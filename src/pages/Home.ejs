@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel = "icon" href = "logo.png" type = "image/x-icon">
+    <title>Vitt Meeting Point</title>
+</head>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville&display=swap');
+
+    body{
+        background-color: #727272;
+    }
+    *{
+        font-family: 'Libre Baskerville', serif;
+        -webkit-user-drag:none;
+        -moz-user-drag:none;
+        -khtml-user-drag:none;
+        -ms-user-drag:none;
+
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        -moz-user-select: none;
+        -khtml-user-select: none;
+    }
+    html{
+        font-size: 62.5%;
+    }
+    .flex-container{
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        height:90vh;
+    }
+    h1{
+        font-size: 4rem;
+        color:#141414;
+    }
+    img{
+        border-radius: 5rem;
+        width:50rem;
+        height:35rem;
+    }
+    p{
+        text-align: center;
+        width:20rem;
+        color:white;
+        font-weight:bold;
+    }
+    #newMeeting,#join{
+        padding:1rem 1.5rem;
+        background-color: #355dd5;
+        border-radius: 1.5rem;
+        color: white;
+        font-size: 1.5rem;
+        outline:none;
+        border:none;
+        cursor: pointer;
+        text-transform: capitalize;
+    }
+    #newMeeting:hover,#join:hover{
+        background-color: #3f69e6;
+    }
+    #newMeeting:disabled{
+        background-color: gray;
+    }
+    #join{
+        margin-left: 1rem;
+    }
+    .client-mob{
+        width:15rem;
+        padding:1.2rem 1.5rem;
+        border-radius:1rem ;
+        border:none;
+        outline-color: white;
+    }
+    #meetingInput{
+        width:20rem;
+        padding:1.2rem 1.5rem;
+        border-radius:1rem ;
+        border:none;
+        outline-color: white;
+    }
+    .meetinglink{
+            /* border:0.1rem solid red; */
+            padding:0.2rem 0.5rem;
+            width:30rem;
+            background-color: white;
+            margin:0.5rem 0;
+            border:none;
+            border-radius: 1rem;
+            font-size: 1.2rem;
+            color:rgb(87, 86, 86);            
+            text-align: left;
+        }
+    @media screen and (max-width:800px){
+        html{
+            font-size: 55%;
+        }
+        h1{
+            font-size: 3rem;
+        }
+        img{
+            width:35rem;
+            height:25rem;
+        }
+        .flex-container{
+        display: flex;
+        flex-direction: column-reverse;
+        justify-content: space-around;
+        align-items: center;
+        height:80vh;
+        }
+        
+    }
+</style>
+<body>
+    <header style="position:absolute;top:10px;left:20px">
+        <img src="logo.png" style="width:50px;height:50px"/>
+    </header>
+    <div class="flex-container">
+        <div >
+            <h1>Vitt Video Chat App</h1>
+            <div class="options">
+                <span>
+                    <input                     
+                        type="tel" 
+                        pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                        name="phone"
+                        class="client-mob"
+                        placeholder="User Code" 
+                    /> 
+                </span>
+                <button id="newMeeting">meeting link</button>
+                <br/> 
+                <textarea class="meetinglink" rows="8" >
+                </textarea>
+                <br/>
+                <p>Or</p>
+                <div >
+                    <input type="text" id="meetingInput"/> 
+                    <button id="join">join</button>
+                </div>
+            </div>
+        </div>
+        <div class="images">
+            <img style="display:none" src="https://media.istockphoto.com/photos/african-american-customer-woman-talking-to-support-service-employee-picture-id1355302972?b=1&k=20&m=1355302972&s=170667a&w=0&h=Hqyu97HPCdr7P3qu1TfCCVuzWZb5vLtUV7By-bwWzA8="/>
+            <img style="display:none" src="https://media.istockphoto.com/photos/business-team-in-video-conference-picture-id1410142294?b=1&k=20&m=1410142294&s=170667a&w=0&h=l3pHf2oCpdhVWUkSCD8QJMMiO167augTs7T41TY8ZaU="/>
+            <img style="display: none;" src="https://images.unsplash.com/photo-1616587894289-86480e533129?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=870&q=80"/>
+            <img src="https://cdn.pixabay.com/photo/2020/09/25/10/10/education-5600987_960_720.png"/>
+        </div>
+    </div>
+</body>
+<script>
+    let meeting = document.getElementById('newMeeting')
+    let join = document.getElementById('join')
+    let meetingInput = document.getElementById('meetingInput')
+
+    function uuidv4() {
+    return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    );
+  }
+  
+
+
+
+    meeting.addEventListener('click',async ()=>{
+
+        // localStorage.setItem()
+        document.querySelector('.meetinglink').value = ''
+        let mobnoInput = document.querySelector('.client-mob')
+        let mobno = mobnoInput.value
+        
+        let meetingBtn = document.querySelector('#newMeeting')
+
+        if(mobno === '')
+            return ;
+        
+        meetingBtn.setAttribute('disabled',true);
+        
+        let ROOM_ID = uuidv4()
+        let CUST_ID 
+
+
+        await fetch('https://qhpv9mvz1h.execute-api.ap-south-1.amazonaws.com/prod/fetch-customerid',{
+        method:'POST',
+        headers:{
+            'Accept':'application.json',
+            'Content-Type':'application/json'
+        },
+        body:JSON.stringify({mobileno:mobno}),
+        cache:'default'
+        }).then((res)=>{
+            return res.json()
+        }).then(result=>{
+            console.log('i am value',document.querySelector('.client-mob').value)
+            
+            console.log(result)
+            CUST_ID = result.custid  
+            
+           
+        }).catch((err)=>{
+            console.log(err)
+            meetingBtn.style.backgroundColor = "#3f69e6"
+            //meetingBtn.disabled = false
+        })
+        
+        if(!CUST_ID)
+        CUST_ID = uuidv4()
+
+        fetch('/createRoom',{
+        method:'POST',
+        headers:{
+            'Accept':'application.json',
+            'Content-Type':'application/json'
+        },
+        body:JSON.stringify({roomId:ROOM_ID}),
+        cache:'default'
+        }).then(()=>{
+           
+            //if multiple links exist
+            if(localStorage.getItem('created_by_admin') !=null){
+                let d = new Date()
+                let storedArr = localStorage.getItem('created_by_admin')
+                let tempArr = JSON.parse(storedArr)
+                tempArr.push( {id:ROOM_ID,time:d.getTime()} )
+                //console.log(tempArr)
+                
+                //add links to browser
+                localStorage.setItem('created_by_admin',JSON.stringify(tempArr));
+                
+            }
+            else{
+                //if creating link first time
+                let d = new Date()
+                localStorage.setItem('created_by_admin',JSON.stringify([{id:ROOM_ID,time:d.getTime()}]))
+            }
+            console.log("howdy")
+            //window.location.href = `?room_id=${ROOM_ID}&cust_id=${CUST_ID}`;
+            
+            
+            document.querySelector('.meetinglink').value = 
+            `${window.location.href}?room_id=${ROOM_ID}&cust_id=${CUST_ID}&mob=${mobnoInput.value}`
+            
+            //window.location.pathname = `${ROOM_ID}`;
+            mobnoInput.value = ''
+        }).catch(e=>{
+            console.log(e)
+            
+        })
+        console.log(meetingBtn)
+        meetingBtn.removeAttribute('disabled');
+        
+    })
+
+    join.addEventListener('click',()=>{
+        window.location.href = meetingInput.value
+    })
+
+    let imageCount=0;
+    function changeImage(){
+        let images = document.getElementsByClassName('images')
+        let imgArr = images[0].children
+        
+        imageCount = imageCount%imgArr.length
+        
+        for(let i=0;i<imgArr.length;i++){
+            if(i==imageCount){
+                imgArr[i].style.display='block'
+            }else {
+            imgArr[i].style.display='none'
+            }
+        }
+
+        imageCount++;
+    }
+    setInterval(()=>{
+            changeImage()
+    },5000)
+    
+    
+</script>
+</html>

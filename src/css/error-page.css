@@ -1,0 +1,15 @@
+@keyframes blink {
+    0% {background-color: white;}
+    100% {background-color: black;}
+    
+  }
+.blink-cursor{
+    width:1rem;
+    height:3rem;
+    /* background-color:white; */
+    margin-left:1rem;
+    animation-name: blink;
+    animation-duration: 0.2s;
+    animation-iteration-count: infinite;
+}
+
