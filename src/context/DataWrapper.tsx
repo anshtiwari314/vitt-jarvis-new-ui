@@ -35,9 +35,9 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     
     const [data,setData] = useState<Object[]>([])
     const dataArrRef = useRef<any>([])
-    //let url1 =`https://repeatedly-pleasing-narwhal.ngrok-free.app/`
-    let url1 = 'http://localhost:3008/'
-    
+    let audioServerUrl =`https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-2way-clientaudio`
+    //let url1 = 'http://localhost:3008/'
+    let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
     const [SESSION_ID,setSessionId] = useState(uuidv4()) 
     const tempRef = useRef("")
     const [msgLoading,setMsgLoading] = useState<boolean>(false);
@@ -69,6 +69,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         setAudioArr(prev=>[...prev,{base64:base64,filename:filename}])
     }
     function handleData(data:any){
+        console.log('handleData',data)
         setMsgLoading(false)
         let arr:Data[] =[]
         //@ts-ignore
@@ -245,7 +246,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     },[SESSION_ID])
 
     useEffect(()=>{
-        const tempSocket = io(url1)
+        const tempSocket = io(socketUrl)
         console.log(tempSocket)
         setSocket(tempSocket)
     },[])
@@ -279,24 +280,18 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             
             console.log(result.sessionid ===SESSION_ID,result.sessionid,SESSION_ID)
             if(result.sessionid === SESSION_ID){
-            
-            if(result.text.trim().length ===0){
-                console.log("empty text")
-             //   setMsgId(uuidv4())
-            }
-            handleTokens(result)
-            //handleData(data)
+            handleData(result)
            // handleAudio(data.speech_bytes,data.file_name)
             }
     }
        socket.on("connect",onConnect)
        socket.on("disconnect",onDisconnect)
-       socket.on("messagefromserver",receiveData)
+       socket.on("receive-data",receiveData)
 
        return ()=>{
            socket.off("connect",onConnect)
            socket.off('disconnect',onDisconnect)
-           socket.off("messagefromserver",receiveData)
+           socket.off("receive-data",receiveData)
        }
     },[SESSION_ID,socket,msgId])
 
@@ -314,7 +309,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
       }
       function startMediaRecorder(stream:MediaStream,time:number){
         //let url = 'https://f6p70odi12.execute-api.ap-south-1.amazonaws.com'
-        let url = url1
+        let url = audioServerUrl
          let arrayofChunks:any = []
            let mediaRecorder = new MediaRecorder(stream,{
              audioBitsPerSecond:32000
@@ -364,12 +359,22 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
          let date = new Date() 
         let audioData = JSON.stringify({
             audiomessage:base64data.split(',')[1],
+            mob:'8368751774',
            // uid:myId,
             timeStamp:`${date.toLocaleDateString()} ${date.toLocaleTimeString()}:${date.getMilliseconds()}`,
             sessionid:SESSION_ID
         })
         socket.emit('audiomessagefromclient',audioData)
-    
+        fetch(url,{
+          method:'POST',
+          headers:{
+             'Accept':'application.json',
+             'Content-Type':'application/json'
+          },
+          body:audioData,
+          cache:'default',}).then(res=>{
+             console.log("res from audio server",res)
+          })
         }
        reader.readAsDataURL(blob)
       }
