@@ -12,7 +12,7 @@ import TokenMsg from '../components/TokenMsg'
 function NewUi() {
     
     //@ts-ignore
-    const {data,msgLoading,handleQuery,recordingOn,setRecordingOn} = useData()
+    const {data,msgLoading,handleQuery,recordingOn,setRecordingOn,vadStatus,setVadStatus} = useData()
 
     const [query,setQuery] = useState<string>("")
 
@@ -89,10 +89,10 @@ function NewUi() {
 
                     }}>
                     <img src={Send} style={{color:'white',cursor:'pointer'}} onClick={()=>handleQuery(query)}/>
-                    {recordingOn?
-                    <img src={redMic}  style={{cursor:'pointer'}} onClick={()=>setRecordingOn((p:any)=>!p)}/>
+                    {vadStatus?
+                    <img src={redMic}  style={{cursor:'pointer'}} onClick={()=>setVadStatus((p:any)=>!p)}/>
                     :
-                    <img src={Mic}  style={{cursor:'pointer'}} onClick={()=>setRecordingOn((p:any)=>!p)}/>
+                    <img src={Mic}  style={{cursor:'pointer'}} onClick={()=>setVadStatus((p:any)=>!p)}/>
                     }
                     
                 </div>

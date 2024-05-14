@@ -15,8 +15,8 @@ import './page3.css'
 export default function Page3() {
     
     return (
-        <div style={{border:'0.1rem solid red',display:'flex',height:'99vh'}}>
-            <div style={{border:'0.1rem solid green',width:'20%'}}>
+        <div style={{display:'flex',height:'99vh'}}>
+            <div style={{border:'0.1rem solid black',borderRight:'none',width:'20%'}}>
                 <div style={{
                     //border:'0.1rem solid blue',
                     display:'flex',

@@ -5,6 +5,7 @@ import Dislike from '../assets/Dislike.svg'
 import DislikeFiLLed from '../assets/Dislike-filled.svg'
 import Pin from '../assets/Pin.svg'
 import PinFilled from '../assets/Pin-filled.svg'
+import Parser from 'html-react-parser'
 
 interface Props {}
 
@@ -41,7 +42,7 @@ function TokenMsg({e}:{e:any}) {
                 fontWeight:400,
                 color:'#343541',
                 lineHeight:'2.8rem'
-                }}>{e.content}</p>
+                }}>{Parser(e.content)}</p>
         </div>
         <div style={{
             flex:0.2,

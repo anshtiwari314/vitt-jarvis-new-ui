@@ -48,6 +48,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     const [msgId,setMsgId] = useState(uuidv4())
     let [recordingOn,setRecordingOn] = useState<boolean>(false);
     let recordingStatus = useRef(false);
+    const [vadStatus,setVadStatus] = useState<boolean>(false)
+    const [vadOb,setVadOb] = useState(null)
 
     let Data = {
         color: "#7D11E9",
@@ -280,6 +282,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             
             console.log(result.sessionid ===SESSION_ID,result.sessionid,SESSION_ID)
             if(result.sessionid === SESSION_ID){
+            setMsgLoading(false)
             handleData(result)
            // handleAudio(data.speech_bytes,data.file_name)
             }
@@ -352,6 +355,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
        }
        function sendToServer(blob:any,url:string){
         //console.log(blob)
+        setMsgLoading(true)
         let reader = new FileReader()
         reader.onloadend = ()=>{
           let base64data:any = reader.result;
@@ -364,7 +368,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             timeStamp:`${date.toLocaleDateString()} ${date.toLocaleTimeString()}:${date.getMilliseconds()}`,
             sessionid:SESSION_ID
         })
-        socket.emit('audiomessagefromclient',audioData)
+        //socket.emit('audiomessagefromclient',audioData)
         fetch(url,{
           method:'POST',
           headers:{
@@ -378,6 +382,100 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         }
        reader.readAsDataURL(blob)
       }
+
+      function getWavBytes(buffer:any, options:any) {
+        const type = options.isFloat ? Float32Array : Uint16Array
+        const numFrames = buffer.byteLength / type.BYTES_PER_ELEMENT
+      
+        const headerBytes = getWavHeader(Object.assign({}, options, { numFrames }))
+        const wavBytes = new Uint8Array(headerBytes.length + buffer.byteLength);
+      
+        // prepend header, then add pcmBytes
+        wavBytes.set(headerBytes, 0)
+        wavBytes.set(new Uint8Array(buffer), headerBytes.length)
+      
+        return wavBytes
+      }
+      
+
+      function getWavHeader(options:any) {
+        const numFrames =      options.numFrames
+        const numChannels =    options.numChannels || 2
+        const sampleRate =     options.sampleRate || 44100
+        const bytesPerSample = options.isFloat? 4 : 2
+        const format =         options.isFloat? 3 : 1
+      
+        const blockAlign = numChannels * bytesPerSample
+        const byteRate = sampleRate * blockAlign
+        const dataSize = numFrames * blockAlign
+      
+        const buffer = new ArrayBuffer(44)
+        const dv = new DataView(buffer)
+      
+        let p = 0
+      
+        function writeString(s:string) {
+          for (let i = 0; i < s.length; i++) {
+            dv.setUint8(p + i, s.charCodeAt(i))
+          }
+          p += s.length
+        }
+      
+        function writeUint32(d:any) {
+          dv.setUint32(p, d, true)
+          p += 4
+        }
+      
+        function writeUint16(d:any) {
+          dv.setUint16(p, d, true)
+          p += 2
+        }
+      
+        writeString('RIFF')              // ChunkID
+        writeUint32(dataSize + 36)       // ChunkSize
+        writeString('WAVE')              // Format
+        writeString('fmt ')              // Subchunk1ID
+        writeUint32(16)                  // Subchunk1Size
+        writeUint16(format)              // AudioFormat https://i.stack.imgur.com/BuSmb.png
+        writeUint16(numChannels)         // NumChannels
+        writeUint32(sampleRate)          // SampleRate
+        writeUint32(byteRate)            // ByteRate
+        writeUint16(blockAlign)          // BlockAlign
+        writeUint16(bytesPerSample * 8)  // BitsPerSample
+        writeString('data')              // Subchunk2ID
+        writeUint32(dataSize)            // Subchunk2Size
+      
+        return new Uint8Array(buffer)
+      }
+    function processingToWav(audio:any){
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const myArrayBuffer = audioCtx.createBuffer(
+        1,
+        audio.length,
+        16000,
+      );
+      let nowBuffering;
+        for (let channel = 0; channel < myArrayBuffer.numberOfChannels; channel++) {
+            // This gives us the actual array that contains the data
+            nowBuffering = myArrayBuffer.getChannelData(channel);
+          //  console.log('array buffer length',myArrayBuffer.length)
+            for (let i = 0; i < myArrayBuffer.length; i++) {
+              // Math.random() is in [0; 1.0]
+              // audio needs to be in [-1.0; 1.0]
+              nowBuffering[i] = audio[i]*2;
+            }
+          }
+          const ch1Data = myArrayBuffer.getChannelData(0)
+          console.log("duration",myArrayBuffer.duration)
+        const wavBytes = getWavBytes(nowBuffering?.buffer, {
+                isFloat: true,       // floating point or 16-bit integer
+                numChannels: 1,
+                sampleRate: 16000,
+            })
+        const wavBlob = new Blob([wavBytes], { type: 'audio/ogg' })
+        return wavBlob
+    }
+
 
     useEffect(()=>{
         recordingStatus.current = recordingOn
@@ -448,18 +546,40 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
           }
         },[recordingOn])
         
-    // useEffect( ()=>{
+    useEffect(()=>{
+      
+      function start(){
+        console.log('start triggeres')
+      }
+      function stop(audio){
+        console.log('stop triggeres',audio)
+        let wavBlob =processingToWav(audio)
+        WavToMp3(wavBlob).then(mp3Blob=>{
+          sendToServer(mp3Blob,audioServerUrl)
+        })
+        
+      }
 
-        
-    //     if(SESSION_ID==='' || socket===null )
-    //     return;
+      VAD(start,stop).then(vad=>{
+        //@ts-ignore
+        setVadOb(vad)
+      })
+    },[])    
 
-        
-        
-    //     return ()=>{
-            
-    //     }
-    // },[SESSION_ID,socket])
+    useEffect(()=>{
+      if(vadOb===null)
+      return ;
+
+      let url = ''
+      let tempVad = null
+      
+      if(vadStatus===true){
+       vadOb.start()
+      }
+      if(vadStatus===false){
+        vadOb.pause()
+      }
+    },[vadOb,vadStatus])
 
     let values = {
         data,
@@ -470,7 +590,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         audioArr,
         audioUrlFlag,audioUrlRef,
         handleQuery,
-        recordingOn,setRecordingOn
+        recordingOn,setRecordingOn,vadStatus,setVadStatus,
     }
   return (
       //@ts-ignore
