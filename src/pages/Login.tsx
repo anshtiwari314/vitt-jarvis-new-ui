@@ -103,6 +103,7 @@ export default function Login() {
               if(result.error!==null)
                 setError(result.error)
               if(result.result===true){
+               // console.log(result)
                   setCurrentUser(result.data)
               }
             })

@@ -2,7 +2,7 @@ import React from 'react'
 import {Route,Routes} from 'react-router-dom';
 import PrivateRoute from './components/PrivateRoute';
 import GlobalRoute from './components/GlobalRoute';
-import Page1 from './pages/Page3'
+import Page from './pages/Page3'
 import SignUp from './pages/SignUp'
 import Login from './pages/Login'
 import ErrorPage from './pages/ErrorPage'
@@ -16,7 +16,7 @@ export default function Routing() {
             {/* @ts-ignore */}
             <Route path='/signup' element={<PrivateRoute component={<SignUp/>}/>}/>
             {/* @ts-ignore */}
-            <Route path='/mainpage' element={<GlobalRoute component={<DataWrapper><Page1/></DataWrapper>}/>}/>
+            <Route path='/mainpage' element={<GlobalRoute component={<DataWrapper><Page/></DataWrapper>}/>}/>
             <Route path='*' element={<ErrorPage/>}/>
     </Routes>
   )

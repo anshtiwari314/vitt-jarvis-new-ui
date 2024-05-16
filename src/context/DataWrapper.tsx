@@ -4,6 +4,7 @@ import AddTextMsg from '../components/AddTextMsg'
 import {io} from 'socket.io-client';
 import {v4 as uuidv4} from 'uuid'
 import WavToMp3 from '../functions/wavToMp3';
+import { useAuth } from './AuthContext';
 
 const Context = createContext('')
 type Data = {
@@ -38,7 +39,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     let audioServerUrl =`https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-2way-clientaudio`
     //let url1 = 'http://localhost:3008/'
     let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
-    const [SESSION_ID,setSessionId] = useState(uuidv4()) 
+    
     const tempRef = useRef("")
     const [msgLoading,setMsgLoading] = useState<boolean>(false);
     const [audioArr,setAudioArr] = useState<any>([])
@@ -49,7 +50,10 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     let [recordingOn,setRecordingOn] = useState<boolean>(false);
     let recordingStatus = useRef(false);
     const [vadStatus,setVadStatus] = useState<boolean>(false)
-    const [vadOb,setVadOb] = useState(null)
+    const [vadOb,setVadOb] = useState<any>(null)
+    //@ts-ignore
+    const {currentUser} = useAuth()
+    const [SESSION_ID,setSessionId] = useState(currentUser.sessionid)
 
     let Data = {
         color: "#7D11E9",
@@ -363,7 +367,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
          let date = new Date() 
         let audioData = JSON.stringify({
             audiomessage:base64data.split(',')[1],
-            mob:'8368751774',
+            mob:'',
            // uid:myId,
             timeStamp:`${date.toLocaleDateString()} ${date.toLocaleTimeString()}:${date.getMilliseconds()}`,
             sessionid:SESSION_ID
@@ -448,6 +452,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         return new Uint8Array(buffer)
       }
     function processingToWav(audio:any){
+      //@ts-ignore
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const myArrayBuffer = audioCtx.createBuffer(
         1,
@@ -551,10 +556,10 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
       function start(){
         console.log('start triggeres')
       }
-      function stop(audio){
+      function stop(audio:any){
         console.log('stop triggeres',audio)
         let wavBlob =processingToWav(audio)
-        WavToMp3(wavBlob).then(mp3Blob=>{
+        WavToMp3(wavBlob).then((mp3Blob:Blob)=>{
           sendToServer(mp3Blob,audioServerUrl)
         })
         
