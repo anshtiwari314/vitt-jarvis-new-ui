@@ -5,6 +5,10 @@ import {io} from 'socket.io-client';
 import {v4 as uuidv4} from 'uuid'
 import WavToMp3 from '../functions/wavToMp3';
 import { useAuth } from './AuthContext';
+import { useMicVAD, utils } from "@ricky0123/vad-react"
+import * as ort from "onnxruntime-web"
+
+
 
 const Context = createContext('')
 type Data = {
@@ -34,22 +38,29 @@ export function useData(){
  
 export default function DataWrapper({children}:{children:React.ReactNode}) {
     
+  ort.env.wasm.wasmPaths = {
+    "ort-wasm-simd-threaded.wasm": `/ort-wasm-simd-threaded.wasm`,
+    "ort-wasm-simd.wasm": `/ort-wasm-simd.wasm`,
+    "ort-wasm.wasm": `/ort-wasm.wasm`,
+    "ort-wasm-threaded.wasm": `/ort-wasm-threaded.wasm`,
+  }
+
     const [data,setData] = useState<Object[]>([])
     const dataArrRef = useRef<any>([])
     let audioServerUrl =`https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-2way-clientaudio`
-    //let url1 = 'http://localhost:3008/'
+    //let audioServerUrl = 'http://localhost:5000/'
     let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
     
     const tempRef = useRef("")
     const [msgLoading,setMsgLoading] = useState<boolean>(false);
     const [audioArr,setAudioArr] = useState<any>([])
-    let audioUrlRef = useRef(null)
-    const [audioUrlFlag,setAudioUrlFlag] = useState<boolean>(false)
+    let audioUrlRef = useRef(null);
+    const [audioUrlFlag,setAudioUrlFlag] = useState<boolean>(false);
     const [socket,setSocket] = useState<any>(null)
     const [msgId,setMsgId] = useState(uuidv4())
     let [recordingOn,setRecordingOn] = useState<boolean>(false);
     let recordingStatus = useRef(false);
-    const [vadStatus,setVadStatus] = useState<boolean>(false)
+    const [vadStatus,setVadStatus] = useState<boolean>(false);
     const [vadOb,setVadOb] = useState<any>(null)
     //@ts-ignore
     const {currentUser} = useAuth()
@@ -68,14 +79,47 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         similarity_query: "Definition of mutual fund",
         istranscription:true
     }
+    const VAD2 = useMicVAD({
+      workletURL: `/vad.worklet.bundle.min.js`,
+      //modelURL: "http://localhost:8080/silero_vad.onnx",
+      //@ts-ignore
+      modelURL:`/silero_vad.onnx`,
+      onVADMisfire: () => {
+        console.log("Vad misfire")
+      },
+      onSpeechStart: () => {
+        console.log("Speech start")
+      },
+      onSpeechEnd: (audio) => {
+        console.log("Speech end")
+        const wavBuffer = utils.encodeWAV(audio)
+        // const base64 = utils.arrayBufferToBase64(wavBuffer)
+        // console.log("hello world",base64)
+
+
+           // let wavBlob =processingToWav(audio)
+        let wavBlob = new Blob([wavBuffer], { type: 'audio/wav' })
+        WavToMp3(wavBlob).then((mp3Blob:Blob)=>{
+          sendToServer(mp3Blob,audioServerUrl)
+        })
+
+        // const url = `data:audio/wav;base64,${base64}`
+        // setAudioList((old) => [url, ...old])
+      },
+    })
+
     
+
+    //  useEffect(()=>{
+    //   console.log('vad',"listeniing",VAD2.listening,"loading",VAD2.loading,"user speaking",VAD2.userSpeaking,"errored",VAD2.errored,VAD2)
+    //  },[VAD2])
 
     function handleAudio(base64:string,filename:string){
         //@ts-ignore
         setAudioArr(prev=>[...prev,{base64:base64,filename:filename}])
     }
     function handleData(data:any){
-        console.log('handleData',data)
+        //console.log('handleData',data)
         setMsgLoading(false)
         let arr:Data[] =[]
         //@ts-ignore
@@ -198,7 +242,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
            
         } 
 
-       console.log(arr)
+       //console.log(arr)
        setData(prev=>[...arr,...prev])
        //console.log(obj)
     }
@@ -243,9 +287,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         setData([...dataArrRef.current])
     }
 
-    useEffect(()=>{
-        console.log(data)
-    },[data])
+    
 
     useEffect(()=>{
         console.log('i am session id at data-wrapper',SESSION_ID)
@@ -278,13 +320,13 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         }
 
         function receiveData(result:any){
-            console.log(result.text,result.messageid,result);
+            console.log(result);
             // if(tempRef.current ===data){
             //     //console.log("tempRef current",tempRef.current)
             //     return ;
             // }
             
-            console.log(result.sessionid ===SESSION_ID,result.sessionid,SESSION_ID)
+            //console.log(result.sessionid ===SESSION_ID,result.sessionid,SESSION_ID)
             if(result.sessionid === SESSION_ID){
             setMsgLoading(false)
             handleData(result)
@@ -302,18 +344,21 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
        }
     },[SESSION_ID,socket,msgId])
 
-    function VAD(cb1:CallableFunction,cb2:CallableFunction){
-        return new Promise(async (resolve,reject)=>{
-            //@ts-ignore
-            const myvad = await vad.MicVAD.new({
-              onSpeechStart: cb1,
-              onSpeechEnd: cb2
-            })
-            resolve(myvad)
-            reject(myvad)
-        })
+    // function VAD(cb1:CallableFunction,cb2:CallableFunction){
+    //     return new Promise(async (resolve,reject)=>{
+    //         //@ts-ignore
+    //         const myvad = await vad.MicVAD.new({
+    //           onSpeechStart: cb1,
+    //           onSpeechEnd: cb2
+    //         })
+    //         resolve(myvad)
+    //        // reject(myvad)
+    //     })
         
-      }
+    //   }
+    
+
+
       function startMediaRecorder(stream:MediaStream,time:number){
         //let url = 'https://f6p70odi12.execute-api.ap-south-1.amazonaws.com'
         let url = audioServerUrl
@@ -381,7 +426,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
           },
           body:audioData,
           cache:'default',}).then(res=>{
-             console.log("res from audio server",res)
+            // console.log("res from audio server",res)
           })
         }
        reader.readAsDataURL(blob)
@@ -537,10 +582,10 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             },500)
           }
           
-            VAD(start,stop).then((vad:any)=>{
-              tempVad = vad
-              vad.start()
-            })
+            // VAD(start,stop).then((vad:any)=>{
+            //   tempVad = vad
+            //   vad.start()
+            // })
             
           }
           return ()=>{
@@ -551,40 +596,38 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
           }
         },[recordingOn])
         
-    useEffect(()=>{
+    // useEffect(()=>{
       
-      function start(){
-        console.log('start triggeres')
-      }
-      function stop(audio:any){
-        console.log('stop triggeres',audio)
-        let wavBlob =processingToWav(audio)
-        WavToMp3(wavBlob).then((mp3Blob:Blob)=>{
-          sendToServer(mp3Blob,audioServerUrl)
-        })
+    //   function start(){
+    //     console.log('start triggeres')
+    //   }
+    //   function stop(audio:any){
+    //     console.log('stop triggeres',audio)
+    //     let wavBlob =processingToWav(audio)
+    //     WavToMp3(wavBlob).then((mp3Blob:Blob)=>{
+    //       sendToServer(mp3Blob,audioServerUrl)
+    //     })
         
-      }
-
-      VAD(start,stop).then(vad=>{
-        //@ts-ignore
-        setVadOb(vad)
-      })
-    },[])    
+    //   }
+      
+    //   VAD(start,stop).then(vad=>{
+    //     //@ts-ignore
+    //     setVadOb(vad)
+    //   }).catch((e:any)=>{console.log(e)})
+    // },[])    
 
     useEffect(()=>{
-      if(vadOb===null)
-      return ;
 
       let url = ''
       let tempVad = null
       
       if(vadStatus===true){
-       vadOb.start()
+       VAD2.start()
       }
       if(vadStatus===false){
-        vadOb.pause()
+        VAD2.pause()
       }
-    },[vadOb,vadStatus])
+    },[VAD2,vadStatus])
 
     let values = {
         data,
@@ -595,7 +638,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         audioArr,
         audioUrlFlag,audioUrlRef,
         handleQuery,
-        recordingOn,setRecordingOn,vadStatus,setVadStatus,
+        recordingOn,setRecordingOn,vadStatus,setVadStatus
     }
   return (
       //@ts-ignore

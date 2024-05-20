@@ -9,7 +9,7 @@ export function useAuth(){
 
 export default function AuthContext({children}:{children:React.ReactNode}) {
   
-    const [currentUser,setCurrentUser] = useState(null)
+    const [currentUser,setCurrentUser] = useState({sessionid:'anuj'})
 
   let values = {
     currentUser,setCurrentUser

@@ -140,7 +140,7 @@ function downsampleToWav(file:File, callback:CallableFunction) {
 function encodeMp3(arrayBuffer:ArrayBuffer) {
   //@ts-ignore
   const wav = lamejs.WavHeader.readHeader(new DataView(arrayBuffer));
-  console.log("i am wav", wav);
+  //console.log("i am wav", wav);
   const dataView = new Int16Array(arrayBuffer, wav.dataOffset, wav.dataLen / 2);
   //@ts-ignore
   const mp3Encoder = new lamejs.Mp3Encoder(wav.channels, wav.sampleRate, 128);

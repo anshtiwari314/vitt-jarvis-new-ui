@@ -9,6 +9,7 @@ import { useData } from '../context/DataWrapper';
 import Msg from '../components/Msg';
 import TokenMsg from '../components/TokenMsg'
 
+
 function NewUi() {
     
     //@ts-ignore
@@ -89,6 +90,7 @@ function NewUi() {
 
                     }}>
                     <img src={Send} style={{color:'white',cursor:'pointer'}} onClick={()=>handleQuery(query)}/>
+                    
                     {vadStatus?
                     <img src={redMic}  style={{cursor:'pointer'}} onClick={()=>setVadStatus((p:any)=>!p)}/>
                     :
