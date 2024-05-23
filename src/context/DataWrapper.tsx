@@ -64,7 +64,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     const [vadOb,setVadOb] = useState<any>(null)
     //@ts-ignore
     const {currentUser} = useAuth()
-    const [SESSION_ID,setSessionId] = useState(currentUser.sessionid)
+    const [SESSION_ID,setSessionId] = useState(currentUser?.sessionid)
 
     let Data = {
         color: "#7D11E9",
