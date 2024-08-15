@@ -36,7 +36,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     const [data,setData] = useState<Object[]>([])
     const dataArrRef = useRef<any>([])
     //let url1 =`https://repeatedly-pleasing-narwhal.ngrok-free.app/`
-    let url1 = 'http://localhost:3008/'
+    let url1 = 'http://localhost:5000/'
     
     const [SESSION_ID,setSessionId] = useState(uuidv4()) 
     const tempRef = useRef("")
@@ -360,7 +360,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         let reader = new FileReader()
         reader.onloadend = ()=>{
           let base64data:any = reader.result;
-         // console.log(`base64`,base64data)
+          console.log(`base64`,base64data)
          let date = new Date() 
         let audioData = JSON.stringify({
             audiomessage:base64data.split(',')[1],
