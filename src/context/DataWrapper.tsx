@@ -364,17 +364,18 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             timeStamp:`${date.toLocaleDateString()} ${date.toLocaleTimeString()}:${date.getMilliseconds()}`,
             sessionid:SESSION_ID
         })
+        console.log('just before sending data',new Date().toLocaleTimeString())
         socket.emit('audiomessagefromclient',audioData)
-        fetch(url,{
-          method:'POST',
-          headers:{
-             'Accept':'application.json',
-             'Content-Type':'application/json'
-          },
-          body:audioData,
-          cache:'default',}).then(res=>{
-             console.log("res from audio server",res)
-          })
+        // fetch(url,{
+        //   method:'POST',
+        //   headers:{
+        //      'Accept':'application.json',
+        //      'Content-Type':'application/json'
+        //   },
+        //   body:audioData,
+        //   cache:'default',}).then(res=>{
+        //      console.log("res from audio server",res)
+        //   })
         }
        reader.readAsDataURL(blob)
       }
@@ -408,7 +409,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         let timer :undefined|any
         
         if(recordingOn ===true){
-          console.log("vad trigeered")
+          console.log("vad trigeered",new Date().toLocaleTimeString())
           
           //this timeout if user is silence from starting 
           timer = setTimeout(()=>{
@@ -417,16 +418,16 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
           },5000)
     
           function start(){
-            console.log("audio started")
+            console.log("audio started",new Date().toLocaleTimeString())
             //end timer
             timer && clearTimeout(timer); 
             id && clearTimeout(id) ; id = undefined;
           }
           function stop(){
-            console.log("audio stopped")
+            console.log("audio stopped" ,new Date().toLocaleTimeString())
             //start timer
             id=setTimeout(()=>{
-              console.log("silence 0.5 sec")
+              console.log("silence 0.5 sec",new Date().toLocaleTimeString())
               console.log(tempVad)
               tempVad && tempVad.pause()
               tempVad = undefined
