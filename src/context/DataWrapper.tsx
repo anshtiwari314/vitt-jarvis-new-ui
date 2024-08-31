@@ -204,7 +204,19 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             query:data,
             sessionid:SESSION_ID
         }
-        socket.emit("messagefromclient",tempObj)
+        //socket.emit("messagefromclient",tempObj)
+        //
+
+        fetch('https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-2way-clientaudio',{
+          method:'POST',
+          headers:{
+            'Accept':'application.json',
+            'Content-Type':'application/json'
+          },
+          body:JSON.stringify(tempObj),
+          cache:'default',}).then(res=>{
+            console.log("res from audio server",res)
+          })
     }
     function handleTokens(data:any){
         
@@ -272,15 +284,19 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         }
 
         function receiveData(result:any){
-            console.log(result.text,result.messageid,result);
+          console.log(`%c just after receiveing data ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+          console.log(result.text,result.messageid,result);
             // if(tempRef.current ===data){
             //     //console.log("tempRef current",tempRef.current)
             //     return ;
             // }
             
             console.log(result.sessionid ===SESSION_ID,result.sessionid,SESSION_ID)
+
             if(result.sessionid === SESSION_ID){
-            handleData(result)
+              console.log(`%c just after filter data for this session id ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+              
+              handleData(result)
            // handleAudio(data.speech_bytes,data.file_name)
             }
     }
@@ -323,8 +339,10 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
           setMsgLoading(true)
          //let url = `https://asia-south1-utility-range-375005.cloudfunctions.net/save_b64_1`
          //let url = `https://0455-182-72-76-34.ngrok.io`
+         console.log(`%c just before wav to mp3 ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
          let mp3Blob = await WavToMp3(new Blob(arrayofChunks,{type:'audio/wav'}))
          //console.log(mp3Blob)
+         console.log(`%c just after wav to mp3 ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
          sendToServer( mp3Blob,url)
           arrayofChunks = []
          }
@@ -364,18 +382,19 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             timeStamp:`${date.toLocaleDateString()} ${date.toLocaleTimeString()}:${date.getMilliseconds()}`,
             sessionid:SESSION_ID
         })
-        console.log('just before sending data',new Date().toLocaleTimeString())
-        socket.emit('audiomessagefromclient',audioData)
-        // fetch(url,{
-        //   method:'POST',
-        //   headers:{
-        //      'Accept':'application.json',
-        //      'Content-Type':'application/json'
-        //   },
-        //   body:audioData,
-        //   cache:'default',}).then(res=>{
-        //      console.log("res from audio server",res)
-        //   })
+        console.log(`%c just before sending data ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+        
+        //socket.emit('audiomessagefromclient',audioData)
+        fetch(url,{
+          method:'POST',
+          headers:{
+             'Accept':'application.json',
+             'Content-Type':'application/json'
+          },
+          body:audioData,
+          cache:'default',}).then(res=>{
+             console.log("res from audio server",res)
+          })
         }
        reader.readAsDataURL(blob)
       }
@@ -409,7 +428,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         let timer :undefined|any
         
         if(recordingOn ===true){
-          console.log("vad trigeered",new Date().toLocaleTimeString())
+          console.log(`%c vad triggered ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+          
           
           //this timeout if user is silence from starting 
           timer = setTimeout(()=>{
@@ -418,16 +438,19 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
           },5000)
     
           function start(){
-            console.log("audio started",new Date().toLocaleTimeString())
+            
+            console.log(`%c audio started ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
             //end timer
             timer && clearTimeout(timer); 
             id && clearTimeout(id) ; id = undefined;
           }
           function stop(){
-            console.log("audio stopped" ,new Date().toLocaleTimeString())
+            
+            console.log(`%c audio stopped ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
             //start timer
             id=setTimeout(()=>{
-              console.log("silence 0.5 sec",new Date().toLocaleTimeString())
+              
+              console.log(`%c if silence after 0.5sec then pause the vad ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
               console.log(tempVad)
               tempVad && tempVad.pause()
               tempVad = undefined

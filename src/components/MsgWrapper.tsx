@@ -33,6 +33,7 @@ export default function MsgWrapper() {
             {data && data.map((e:any,i:number)=>{
                 return <Msg e={e} key={e.id}/>
             })}
+            <button>hello</button>
             </div>
             
   )

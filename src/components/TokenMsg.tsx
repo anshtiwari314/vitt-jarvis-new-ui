@@ -1,10 +1,11 @@
-import React,{useState} from 'react'
+import React,{useEffect, useState} from 'react'
 import Like from '../assets/Like.svg'
 import LikeFilled from '../assets/Like-filled.svg'
 import Dislike from '../assets/Dislike.svg'
 import DislikeFiLLed from '../assets/Dislike-filled.svg'
 import Pin from '../assets/Pin.svg'
 import PinFilled from '../assets/Pin-filled.svg'
+import Parser from 'html-react-parser'
 
 interface Props {}
 
@@ -13,6 +14,9 @@ function TokenMsg({e}:{e:any}) {
     const [toggleLikeBtn,setToggleLikeBtn] = useState<boolean>(false)
     const [toggleDislikeBtn,setToggleDislikeBtn] = useState<boolean>(false)
     const [togglePinBtn,setTogglePinBtn] = useState<boolean>(false)
+    useEffect(()=>{
+        console.log("e from tokenmsg",e)
+    },[])
     return (
         <div style={{
             //width:'fit-content',
@@ -32,7 +36,8 @@ function TokenMsg({e}:{e:any}) {
                 lineHeight:'2.8rem',
                 fontSize:'2rem'
                 }}>
-                {e.query}
+                {e.query}    
+                
             </h3>
             <p style={{
                 fontSize:'1.6rem',
@@ -41,7 +46,7 @@ function TokenMsg({e}:{e:any}) {
                 fontWeight:400,
                 color:'#343541',
                 lineHeight:'2.8rem'
-                }}>{e.content}</p>
+                }}>{Parser(e.content)}</p>
         </div>
         <div style={{
             flex:0.2,

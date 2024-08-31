@@ -23,8 +23,14 @@ function NewUi() {
         }
     }
 
+    function handleCopyToClipboard(){
+        //console.log(data[data.length-1].content)
+        navigator.clipboard.writeText(data[data.length-1].content);
+        window.alert("Content copied")
+    }
     return (
-        <div style={{border:'0.1rem solid black',width:'70%',paddingLeft:'4rem'}}>
+        <div style={{//border:'0.1rem solid black',
+            width:'70%',paddingLeft:'4rem'}}>
             <div>   
                 {/* <h2 style={{fontSize:'2.5rem',fontFamily: '"DM Sans", sans-serif',fontWeight:700}}>Meeting title</h2> */}
                 <h3 style={{fontSize:'2rem',fontFamily: '"DM Sans", sans-serif',fontWeight:700,margin:'0.5rem 0',color:'#1B1B1B'}}>Ongoing call</h3>
@@ -53,9 +59,30 @@ function NewUi() {
                     return <Msg e={e} key={e.id}/>
                 })} */}
                 {data && data.map((e:any,i:number)=>{
-                    return <TokenMsg e={e} key={e.id}/>
+                    if(i===0){
+                        return <>
+                        <TokenMsg e={e} key={e.id}/>
+                        <button className="btn btn-primary" style={{
+                    
+                    // backgroundColor:'#adacac',
+                    // color:'white',
+                    width:'20rem',
+                    margin:'0.5rem 2rem',
+                    padding:'1rem 1rem',
+                    textAlign:'center',
+                    fontSize:'1.5rem',
+                    // display:'flex',
+                    // justifyContent:'center',
+                    outline:'none',border:'none',borderRadius:'1rem'
+                }} onClick={handleCopyToClipboard}>Copy</button>
+                        </>
+                    }else{
+                        return <TokenMsg e={e} key={e.id}/>
+                    }
+                    
                 })}
-               
+                
+                
             </div>
             <div style={{
                 width:'98%',
@@ -77,6 +104,7 @@ function NewUi() {
                         background:'transparent',
                         border:'none',
                         outline:'none',
+                        fontSize:'1.5rem',
                         //border:'0.1rem solid red'
                     }}
 
