@@ -1,9 +1,10 @@
 import React, { useState,createContext, useContext, useEffect, useRef } from 'react'
 import AddOnlySuggestiveMsg from '../components/AddOnlySuggestiveMsg'
 import AddTextMsg from '../components/AddTextMsg'
-import {io} from 'socket.io-client';
+import {connect, io} from 'socket.io-client';
 import {v4 as uuidv4} from 'uuid'
 import WavToMp3 from '../functions/wavToMp3';
+import { useAuth } from './AuthContext';
 
 const Context = createContext('')
 type Data = {
@@ -35,15 +36,21 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     
     const [data,setData] = useState<Object[]>([])
     const dataArrRef = useRef<any>([])
-    let audioServerUrl =`https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-2way-clientaudio`
+    let audioServerUrl =`https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-clientaudio`
     //let url1 = 'http://localhost:3008/'
     let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
-    const [SESSION_ID,setSessionId] = useState(uuidv4()) 
+    
+    //@ts-ignore
+    const {currentUser}= useAuth()
+    const [SESSION_ID,setSessionId] = useState(currentUser.sessionid) 
     const tempRef = useRef("")
     const [msgLoading,setMsgLoading] = useState<boolean>(false);
     const [audioArr,setAudioArr] = useState<any>([])
+
     let audioUrlRef = useRef(null)
     const [audioUrlFlag,setAudioUrlFlag] = useState<boolean>(false)
+    const [audioUrl,setAudioUrl] = useState('')
+
     const [socket,setSocket] = useState<any>(null)
     const [msgId,setMsgId] = useState(uuidv4())
     let [recordingOn,setRecordingOn] = useState<boolean>(false);
@@ -62,6 +69,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         similarity_query: "Definition of mutual fund",
         istranscription:true
     }
+    
     
 
     function handleAudio(base64:string,filename:string){
@@ -83,6 +91,11 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             audioUrlRef.current = data.audiourl
             setAudioUrlFlag(prev=>!prev)
             //setAudioUrl('https://files.gospeljingle.com/uploads/music/2023/04/Taylor_Swift_-_August.mp3')
+            setAudioUrl(data.audiourl)
+          }
+        if(data?.audiobase64!=null){
+            
+            setAudioUrl(`data:audio/mpeg;base64,${data.audiobase64}`)
         }
         if(data?.imageurl){
             //@ts-ignore
@@ -198,7 +211,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     }
 
     function handleQuery(data:any){
-        //setMsgLoading(true)
+        setMsgLoading(true)
         console.log(data)
         let tempObj = {
             query:data,
@@ -249,6 +262,10 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         setData([...dataArrRef.current])
     }
 
+    
+    useEffect(()=>{
+      console.log('i am current user at data-wrapper',currentUser)
+    },[currentUser])
     useEffect(()=>{
         console.log(data)
     },[data])
@@ -291,7 +308,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             //     return ;
             // }
             
-            console.log(result.sessionid ===SESSION_ID,result.sessionid,SESSION_ID)
+            console.log(result.sessionid ===SESSION_ID,result.sessionid,result,SESSION_ID)
 
             if(result.sessionid === SESSION_ID){
               console.log(`%c just after filter data for this session id ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
@@ -380,7 +397,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             mob:'8368751774',
            // uid:myId,
             timeStamp:`${date.toLocaleDateString()} ${date.toLocaleTimeString()}:${date.getMilliseconds()}`,
-            sessionid:SESSION_ID
+            sessionid:SESSION_ID,
+            url:window.location.href
         })
         console.log(`%c just before sending data ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
         
@@ -472,6 +490,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
           }
         },[recordingOn])
         
+        
+
     // useEffect( ()=>{
 
         
@@ -494,7 +514,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         audioArr,
         audioUrlFlag,audioUrlRef,
         handleQuery,
-        recordingOn,setRecordingOn
+        recordingOn,setRecordingOn,audioUrl,setAudioUrl
     }
   return (
       //@ts-ignore

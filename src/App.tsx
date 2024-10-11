@@ -16,9 +16,13 @@ export default function App() {
   //const {data} = useData()
   
   return (
-    <DataWrapper>
-        <Page/> 
-    </DataWrapper>
+    <AuthContext>
+      {/* <DataWrapper> */}
+          <Router>
+            <Routing/>
+          </Router>
+      {/* </DataWrapper> */}
+    </AuthContext>
       
   )
 }

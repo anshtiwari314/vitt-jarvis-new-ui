@@ -82,7 +82,7 @@ export default function Page3() {
                     }}>
                     <div style={{
                         display:'flex',
-                        alignItems:'center',
+                        //alignItems:'center',
                         justifyContent:'center',
                         margin:'1.5rem 0',
                       //  border:'0.1rem solid blue',
@@ -100,13 +100,13 @@ export default function Page3() {
                         alignItems:'center',
                         justifyContent:'center',
                         margin:'1.5rem 0',
-                       // border:'0.1rem solid blue',
+                        //border:'0.1rem solid blue',
                         padding:'1.5rem 0'
                         }}>
                         <span style={{flex:'0.2',display:'flex',justifyContent:'center'}}>
                             <img src={Meeting}/>
                         </span>
-                        <span style={{flex:'0.8'}}>
+                        <span style={{flex:'0.8',display:'flex',alignItems:'center'}}>
                             <p style={{fontSize:'1.5rem',fontFamily: "'Open Sans', sans-serif",fontWeight:400}}>Meeting Notes</p>
                         </span>
                     </div>

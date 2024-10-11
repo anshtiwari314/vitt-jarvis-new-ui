@@ -14,6 +14,45 @@ function TokenMsg({e}:{e:any}) {
     const [toggleLikeBtn,setToggleLikeBtn] = useState<boolean>(false)
     const [toggleDislikeBtn,setToggleDislikeBtn] = useState<boolean>(false)
     const [togglePinBtn,setTogglePinBtn] = useState<boolean>(false)
+
+    const [feedback,setFeedback] = useState(null)
+
+    let failFeedbackUrl = 'https://qhpv9mvz1h.execute-api.ap-south-1.amazonaws.com/prod/fail-feedback'
+    let passFeedbackUrl = 'https://qhpv9mvz1h.execute-api.ap-south-1.amazonaws.com/prod/pass-feedback'
+
+    function handleFeedback(e:any,url:string){
+        console.log(e)
+        fetch(url,{
+            method:'POST',
+            headers:{
+               'Accept':'application.json',
+               'Content-Type':'application/json'
+            },
+            body:JSON.stringify({
+                sessionid: e.sessionid, 
+                audiofiletimestamp: e.audiofiletimestamp ,
+                istranscription:e.istranscription
+            }),
+            cache:'default',}).then(res=>{
+               console.log("res from feedback server",res)
+               return res.json()
+            }).then((result)=>{
+              
+              // //setMsg((prev)=>[...prev,...result])
+              console.log(result)
+            })
+    }
+
+    useEffect(()=>{
+        if(feedback===null)
+        return ;
+        
+        // if(feedback===true)
+        // handleFeedback(e,passFeedbackUrl)
+        // else handleFeedback(e,failFeedbackUrl)
+
+    },[feedback])
+
     useEffect(()=>{
         console.log("e from tokenmsg",e)
     },[])
@@ -62,16 +101,16 @@ function TokenMsg({e}:{e:any}) {
                width:'80%',
                margin:'0 auto'
                 }}>
-                {toggleLikeBtn===false ? 
-                <img src={Like} style={{fontSize:'1rem',cursor:'pointer'}}  onClick={()=>setToggleLikeBtn(p=>!p)}/>
+                { feedback===true? 
+                <img src={LikeFilled} style={{fontSize:'1rem',cursor:'pointer'}}  onClick={()=>{setToggleLikeBtn(p=>!p)}}/>
                 :
-                <img src={LikeFilled} style={{fontSize:'1rem',cursor:'pointer'}}  onClick={()=>setToggleLikeBtn(p=>!p)}/>
+                <img src={Like} style={{fontSize:'1rem',cursor:'pointer'}}  onClick={()=>{setToggleLikeBtn(p=>!p);setFeedback(true);handleFeedback(e,passFeedbackUrl)}}/>
                 }
                 {
-                toggleDislikeBtn===false ?
-                <img src={Dislike} style={{fontSize:'1rem',cursor:'pointer'}} onClick={()=>setToggleDislikeBtn(p=>!p)}/>
-                :
+                feedback===false?
                 <img src={DislikeFiLLed} style={{fontSize:'1rem',cursor:'pointer'}} onClick={()=>setToggleDislikeBtn(p=>!p)}/>
+                :
+                <img src={Dislike} style={{fontSize:'1rem',cursor:'pointer'}} onClick={()=>{setToggleDislikeBtn(p=>!p);setFeedback(false);handleFeedback(e,failFeedbackUrl)}}/>
                 }
                 {
                 togglePinBtn===false ?
