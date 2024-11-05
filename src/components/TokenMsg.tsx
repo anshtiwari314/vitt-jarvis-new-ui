@@ -11,11 +11,11 @@ interface Props {}
 
 function TokenMsg({e}:{e:any}) {
     
-    const [toggleLikeBtn,setToggleLikeBtn] = useState<boolean>(false)
-    const [toggleDislikeBtn,setToggleDislikeBtn] = useState<boolean>(false)
+    //const [toggleLikeBtn,setToggleLikeBtn] = useState<boolean>(false)
+    //const [toggleDislikeBtn,setToggleDislikeBtn] = useState<boolean>(false)
     const [togglePinBtn,setTogglePinBtn] = useState<boolean>(false)
 
-    const [feedback,setFeedback] = useState(null)
+    const [feedback,setFeedback] = useState<null|boolean>(null)
 
     let failFeedbackUrl = 'https://qhpv9mvz1h.execute-api.ap-south-1.amazonaws.com/prod/fail-feedback'
     let passFeedbackUrl = 'https://qhpv9mvz1h.execute-api.ap-south-1.amazonaws.com/prod/pass-feedback'
@@ -102,15 +102,15 @@ function TokenMsg({e}:{e:any}) {
                margin:'0 auto'
                 }}>
                 { feedback===true? 
-                <img src={LikeFilled} style={{fontSize:'1rem',cursor:'pointer'}}  onClick={()=>{setToggleLikeBtn(p=>!p)}}/>
+                <img src={LikeFilled} style={{fontSize:'1rem',cursor:'pointer'}} />
                 :
-                <img src={Like} style={{fontSize:'1rem',cursor:'pointer'}}  onClick={()=>{setToggleLikeBtn(p=>!p);setFeedback(true);handleFeedback(e,passFeedbackUrl)}}/>
+                <img src={Like} style={{fontSize:'1rem',cursor:'pointer'}}  onClick={()=>{setFeedback(true);handleFeedback(e,passFeedbackUrl)}}/>
                 }
                 {
                 feedback===false?
-                <img src={DislikeFiLLed} style={{fontSize:'1rem',cursor:'pointer'}} onClick={()=>setToggleDislikeBtn(p=>!p)}/>
+                <img src={DislikeFiLLed} style={{fontSize:'1rem',cursor:'pointer'}} />
                 :
-                <img src={Dislike} style={{fontSize:'1rem',cursor:'pointer'}} onClick={()=>{setToggleDislikeBtn(p=>!p);setFeedback(false);handleFeedback(e,failFeedbackUrl)}}/>
+                <img src={Dislike} style={{fontSize:'1rem',cursor:'pointer'}} onClick={()=>{setFeedback(false);handleFeedback(e,failFeedbackUrl)}}/>
                 }
                 {
                 togglePinBtn===false ?
