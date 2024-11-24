@@ -1,24 +1,43 @@
-import React from 'react'
+import React,{useState} from 'react'
 import NewUi from './NewUi'
+
+
+
+import Logo from '../assets/vitt-logo3.png'
+import Search from '../assets/Search.svg'
+
+import './page3.css'
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSearch,faMicrophone,faPlusCircle,faTimesCircle,faRecordVinyl } from '@fortawesome/free-solid-svg-icons'
+import { useData } from '../context/DataWrapper'
+import { useAuth} from '../context/AuthContext'
+
 import Meeting from '../assets/Meeting.svg'
 import Home from '../assets/Home.svg'
 import Setting from '../assets/Setting.svg'
 import Inventory from './assets/Inventory.svg'
 import Library from '../assets/Library.svg'
 import Analytics from '../assets/Analytics.svg'
-import Logo from '../assets/vitt-logo3.png'
-import Search from '../assets/Search.svg'
 import Schedule from '../assets/Schedule.svg'
 import Feedback from '../assets/Feedback.svg'
-import './page3.css'
+import ErrorPage from './ErrorPage'
 
 export default function Page3() {
     
+    //@ts-ignore
+    const {tabs,activeTab,setActiveTab} = useData()
+    //@ts-ignore
+    const {currentUser} = useAuth()
+
     return (
         <div style={{//border:'0.1rem solid red',
-            display:'flex',height:'99vh'}}>
+            display:'flex',height:'99vh',position:'relative'}}>
             <div style={{borderRight:'0.1rem solid gray',
-            width:'20%'}}>
+            width:'20%'
+
+            //,position:'absolute',left:'-20vw',display:'none'
+            }}>
                 <div style={{
                     //border:'0.1rem solid blue',
                     display:'flex',
@@ -75,17 +94,41 @@ export default function Page3() {
                     
                 </div>
 
+                
                 <div style={{
                    // border:'0.1rem solid tomato',
                     margin:'5rem 0',
-                    paddingLeft:'2rem'
+                    paddingLeft:'2rem',
+                    
                     }}>
-                    <div style={{
+                        {
+                    tabs.map((e,i)=>{
+                        return (
+                            <div style={{
+                                display:'flex',
+                                //alignItems:'center',
+                                justifyContent:'center',
+                                margin:'1.5rem 0',
+                              //  border:'0.1rem solid blue',
+                                padding:'1.5rem 0',
+                                cursor:'pointer'
+                                }} onClick={()=>setActiveTab(i)}>
+                                <span style={{flex:'0.2',display:'flex',justifyContent:'center'}}>
+                                    <img src={e.icon}/>
+                                </span>
+                                <span style={{flex:'0.8'}}>
+                                    <p style={{fontSize:'1.5rem',fontFamily: "'Open Sans', sans-serif",fontWeight:activeTab===i?700:400}}>{e.tab}</p>
+                                </span>
+                            </div>
+                            )
+                        })
+                    }
+                    {/* <div style={{
                         display:'flex',
                         //alignItems:'center',
                         justifyContent:'center',
                         margin:'1.5rem 0',
-                      //  border:'0.1rem solid blue',
+                        border:'0.1rem solid blue',
                         padding:'1.5rem 0'
                         }}>
                         <span style={{flex:'0.2',display:'flex',justifyContent:'center'}}>
@@ -107,7 +150,7 @@ export default function Page3() {
                             <img src={Meeting}/>
                         </span>
                         <span style={{flex:'0.8',display:'flex',alignItems:'center'}}>
-                            <p style={{fontSize:'1.5rem',fontFamily: "'Open Sans', sans-serif",fontWeight:400}}>Meeting Notes</p>
+                            <p style={{fontSize:'1.5rem',fontFamily: "'Open Sans', sans-serif",fontWeight:400}}>Recordings</p>
                         </span>
                     </div>
                     <div style={{
@@ -184,12 +227,29 @@ export default function Page3() {
                         <span style={{flex:'0.8'}}>
                             <p style={{fontSize:'1.5rem',fontFamily: "'Open Sans', sans-serif",fontWeight:400}}>Your Feedback</p>
                         </span>
-                    </div>
+                    </div> */}
                 </div>  
             </div>
-            <NewUi/>
-            <div style={{width:'20%'}}>
+            <div style={{width:'100%',height:'99.5vh'}}>
+            {
+                activeTab===0?<NewUi/>:null 
+                    
+            }
+            {
+                activeTab === 1? <div style={{//border:'0.1rem solid black',
+                    width:'100%',height:'100%'}}>
+                        <iframe
+                        src={`https://vitt-pcvc-audit.netlify.app/#/analytics/${currentUser.sessionid}`}
+                        title="Analytics page"
+                        width="100%"
+                        height="100%">
+                        </iframe>
+                    </div>:null
+            }
+            { 
+                activeTab >1 ? <ErrorPage/>:null
 
+            }
             </div>
         </div>
     )

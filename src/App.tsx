@@ -22,15 +22,15 @@ export default function App() {
             <Routing/>
           </Router>
       {/* </DataWrapper> */}
-    </AuthContext>
+    </AuthContext> 
       
   )
 }
 
-// <AuthContext>
-    //   {/* <DataWrapper> */}
-    //       <Router>
-    //         <Routing/>
-    //       </Router>
-    //   {/* </DataWrapper> */}
-    // </AuthContext>
+// {/* <AuthContext>
+//       {/* <DataWrapper> */}
+//           <Router>
+//             <Routing/>
+//           </Router>
+//       {/* </DataWrapper> */}
+//     </AuthContext> */}

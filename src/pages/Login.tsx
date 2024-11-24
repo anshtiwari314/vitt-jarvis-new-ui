@@ -1,6 +1,7 @@
 import React,{useState,useEffect, useRef} from 'react'
 import { useAuth } from '../context/AuthContext'
 import {Link} from 'react-router-dom'
+import { v4 as uuidv4 } from 'uuid';
 
 export const styling = {
     body:{
@@ -103,7 +104,7 @@ export default function Login() {
               if(result.error!==null)
                 setError(result.error)
               if(result.result===true){
-                  setCurrentUser(result.data)
+                  setCurrentUser({...result.data,sessionuid:uuidv4()})
               }
             })
     }

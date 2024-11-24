@@ -6,6 +6,16 @@ import {v4 as uuidv4} from 'uuid'
 import WavToMp3 from '../functions/wavToMp3';
 import { useAuth } from './AuthContext';
 
+
+import Meeting from '../assets/Meeting.svg'
+import Home from '../assets/Home.svg'
+import Setting from '../assets/Setting.svg'
+import Inventory from './assets/Inventory.svg'
+import Library from '../assets/Library.svg'
+import Analytics from '../assets/Analytics.svg'
+import Schedule from '../assets/Schedule.svg'
+import Feedback from '../assets/Feedback.svg'
+
 const Context = createContext('')
 type Data = {
         type:string,
@@ -39,7 +49,9 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     let audioServerUrl =`https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-clientaudio`
     //let url1 = 'http://localhost:3008/'
     let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
-    
+    const globalStreamRef = useRef<any>(null)
+    const [recordingActive,setRecordingActive] = useState(false)
+
     //@ts-ignore
     const {currentUser}= useAuth()
     const [SESSION_ID,setSessionId] = useState(currentUser.sessionid) 
@@ -55,6 +67,20 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     const [msgId,setMsgId] = useState(uuidv4())
     let [recordingOn,setRecordingOn] = useState<boolean>(false);
     let recordingStatus = useRef(false);
+    const [progress,setProgress] = useState({uploaded:0,hidden:false})
+
+
+    const [activeTab,setActiveTab ] = useState(0)
+    
+    const tabs = [
+      {tab:'Dashboard',icon:Home},
+      {tab:'Recordings',icon:Meeting},
+      {tab:'Language Settings',icon:Setting},
+      {tab:'Advanced Analytics',icon:Analytics},
+      {tab:'Schedule',icon:Schedule},
+      {tab:'Library',icon:Library},
+      {tab:'Your Feedback',icon:Feedback}
+    ] 
 
     let Data = {
         color: "#7D11E9",
@@ -261,8 +287,184 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
        
         setData([...dataArrRef.current])
     }
+    function handleRecordings(stream:MediaStream){
+      let url = 'https://qhpv9mvz1h.execute-api.ap-south-1.amazonaws.com/prod/postfacto-upload-test'
+      let arrayofChunks:any = []
+        let mediaRecorder = new MediaRecorder(stream,{
+          audioBitsPerSecond:32000
+          })
+      
+      mediaRecorder.ondataavailable = (e)=>{ 
+        arrayofChunks.push(e.data)
+      }
+      
+      mediaRecorder.onstop = async ()=>{
+      // setMsgLoading(true)
+      //let url = `https://asia-south1-utility-range-375005.cloudfunctions.net/save_b64_1`
+      //let url = `https://0455-182-72-76-34.ngrok.io`
+      console.log(`%c just before wav to mp3 ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+      let mp3Blob = await WavToMp3(new Blob(arrayofChunks,{type:'audio/wav'}))
+      //console.log(mp3Blob)
+      console.log(`%c just after wav to mp3 ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+      //sendToServer( mp3Blob,url)
+      let myfile = new File([mp3Blob], "audio.mp3", {type:"audio/mp3"});
+      uploadFile(myfile)
+      
+       arrayofChunks = []
+      }
+ 
+      //setTimeout(()=>mediaRecorder.stop(),time)
+  
+      //if recording true stop after 30 sec
+      
+      // let timeOutId = setTimeout(()=>{
+      //  if(mediaRecorder.state==='recording')
+      //  mediaRecorder.stop()
+      // },time)
 
+      //chk every second 
+      // let intervalId = setInterval(()=>{
+      //   if(recordingStatus.current ===false){
+      //     clearInterval(intervalId) 
+      //      clearTimeout(timeOutId)
+      //    if(mediaRecorder.state==='recording')
+      //     mediaRecorder.stop()
+          
+      //   }
+        
+      // },1000)
+
+      globalStreamRef.current = mediaRecorder
+      mediaRecorder.start()
+    }
     
+    function uploadFile(uploadFileparam:Blob) {
+      let uid = uuidv4()
+      const chunkSize = 1 * 1024 * 1024;
+      let filesUploaded = 0;
+      let totalFiles = 1;
+      const totalChunks = Math.ceil(uploadFileparam.size / chunkSize);
+      let currentChunk = 0;
+      let uploadUrl = 'https://qhpv9mvz1h.execute-api.ap-south-1.amazonaws.com/prod/postfacto-upload-test'
+      // Chunk uploading function
+  
+      function uploadChunk(chunkStart:Number) {
+          const chunk = uploadFileparam.slice(chunkStart, chunkStart + chunkSize);
+          
+          let date = new Date()
+          let datelocale = `${date.getDate()}.${date.getMonth()+1}.${date.getFullYear()}`
+          let timelocale = `${date.getHours()}.${date.getMinutes()}.${date.getSeconds()}.${date.getMilliseconds()}`
+
+          // filename = `${currentUser.sessionid}-${datelocale}-${timelocale}-${currentUser.sessionuid}`
+         
+          const chunkFormData = new FormData();
+          chunkFormData.append('original_file_name', uploadFileparam.name);
+          chunkFormData.append('file', chunk);
+          // with .ext
+          chunkFormData.append('filename', `${uid}.${ uploadFileparam.name.split('.')[1]}`);
+          //chunkFormData.append('filename', `${filename}.${ uploadFileparam.name.split('.')[1]}`);
+          // without .ext
+          chunkFormData.append('fileid', `${uid}`);
+          chunkFormData.append('chunk', currentChunk);
+          chunkFormData.append('sessionuid',currentUser.sessionuid);
+          chunkFormData.append('agent_username',currentUser.sessionid);
+          chunkFormData.append('totalChunks', totalChunks);
+          chunkFormData.append('date',datelocale)
+          chunkFormData.append('time',timelocale)
+  
+          const xhr = new XMLHttpRequest();
+  
+          xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) {
+                  const percentComplete = ((currentChunk * chunkSize + event.loaded) / uploadFileparam.size) * 100;
+                  
+                  let num=Math.round(percentComplete)
+                  if(num<100){
+
+                  }
+                  //setProgress({uploaded:num,hidden:false})
+                  else {
+                    //setProgress({uploaded:100,hidden:false})
+                    // setTimeout(()=>{
+                    //   setProgress({uploaded:0,hidden:true})
+                    // },2000)
+                  }
+                  //progressBarFill.style.width = percentComplete + '%';
+                  //progressBarFill.textContent = Math.round(percentComplete) + '%';
+              }
+          };
+  
+          xhr.onload = () => {
+              if (xhr.status === 200) {
+                  currentChunk++;
+                  if (currentChunk < totalChunks) {
+                      uploadChunk(currentChunk * chunkSize);
+                  } else {
+                      filesUploaded++;
+                      if (filesUploaded === totalFiles) { 
+  
+                        let ob = {
+                          original_file_name:uploadFileparam.name,
+                          filename:`${uid}.${uploadFileparam.name.split('.')[1]}`,
+                          fileid:uid
+                        }
+                          //setUploadedFiles([ob])
+                          
+                          //message.textContent = 'All files successfully uploaded!';
+                          //message.style.color = 'green';
+                          //progressBar.classList.add('hidden');
+                      }
+                  }
+              } else {
+                //  message.textContent = 'Error uploading files.';
+                //  message.style.color = 'red';
+  
+                  console.error('Error:', xhr.responseText);
+              }
+          };
+  
+          xhr.onerror = () => {
+              console.log('Network error or request failed');
+          };
+  
+          //xhr.open('POST', 'http://127.0.0.1:5000/upload');
+          xhr.open('POST', `${uploadUrl}`, true);
+          //xhr.open('POST', 'http://35.200.139.251/upload', true);
+          xhr.send(chunkFormData);
+      }
+  
+      uploadChunk(0);
+  }
+  
+    function handleProcessing(){
+      uploadFile(audiofile)
+    }
+
+
+
+    useEffect(()=>{
+      console.log("recording acive status",recordingActive)
+      if(recordingActive){
+        navigator.mediaDevices.getUserMedia({
+          audio:true
+        }).then(stream=>{
+          console.log("before handle recording triggered")
+          handleRecordings(stream)
+        }).catch(()=>{
+          console.log("error in recording")
+        })
+      }
+      else {
+        let mediaRecorder = globalStreamRef.current
+         
+        if(mediaRecorder !==null && mediaRecorder.state==='recording'){
+          mediaRecorder.stop()
+          console.log("after media recorder stop")
+        }
+      }
+
+    },[recordingActive])
+
     useEffect(()=>{
       console.log('i am current user at data-wrapper',currentUser)
     },[currentUser])
@@ -398,7 +600,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
            // uid:myId,
             timeStamp:`${date.toLocaleDateString()} ${date.toLocaleTimeString()}:${date.getMilliseconds()}`,
             sessionid:SESSION_ID,
-            url:window.location.href
+            url:window.location.href,
+            
         })
         console.log(`%c just before sending data ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
         
@@ -514,7 +717,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         audioArr,
         audioUrlFlag,audioUrlRef,
         handleQuery,
-        recordingOn,setRecordingOn,audioUrl,setAudioUrl
+        recordingOn,setRecordingOn,audioUrl,setAudioUrl,
+        recordingActive,setRecordingActive,tabs,activeTab,setActiveTab
     }
   return (
       //@ts-ignore
