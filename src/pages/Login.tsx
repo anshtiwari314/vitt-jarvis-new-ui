@@ -117,12 +117,12 @@ export default function Login() {
                 <div >
                     <div className="auth-box">
                         <div className="auth-label">
-                            <label htmlFor='login-email'>Email :</label>
+                            <label htmlFor='login-email'>Username :</label>
                         </div>
                         
                             <input
                                 type="email" 
-                                placeholder='please enter your email'
+                                placeholder='please enter your username'
                                 className='auth-input'
                                 id='login-email'
                                 value={email}
