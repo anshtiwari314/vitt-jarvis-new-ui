@@ -47,10 +47,12 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
 
     const [data,setData] = useState<Object[]>([])
     const dataArrRef = useRef<any>([])
-    let audioServerUrl =`https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-2way-clientaudio`
-    //let audioServerUrl = 'http://localhost:5000/'
-    let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
+    let [audioServerUrl,setAudioServerUrl] =useState(`https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-clientaudio`)
+    //let audioServerUrl = 'http://localhost:5000/'\
     
+    let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
+    //let socketUrl = 'http://localhost:5000'
+
     const tempRef = useRef("")
     const [msgLoading,setMsgLoading] = useState<boolean>(false);
     const [audioArr,setAudioArr] = useState<any>([])
@@ -65,6 +67,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     //@ts-ignore
     const {currentUser} = useAuth()
     const [SESSION_ID,setSessionId] = useState(currentUser?.sessionid)
+    const [question,setQuestion] = useState('')
 
     let Data = {
         color: "#7D11E9",
@@ -249,12 +252,24 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
 
     function handleQuery(data:any){
         //setMsgLoading(true)
-        console.log(data)
+        console.log('i am query',data)
         let tempObj = {
             query:data,
             sessionid:SESSION_ID
         }
-        socket.emit("messagefromclient",tempObj)
+        //socket.emit("messagefromclient",tempObj)\
+
+        fetch(audioServerUrl,{
+          method:'POST',
+          headers:{
+            'Accept':'application.json',
+            'Content-Type':'application/json'
+          },
+          body:JSON.stringify(tempObj),
+          cache:'default',}).then(res=>{
+            console.log("res from audio server",res)
+          })
+
     }
     function handleTokens(data:any){
         
@@ -313,6 +328,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
                 console.log("connection established");
                 console.log("socket.id",socket.id)
              //socket.emit('join-room',SESSION_ID,socket.id)
+             socket.emit('connected',SESSION_ID)
         }
 
         function onDisconnect(){
@@ -327,6 +343,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             // }
             
             //console.log(result.sessionid ===SESSION_ID,result.sessionid,SESSION_ID)
+
             if(result.sessionid === SESSION_ID){
             setMsgLoading(false)
             handleData(result)
@@ -415,7 +432,9 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             mob:'',
            // uid:myId,
             timeStamp:`${date.toLocaleDateString()} ${date.toLocaleTimeString()}:${date.getMilliseconds()}`,
-            sessionid:SESSION_ID
+            sessionid:SESSION_ID,
+            url:window.location.href,
+            question:question
         })
         //socket.emit('audiomessagefromclient',audioData)
         fetch(url,{
@@ -427,8 +446,11 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
           body:audioData,
           cache:'default',}).then(res=>{
             // console.log("res from audio server",res)
+
           })
+        setQuestion('')
         }
+
        reader.readAsDataURL(blob)
       }
 
@@ -622,9 +644,11 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
       let tempVad = null
       
       if(vadStatus===true){
+        
        VAD2.start()
       }
       if(vadStatus===false){
+       
         VAD2.pause()
       }
     },[VAD2,vadStatus])
@@ -637,8 +661,10 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         setMsgLoading,
         audioArr,
         audioUrlFlag,audioUrlRef,
+        audioServerUrl,setAudioServerUrl,
         handleQuery,
-        recordingOn,setRecordingOn,vadStatus,setVadStatus
+        recordingOn,setRecordingOn,vadStatus,setVadStatus,
+        question,setQuestion
     }
   return (
       //@ts-ignore

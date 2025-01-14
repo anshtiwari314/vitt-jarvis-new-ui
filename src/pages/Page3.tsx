@@ -16,7 +16,7 @@ export default function Page3() {
     
     return (
         <div style={{display:'flex',height:'99vh'}}>
-            <div style={{border:'0.1rem solid black',borderRight:'none',width:'20%'}}>
+            <div style={{borderRight:'none',width:'20%'}}>
                 <div style={{
                     //border:'0.1rem solid blue',
                     display:'flex',
@@ -61,7 +61,8 @@ export default function Page3() {
                                         outline:'none',
                                         background:'transparent',
                                         width:'100%',
-                                        border:'none'
+                                        border:'none',
+                                        fontSize:'1.5rem',
                                     }}
                                 />
                             </div>
