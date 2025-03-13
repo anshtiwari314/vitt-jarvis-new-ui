@@ -38,6 +38,7 @@ export default function Page3() {
 
             //,position:'absolute',left:'-20vw',display:'none'
             }}>
+                
                 <div style={{
                     //border:'0.1rem solid blue',
                     display:'flex',
@@ -73,6 +74,7 @@ export default function Page3() {
                                 }}>
                                 <img src={Search} style={{width:'2rem',height:'2rem'}}/>
                             </div>
+                            
                             <div style={{flex:'0.9'}}>
                                 <input 
                                     placeholder='Search...'
@@ -101,6 +103,7 @@ export default function Page3() {
                     paddingLeft:'2rem',
                     
                     }}>
+                        
                         {
                     tabs.map((e,i)=>{
                         return (
@@ -235,7 +238,7 @@ export default function Page3() {
                 activeTab===0?<NewUi/>:null 
                     
             }
-            {
+            {/* {
                 activeTab === 1? <div style={{//border:'0.1rem solid black',
                     width:'100%',height:'100%'}}>
                         <iframe
@@ -245,9 +248,9 @@ export default function Page3() {
                         height="100%">
                         </iframe>
                     </div>:null
-            }
+            } */}
             { 
-                activeTab >1 ? <ErrorPage/>:null
+                activeTab >0 ? <ErrorPage/>:null
 
             }
             </div>

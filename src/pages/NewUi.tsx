@@ -224,6 +224,7 @@ function NewUi() {
                     width:'10vw',
 
                     }}>
+                        
                     {/* <FontAwesomeIcon icon={faShare} style={{fontSize:'2rem',color:'gray'}} onClick={()=>{handleQuery(query);setQuery('')}}/> */}
                     <img src={Send} style={{color:'white',cursor:'pointer'}} onClick={()=>{handleQuery(query);setQuery('')}}/>
                     {recordingOn?

@@ -5,7 +5,10 @@ import {connect, io} from 'socket.io-client';
 import {v4 as uuidv4} from 'uuid'
 import WavToMp3 from '../functions/wavToMp3';
 import { useAuth } from './AuthContext';
+import { xhrUploadFile } from '../functions/requests';
 
+import { startMediaRecorder } from '../functions/mediaRecorder';
+import {handleData } from '../functions/incomingDataPreprocessing'
 
 import Meeting from '../assets/Meeting.svg'
 import Home from '../assets/Home.svg'
@@ -51,7 +54,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
     const globalStreamRef = useRef<any>(null)
     const [recordingActive,setRecordingActive] = useState(false)
-
+    const recordingActiveStatus = useRef(false)
     //@ts-ignore
     const {currentUser}= useAuth()
     const [SESSION_ID,setSessionId] = useState(currentUser.sessionid) 
@@ -102,139 +105,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         //@ts-ignore
         setAudioArr(prev=>[...prev,{base64:base64,filename:filename}])
     }
-    function handleData(data:any){
-        console.log('handleData',data)
-        setMsgLoading(false)
-        let arr:Data[] =[]
-        //@ts-ignore
-        let obj:Data = {}
-// "sessionid": <str>, "audiofiletimestamp": <str>
-        
-        if(data?.loading){
-            return ;
-        }
-        if(data?.audiourl!=null){
-            audioUrlRef.current = data.audiourl
-            setAudioUrlFlag(prev=>!prev)
-            //setAudioUrl('https://files.gospeljingle.com/uploads/music/2023/04/Taylor_Swift_-_August.mp3')
-            setAudioUrl(data.audiourl)
-          }
-        if(data?.audiobase64!=null){
-            
-            setAudioUrl(`data:audio/mpeg;base64,${data.audiobase64}`)
-        }
-        if(data?.imageurl){
-            //@ts-ignore
-            obj["id"]= uuidv4()
-            obj["type"]="ImageMsg"
-            obj["imageUrl"] = data.imageurl;
-            obj["iconName"] = 'fa-solid fa-forward-fast'
-            obj["similarity_query"] = data.similarity_query;
-            obj["color"]= data.color;
-            obj["iconColor"] = data.iconColor 
-            obj["sessionid"] = data.sessionid;
-            obj["audiofiletimestamp"]=data.audiofiletimestamp
-            obj["istranscription"] = data.istranscription
-            //arr.push(obj)
-            arr = [obj,...arr]
-            //@ts-ignore
-            obj = {}
-        }
-        if(data?.value){
-            //@ts-ignore
-            obj["id"]= uuidv4()
-            obj["type"]="InputForm"
-            obj["iconName"] = "fa-regular fa-pen-to-square"
-            obj["value"] = data.value 
-            obj["label"] = data.label 
-            obj["color"] = data.color 
-            obj["iconColor"] = data.iconColor 
-            obj["similarity_query"] = data.similarity_query;
-            obj["sessionid"] = data.sessionid
-            obj["audiofiletimestamp"]=data.audiofiletimestamp
-            obj["istranscription"] = data.istranscription
-            //arr.push(obj)
-            arr = [obj,...arr]
-            //@ts-ignore
-            obj = {}
-        }
-        if(data?.radio){
-            //@ts-ignore
-            obj["id"]= uuidv4()
-            obj["type"]="RadioForm"
-            obj["iconName"] = 'fa-regular fa-pen-to-square'
-            obj["label"] = data.label 
-            obj["radio"] = data.radio
-            obj["color"] = data.color
-            obj["iconColor"] = data.iconColor 
-            obj["similarity_query"] = data.similarity_query;
-            obj["sessionid"] = data.sessionid
-            obj["audiofiletimestamp"]=data.audiofiletimestamp
-            obj["istranscription"] = data.istranscription
-            //arr.push(obj)
-            arr = [obj,...arr]
-            //@ts-ignore
-            obj={}
-        }
-        if(data?.content){
-            data.content.map((e:any,i:number)=>{
-                //@ts-ignore
-                obj["id"]= uuidv4()
-                obj["type"]="TextMsg"
-                obj["content"] = e 
-                obj["iconName"] = 'fa-solid fa-circle-question'
-                obj["color"]= data.color 
-                obj["iconColor"] = data.iconColor
-                obj["similarity_query"] = data.similarity_query;
-                obj["sessionid"] = data.sessionid
-                obj["audiofiletimestamp"]=data.audiofiletimestamp
-                obj["istranscription"] = data.istranscription
-                //arr.push(obj)
-                arr = [obj,...arr]
-                //@ts-ignore
-                obj={}
-            })
-            
-        }
-        // if(data?.initquery.length>"1"){
-        //         obj["id"]= uuidv4()
-        //         obj["type"]="TextMsg"
-        //         obj["content"] = data.initquery
-        //         obj["iconName"] = 'fa-solid fa-circle-question'
-        //         obj["color"]= data.color 
-        //         obj["iconColor"] = data.iconColor
-        //         obj["similarity_query"] = "Transcription captured";
-        //         obj["sessionid"] = data.sessionid
-        //         obj["audiofiletimestamp"]=data.audiofiletimestamp
-        //         obj["initquery"] = true
-        //         //arr.push(obj)
-        //         arr = [...arr,obj]
-        //         //@ts-ignore
-        //         obj={}
-        // }
-        if(data?.replies){
-            //@ts-ignore
-            obj["id"]= uuidv4()
-            obj["type"] = "SuggestiveMsg"
-            obj["replies"] = data.replies
-            obj["color"] = data.color
-            obj["iconColor"] = data.iconColor 
-            obj["similarity_query"] = data.similarity_query;
-            obj["iconName"] = 'fa-solid fa-forward-fast'
-            obj["sessionid"] = data.sessionid
-            obj["audiofiletimestamp"]=data.audiofiletimestamp
-            obj["istranscription"] = data.istranscription
-            //arr.push(obj)
-            arr = [obj,...arr]
-            //@ts-ignore
-            obj={}
-           
-        } 
-
-       console.log(arr)
-       setData(prev=>[...arr,...prev])
-       //console.log(obj)
-    }
+   
 
     function handleQuery(data:any){
         setMsgLoading(true)
@@ -287,6 +158,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
        
         setData([...dataArrRef.current])
     }
+
     function handleRecordings(stream:MediaStream){
       let url = 'https://qhpv9mvz1h.execute-api.ap-south-1.amazonaws.com/prod/postfacto-upload-test'
       let arrayofChunks:any = []
@@ -308,7 +180,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
       console.log(`%c just after wav to mp3 ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
       //sendToServer( mp3Blob,url)
       let myfile = new File([mp3Blob], "audio.mp3", {type:"audio/mp3"});
-      uploadFile(myfile)
+      xhrUploadFile(myfile)
       
        arrayofChunks = []
       }
@@ -338,136 +210,41 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
       mediaRecorder.start()
     }
     
-    function uploadFile(uploadFileparam:Blob) {
-      let uid = uuidv4()
-      const chunkSize = 1 * 1024 * 1024;
-      let filesUploaded = 0;
-      let totalFiles = 1;
-      const totalChunks = Math.ceil(uploadFileparam.size / chunkSize);
-      let currentChunk = 0;
-      let uploadUrl = 'https://qhpv9mvz1h.execute-api.ap-south-1.amazonaws.com/prod/postfacto-upload-test'
-      // Chunk uploading function
-  
-      function uploadChunk(chunkStart:Number) {
-          const chunk = uploadFileparam.slice(chunkStart, chunkStart + chunkSize);
-          
-          let date = new Date()
-          let datelocale = `${date.getDate()}.${date.getMonth()+1}.${date.getFullYear()}`
-          let timelocale = `${date.getHours()}.${date.getMinutes()}.${date.getSeconds()}.${date.getMilliseconds()}`
-
-          // filename = `${currentUser.sessionid}-${datelocale}-${timelocale}-${currentUser.sessionuid}`
-         
-          const chunkFormData = new FormData();
-          chunkFormData.append('original_file_name', uploadFileparam.name);
-          chunkFormData.append('file', chunk);
-          // with .ext
-          chunkFormData.append('filename', `${uid}.${ uploadFileparam.name.split('.')[1]}`);
-          //chunkFormData.append('filename', `${filename}.${ uploadFileparam.name.split('.')[1]}`);
-          // without .ext
-          chunkFormData.append('fileid', `${uid}`);
-          chunkFormData.append('chunk', currentChunk);
-          chunkFormData.append('sessionuid',currentUser.sessionuid);
-          chunkFormData.append('agent_username',currentUser.sessionid);
-          chunkFormData.append('totalChunks', totalChunks);
-          chunkFormData.append('date',datelocale)
-          chunkFormData.append('time',timelocale)
-  
-          const xhr = new XMLHttpRequest();
-  
-          xhr.upload.onprogress = (event) => {
-              if (event.lengthComputable) {
-                  const percentComplete = ((currentChunk * chunkSize + event.loaded) / uploadFileparam.size) * 100;
-                  
-                  let num=Math.round(percentComplete)
-                  if(num<100){
-
-                  }
-                  //setProgress({uploaded:num,hidden:false})
-                  else {
-                    //setProgress({uploaded:100,hidden:false})
-                    // setTimeout(()=>{
-                    //   setProgress({uploaded:0,hidden:true})
-                    // },2000)
-                  }
-                  //progressBarFill.style.width = percentComplete + '%';
-                  //progressBarFill.textContent = Math.round(percentComplete) + '%';
-              }
-          };
-  
-          xhr.onload = () => {
-              if (xhr.status === 200) {
-                  currentChunk++;
-                  if (currentChunk < totalChunks) {
-                      uploadChunk(currentChunk * chunkSize);
-                  } else {
-                      filesUploaded++;
-                      if (filesUploaded === totalFiles) { 
-  
-                        let ob = {
-                          original_file_name:uploadFileparam.name,
-                          filename:`${uid}.${uploadFileparam.name.split('.')[1]}`,
-                          fileid:uid
-                        }
-                          //setUploadedFiles([ob])
-                          
-                          //message.textContent = 'All files successfully uploaded!';
-                          //message.style.color = 'green';
-                          //progressBar.classList.add('hidden');
-                      }
-                  }
-              } else {
-                //  message.textContent = 'Error uploading files.';
-                //  message.style.color = 'red';
-  
-                  console.error('Error:', xhr.responseText);
-              }
-          };
-  
-          xhr.onerror = () => {
-              console.log('Network error or request failed');
-          };
-  
-          //xhr.open('POST', 'http://127.0.0.1:5000/upload');
-          xhr.open('POST', `${uploadUrl}`, true);
-          //xhr.open('POST', 'http://35.200.139.251/upload', true);
-          xhr.send(chunkFormData);
-      }
-  
-      uploadChunk(0);
-  }
+    
   
     function handleProcessing(){
-      uploadFile(audiofile)
+      xhrUploadFile(audiofile)
     }
 
 
 
     useEffect(()=>{
       console.log("recording acive status",recordingActive)
-      if(recordingActive){
-        navigator.mediaDevices.getUserMedia({
-          audio:true
-        }).then(stream=>{
-          console.log("before handle recording triggered")
-          handleRecordings(stream)
-        }).catch(()=>{
-          console.log("error in recording")
-        })
-      }
-      else {
-        let mediaRecorder = globalStreamRef.current
+      // if(recordingActive){
+      //   navigator.mediaDevices.getUserMedia({
+      //     audio:true
+      //   }).then(stream=>{
+      //     console.log("before handle recording triggered")
+      //     handleRecordings(stream)
+      //   }).catch(()=>{
+      //     console.log("error in recording")
+      //   })
+      // }
+      // else {
+      //   let mediaRecorder = globalStreamRef.current
          
-        if(mediaRecorder !==null && mediaRecorder.state==='recording'){
-          mediaRecorder.stop()
-          console.log("after media recorder stop")
-        }
-      }
+      //   if(mediaRecorder !==null && mediaRecorder.state==='recording'){
+      //     mediaRecorder.stop()
+      //     console.log("after media recorder stop")
+      //   }
+      // }
 
     },[recordingActive])
 
     useEffect(()=>{
       console.log('i am current user at data-wrapper',currentUser)
     },[currentUser])
+    
     useEffect(()=>{
         console.log(data)
     },[data])
@@ -515,7 +292,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             if(result.sessionid === SESSION_ID){
               console.log(`%c just after filter data for this session id ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
               
-              handleData(result)
+              const {arr}=handleData(result)
+              setData(prev=>[...arr,...prev])
            // handleAudio(data.speech_bytes,data.file_name)
             }
     }
@@ -542,83 +320,35 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         })
         
       }
-      function startMediaRecorder(stream:MediaStream,time:number){
-        //let url = 'https://f6p70odi12.execute-api.ap-south-1.amazonaws.com'
-        let url = audioServerUrl
-         let arrayofChunks:any = []
-           let mediaRecorder = new MediaRecorder(stream,{
-             audioBitsPerSecond:32000
-             })
-         
-         mediaRecorder.ondataavailable = (e)=>{ 
-           arrayofChunks.push(e.data)
-         }
-         
-         mediaRecorder.onstop = async ()=>{
-          setMsgLoading(true)
-         //let url = `https://asia-south1-utility-range-375005.cloudfunctions.net/save_b64_1`
-         //let url = `https://0455-182-72-76-34.ngrok.io`
-         console.log(`%c just before wav to mp3 ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
-         let mp3Blob = await WavToMp3(new Blob(arrayofChunks,{type:'audio/wav'}))
-         //console.log(mp3Blob)
-         console.log(`%c just after wav to mp3 ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
-         sendToServer( mp3Blob,url)
-          arrayofChunks = []
-         }
-    
-         //setTimeout(()=>mediaRecorder.stop(),time)
-     
-         //if recording true stop after 30 sec
-         let timeOutId = setTimeout(()=>{
-          if(mediaRecorder.state==='recording')
-          mediaRecorder.stop()
-         },time)
-         //chk every second 
-         let intervalId = setInterval(()=>{
-           if(recordingStatus.current ===false){
-             clearInterval(intervalId) 
-              clearTimeout(timeOutId)
-            if(mediaRecorder.state==='recording')
-             mediaRecorder.stop()
-             
-           }
-           
-         },1000)
-         mediaRecorder.start()
-         
-       }
-       function sendToServer(blob:any,url:string){
-        //console.log(blob)
-        let reader = new FileReader()
-        reader.onloadend = ()=>{
-          let base64data:any = reader.result;
-         // console.log(`base64`,base64data)
-         let date = new Date() 
-        let audioData = JSON.stringify({
-            audiomessage:base64data.split(',')[1],
-            mob:'8368751774',
-           // uid:myId,
-            timeStamp:`${date.toLocaleDateString()} ${date.toLocaleTimeString()}:${date.getMilliseconds()}`,
-            sessionid:SESSION_ID,
-            url:window.location.href,
-            
+      
+      
+
+    useEffect(()=>{
+      recordingActiveStatus.current = recordingActive
+
+      
+
+      let timeOutId 
+      if(recordingActive===true){
+        navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+
+          let startMediaRecorderArgs = {
+            stream,
+            time:4000,
+            recordingStatus:recordingActiveStatus,
+            audioServerUrl,
+            SESSION_ID
+          } 
+
+          console.log('navigator')
+          startMediaRecorder(startMediaRecorderArgs)
+          timeOutId=setTimeout(()=>requestAnimationFrame(()=>startMediaRecorder(startMediaRecorderArgs)),4000)
         })
-        console.log(`%c just before sending data ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
         
-        //socket.emit('audiomessagefromclient',audioData)
-        fetch(url,{
-          method:'POST',
-          headers:{
-             'Accept':'application.json',
-             'Content-Type':'application/json'
-          },
-          body:audioData,
-          cache:'default',}).then(res=>{
-             console.log("res from audio server",res)
-          })
-        }
-       reader.readAsDataURL(blob)
       }
+
+      return ()=> { timeOutId && clearTimeout(timeOutId)}
+    },[recordingActive])
 
     useEffect(()=>{
         recordingStatus.current = recordingOn
@@ -629,11 +359,20 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
           navigator.mediaDevices.getUserMedia({
             audio:true
           }).then(stream=>{
-           startMediaRecorder(stream,30000)
+
+            let startMediaRecorderArgs = {
+              stream,
+              time:30000,
+              recordingStatus:recordingStatus,
+              audioServerUrl,
+              SESSION_ID
+            } 
+
+           startMediaRecorder(startMediaRecorderArgs)
            //@ts-ignore
             id = setInterval(()=>{
               console.log('recording is ',recordingOn)
-              startMediaRecorder(stream,30000)
+              startMediaRecorder(startMediaRecorderArgs)
             },30000)
           })
     
