@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "sass":"sass --watch ./src/css/*.scss ./src/css/*.css"
+    "sass":"sass --watch ./src/css/roshanFile.scss ./src/css/roshanFile.css"
   },
   "dependencies": {
     "@emotion/react": "^11.13.5",
