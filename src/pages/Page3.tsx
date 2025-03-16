@@ -1,7 +1,5 @@
-import React,{useState} from 'react'
+import React,{useEffect, useRef, useState} from 'react'
 import NewUi from './NewUi'
-
-
 
 import Logo from '../assets/vitt-logo3.png'
 import Search from '../assets/Search.svg'
@@ -9,7 +7,7 @@ import Search from '../assets/Search.svg'
 import './page3.css'
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSearch,faMicrophone,faPlusCircle,faTimesCircle,faRecordVinyl } from '@fortawesome/free-solid-svg-icons'
+import { faSearch,faMicrophone,faPlusCircle,faTimesCircle,faRecordVinyl ,faBars,faXmark} from '@fortawesome/free-solid-svg-icons'
 import { useData } from '../context/DataWrapper'
 import { useAuth} from '../context/AuthContext'
 
@@ -29,16 +27,47 @@ export default function Page3() {
     const {tabs,activeTab,setActiveTab} = useData()
     //@ts-ignore
     const {currentUser} = useAuth()
+    const ref=useRef(null)
+    const btnRef=useRef(null);
+    // const btnCloseRef=useRef(null);
+    const onClickOfHamburger=()=>{
+        if(ref.current){
+            ref.current.classList.remove('ResizeTray')
+            btnRef.current.style.setProperty("display","none","important")
+        }
+    }
+    const onClickCloseHamburger=()=>{
+        if(ref.current){
+            ref.current.classList.add('ResizeTray')
+            btnRef.current.style.setProperty("display","inline-block","important")
+        }
+    }
+    useEffect(()=>{
+        const handleResize=()=>{
+            if(window.innerWidth>=770){
+                if(ref.current && ref.current.classList.contains('ResizeTray')){
+                    ref.current.classList.remove('ResizeTray')
+                }
+                if(btnRef.current){
+                    btnRef.current.style.setProperty("display","none","important")
+                }
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        handleResize();
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        }
+    },[]);
 
     return (
         <div style={{//border:'0.1rem solid red',
             display:'flex',height:'99vh',position:'relative'}}>
-            <div style={{borderRight:'0.1rem solid gray',
-            width:'20%'
-
-            //,position:'absolute',left:'-20vw',display:'none'
-            }}>
-                
+                <button className='hamburger' ref={btnRef} onClick={onClickOfHamburger}>
+                    <FontAwesomeIcon icon={faBars}  />
+                </button>
+            <div className='Sidebar ResizeTray' ref={ref}>
+                <button onClick={onClickCloseHamburger} className='close'><FontAwesomeIcon icon={faXmark} /></button>
                 <div style={{
                     //border:'0.1rem solid blue',
                     display:'flex',
@@ -105,7 +134,7 @@ export default function Page3() {
                     }}>
                         
                         {
-                    tabs.map((e,i)=>{
+                    tabs.map((e:any,i:any)=>{
                         return (
                             <div style={{
                                 display:'flex',
