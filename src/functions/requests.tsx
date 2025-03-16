@@ -114,6 +114,9 @@ export  function sendToServer(blob:any,url:string,SESSION_ID){
         timeStamp:`${date.toLocaleDateString()} ${date.toLocaleTimeString()}:${date.getMilliseconds()}`,
         sessionid:SESSION_ID,
         url:window.location.href,
+        date: '13.3.2025',
+        time: '11.51.0.57',
+        fileid:'unique'
         
     })
     console.log(`%c just before sending data ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
