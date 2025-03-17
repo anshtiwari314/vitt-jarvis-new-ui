@@ -1,12 +1,12 @@
 import { sendToServer } from "./requests"
 import WavToMp3 from './wavToMp3'
 
-export function startMediaRecorder({stream,audioServerUrl,time,recordingStatus,SESSION_ID}){
+export function startMediaRecorder({stream,url,time,recordingStatus,SESSION_ID,fileid,filename}){
     //let url = 'https://f6p70odi12.execute-api.ap-south-1.amazonaws.com'
 
     console.log('startMediaRecorder triggered')
 
-    let url = audioServerUrl
+    //let url = audioServerUrl
      let arrayofChunks:any = []
        let mediaRecorder = new MediaRecorder(stream,{
          audioBitsPerSecond:32000
@@ -26,7 +26,20 @@ export function startMediaRecorder({stream,audioServerUrl,time,recordingStatus,S
      //console.log(mp3Blob)
      console.log(`%c just after wav to mp3 ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
      
-     sendToServer( mp3Blob,url,SESSION_ID)
+     let data = {
+      
+      mob:'vois',
+     // uid:myId,
+      
+      sessionid:SESSION_ID,
+      url:window.location.href,
+      date: '13.3.2025',
+      time: '11.51.0.57',
+      fileid,
+      filename
+    }
+
+     sendToServer( mp3Blob,url,SESSION_ID,data)
       arrayofChunks = []
      }
 

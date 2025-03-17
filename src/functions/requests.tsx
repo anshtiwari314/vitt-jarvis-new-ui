@@ -100,25 +100,23 @@ export function xhrUploadFile(uploadFileparam:Blob) {
 }
 
 
-export  function sendToServer(blob:any,url:string,SESSION_ID){
+
+export  function sendToServer(blob:any,url:string,SESSION_ID,data){
     //console.log(blob)
     let reader = new FileReader()
     reader.onloadend = ()=>{
       let base64data:any = reader.result;
      // console.log(`base64`,base64data)
      let date = new Date() 
-    let audioData = JSON.stringify({
+
+     console.log(data)
+     
+     data = {...data, 
         audiomessage:base64data.split(',')[1],
-        mob:'8368751774',
-       // uid:myId,
-        timeStamp:`${date.toLocaleDateString()} ${date.toLocaleTimeString()}:${date.getMilliseconds()}`,
-        sessionid:SESSION_ID,
-        url:window.location.href,
-        date: '13.3.2025',
-        time: '11.51.0.57',
-        fileid:'unique'
-        
-    })
+        timeStamp:`${date.toLocaleDateString()} ${date.toLocaleTimeString()}.${date.getMilliseconds()}`,
+     }
+     
+    let audioData = JSON.stringify(data)
     console.log(`%c just before sending data ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
     
     //socket.emit('audiomessagefromclient',audioData)
@@ -134,4 +132,35 @@ export  function sendToServer(blob:any,url:string,SESSION_ID){
       })
     }
    reader.readAsDataURL(blob)
+  }
+
+  export function PostReq(url,data){
+    
+    return new Promise((resolve,reject)=>{
+        fetch(url,{
+            method:'POST',
+            headers:{
+               'Accept':'application.json',
+               'Content-Type':'application/json'
+            },
+    
+            body:JSON.stringify(data),
+            cache:'default',})
+            .then(res=>{
+               console.log("res from server",res)
+               return res.json()
+            }).then((result)=>{
+              
+              console.log(result)
+              // if(result.error!==null)
+              //   reject(result.error)
+              // if(result.result===true){
+              //  // console.log(result)
+              //     resolve(result.data)
+              // }
+              resolve(result.data)
+            })
+        
+    })
+    
   }

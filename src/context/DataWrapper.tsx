@@ -71,7 +71,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     let [recordingOn,setRecordingOn] = useState<boolean>(false);
     let recordingStatus = useRef(false);
     const [progress,setProgress] = useState({uploaded:0,hidden:false})
-
+    const sessionUid = uuidv4()
 
     const [activeTab,setActiveTab ] = useState(0)
     
@@ -326,9 +326,10 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     useEffect(()=>{
       recordingActiveStatus.current = recordingActive
 
-      
+      let uid = uuidv4()
 
-      let timeOutId 
+      let timeOutId
+      let intervalId
       if(recordingActive===true){
         navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
 
@@ -336,18 +337,25 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             stream,
             time:4000,
             recordingStatus:recordingActiveStatus,
-            audioServerUrl,
-            SESSION_ID
+            url:`${`https://8d38-49-204-210-149.ngrok-free.app`}/save_audio_chunk`,
+            SESSION_ID,
+            fileid:sessionUid ,
+            filename:`${sessionUid}.mp3`
           } 
 
           console.log('navigator')
           startMediaRecorder(startMediaRecorderArgs)
-          timeOutId=setTimeout(()=>requestAnimationFrame(()=>startMediaRecorder(startMediaRecorderArgs)),4000)
+          intervalId =setInterval(()=>{
+            startMediaRecorder(startMediaRecorderArgs)
+          },4000)
+          //timeOutId=setTimeout(()=>requestAnimationFrame(()=>startMediaRecorder(startMediaRecorderArgs)),4000)
         })
         
       }
 
-      return ()=> { timeOutId && clearTimeout(timeOutId)}
+      return ()=> { timeOutId && clearTimeout(timeOutId);
+        intervalId && clearInterval(intervalId)
+      }
     },[recordingActive])
 
     useEffect(()=>{
@@ -456,6 +464,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         audioArr,
         audioUrlFlag,audioUrlRef,
         handleQuery,
+        sessionUid,
         recordingOn,setRecordingOn,audioUrl,setAudioUrl,
         recordingActive,setRecordingActive,tabs,activeTab,setActiveTab
     }

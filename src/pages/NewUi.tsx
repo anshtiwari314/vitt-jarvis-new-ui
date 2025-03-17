@@ -13,14 +13,22 @@ import PinkPanther from '../../PinkPanther30.wav'
 import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSearch,faMicrophone,faMicrophoneSlash,faPlusCircle,faTimesCircle,faRecordVinyl,faMicrophoneAlt,faMicrophoneAltSlash,faWonSign,faShare } from '@fortawesome/free-solid-svg-icons'
+import {CustomFillButton} from '../components/Buttons'
+import { PostReq } from '../functions/requests'
+import {useNavigate} from 'react-router-dom'
+import {useAuth} from '../context/AuthContext'
 
 function NewUi() {
     
     //@ts-ignore
-    const {data,msgLoading,handleQuery,recordingOn,setRecordingOn,audioUrl,setAudioUrl,recordingActive,setRecordingActive} = useData()
+    const {data,msgLoading,handleQuery,recordingOn,setRecordingOn,audioUrl,setAudioUrl,recordingActive,setRecordingActive,sessionUid} = useData()
     const audioRef = useRef(null)
     const [query,setQuery] = useState<string>("")
     const [state,setState] = useState({date:'',time:''})
+    const navigate = useNavigate();
+    //@ts-ignore
+    const {setCurrentUser} = useAuth()
+    const [loading,setLoading] = useState(false)
 
     function handleEnter(e:any){
         if(e.key==='Enter' && query.trim().length>0){
@@ -91,6 +99,30 @@ function NewUi() {
         return ()=>clearInterval(intervalId)
     },[])
   
+    async function endCall(){
+        // api call 
+        let baseUrl = ''
+
+        let url = `${baseUrl}/trigger_metric_evaluation`
+
+        let data = {
+            filename:`${sessionUid}.mp3`, 
+            fileid:sessionUid, 
+            agent_username, 
+            sessionid
+        }
+        setLoading(true)
+        let result = await PostReq(url,data)
+
+        if(result){
+            // redirect to login screen 
+            
+            setCurrentUser(null)
+            
+        }
+        setLoading(false)
+        
+    }
 
     return (
         <div style={{//border:'0.1rem solid black',
@@ -240,6 +272,10 @@ function NewUi() {
                 </div>
                 
                 
+            </div>
+
+            <div style={{textAlign:'center',zIndex:-1}}>
+            <CustomFillButton color="#8236f5" text="End Call" style={{backgroundColor:'#8236f5'}} onClick={()=>redirect('/createjob')}/>
             </div>
         </div>
     )
