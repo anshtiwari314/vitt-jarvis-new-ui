@@ -33,7 +33,7 @@ import {
   faBars
 } from "@fortawesome/free-solid-svg-icons";
 
-function NewUi() {
+function NewUi({sidebarRef,btnRef}) {
 
   //@ts-ignore
   const {
@@ -71,6 +71,13 @@ function NewUi() {
     navigator.clipboard.writeText(data[data.length - 1].content);
     window.alert("Content copied");
   }
+   
+    const onClickOfHamburger=()=>{
+        if(sidebarRef.current){
+            sidebarRef.current.classList.remove('ResizeTray')
+            btnRef.current.style.setProperty("display","none","important")
+        }
+    }
 
   useEffect(() => {
     if (audioRef.current === null) return;
@@ -179,6 +186,8 @@ function NewUi() {
             <FontAwesomeIcon 
             icon={faBars}  
             style={{fontSize:'3rem'}}
+            ref={btnRef}
+            onClick={onClickOfHamburger}
             />
         </div>
         
