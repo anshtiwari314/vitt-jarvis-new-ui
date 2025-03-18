@@ -14,7 +14,33 @@
     width: 20px;
     display: none;
 }
-@media screen and  (max-width: 769px) {
+.new-ui-container{
+  width: 80%;
+  padding-left: 4rem;
+}
+.hamburger-container{
+  display: none;
+  
+}
+.cues-container{
+  height: 74%;
+}
+
+@media screen and (max-width:1283px){
+ html{
+  font-size: 62%;
+ }
+}
+
+
+
+@media screen and (max-width:1125px){
+  html{
+   font-size: 58%;
+  }
+ }
+
+@media screen and  (max-width: 1063px) {
     .ResizeTray{
         position:absolute;
         left:-60%;
@@ -37,6 +63,17 @@
         height: 20px;
         width: 30px;
         z-index:99;
+    }
+    .new-ui-container{
+      width: 100%;
+      padding-left: 0;
+    }
+    .hamburger-container{
+      display:flex;
+      align-items:center;
+    }
+    .cues-container{
+      height: 75%;
     }
 }
 

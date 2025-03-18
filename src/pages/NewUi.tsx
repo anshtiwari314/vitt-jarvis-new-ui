@@ -8,11 +8,16 @@ import MsgWrapper from "../components/MsgWrapper";
 import { useData } from "../context/DataWrapper";
 import Msg from "../components/Msg";
 import TokenMsg from "../components/TokenMsg";
-import {CustomFillButton} from '../components/Buttons'
+import {CustomFillButton,CustomFillButtonWithIcon} from '../components/Buttons'
 //import Popup from '../components/Popup'
 import PinkPanther from "../../PinkPanther30.wav";
 import { v4 as uuidv4 } from "uuid";
+import {getTimeStamp} from '../functions/generalFn'
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {useNavigate} from 'react-router-dom'
+import {useAuth} from '../context/AuthContext'
+import {PostReq} from '../functions/requests'
 import {
   faSearch,
   faMicrophone,
@@ -24,9 +29,12 @@ import {
   faMicrophoneAltSlash,
   faWonSign,
   faShare,
+  faTimes,
+  faBars
 } from "@fortawesome/free-solid-svg-icons";
 
 function NewUi() {
+
   //@ts-ignore
   const {
     data,
@@ -38,14 +46,16 @@ function NewUi() {
     setAudioUrl,
     recordingActive,
     setRecordingActive,
-  } = useData();
+    sessionUid 
+  }:void = useData();
   const audioRef = useRef(null);
   const [query, setQuery] = useState<string>("");
   const [state, setState] = useState({ date: "", time: "" });
+  
 
   const navigate = useNavigate();
     //@ts-ignore
-    const {setCurrentUser} = useAuth()
+    const {currentUser,setCurrentUser} = useAuth()
     const [loading,setLoading] = useState(false)
 
 
@@ -115,13 +125,14 @@ function NewUi() {
         // api call 
         let baseUrl = ''
 
-        let url = `${baseUrl}/trigger_metric_evaluation`
+        let url = `${'http://35.200.139.251'}/trigger_metric_evaluation`
 
         let data = {
-            filename:`${sessionUid}.mp3`, 
-            fileid:sessionUid, 
-            agent_username, 
-            sessionid
+            filename:`${currentUser.sessionuid}.mp3`, 
+            fileid:currentUser.sessionuid, 
+            userid:currentUser.userid,
+            sessionid:currentUser.sessionuid,
+            timeStamp:getTimeStamp()
         }
         setLoading(true)
         let result = await PostReq(url,data)
@@ -137,83 +148,107 @@ function NewUi() {
     }
 
   return (
-    <div
+    <div 
+        className="new-ui-container"
       style={{
         //border:'0.1rem solid black',
-        width: "80%",
-        paddingLeft: "4rem",
+        
         height: "100%",
+        //border:'0.1rem solid red'
         //new changes from here
         // ,height:'100vh',
         // width:'100vw',
         // padding:'0 1rem',
+
       }}
     >
       <audio style={{ display: "none" }} src={audioUrl} ref={audioRef}></audio>
 
-      <div>
+      <div 
+        style={{
+        //    border:'0.1rem solid violet',
+            display:'flex'
+        }}
+      >
         {/* <h2 style={{fontSize:'2.5rem',fontFamily: '"DM Sans", sans-serif',fontWeight:700}}>Meeting title</h2> */}
-        <h3
-          style={{
-            fontSize: "2rem",
-            fontFamily: '"DM Sans", sans-serif',
-            fontWeight: 700,
-            margin: "0.5rem 0",
-            color: "#1B1B1B",
-          }}
-        >
-          Ongoing call
-        </h3>
-        <div style={{ display: "flex", margin: "0.5rem 0", color: "#95969B" }}>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <img
-              src={Time}
-              style={{
-                width: "1.3rem",
-                height: "1.5rem",
-                objectFit: "contain",
-              }}
+        <div 
+            className="hamburger-container"
+        style={{
+            //border:'0.1rem solid red' ,
+            marginLeft:'1rem',marginRight:'2rem'}}>
+            <FontAwesomeIcon 
+            icon={faBars}  
+            style={{fontSize:'3rem'}}
             />
-            <pre
-              style={{
-                marginRight: "0.3rem",
-                marginBottom: "0",
-                fontSize: "1.2rem",
-                fontFamily: '"Inter", sans-serif',
-                fontWeight: 400,
-              }}
+        </div>
+        
+        <div>
+            <h3
+            style={{
+                fontSize: "2rem",
+                fontFamily: '"DM Sans", sans-serif',
+                fontWeight: 700,
+                margin: "0.5rem 0",
+                color: "#1B1B1B",
+                
+            }}
             >
-              {state.date} |{" "}
-            </pre>
+            Ongoing call
+            </h3>
+            <div style={{ display: "flex", margin: "0.5rem 0", color: "#95969B" }}>
+            <div style={{ display: "flex", alignItems: "center" }}>
+                <img
+                src={Time}
+                style={{
+                    width: "1.3rem",
+                    height: "1.5rem",
+                    objectFit: "contain",
+                }}
+                />
+                <pre
+                style={{
+                    marginRight: "0.3rem",
+                    marginBottom: "0",
+                    fontSize: "1.2rem",
+                    fontFamily: '"Inter", sans-serif',
+                    fontWeight: 400,
+                }}
+                >
+                {state.date} |{" "}
+                </pre>
 
-            <img
-              src={Calendar}
-              style={{
-                width: "1.1rem",
-                height: "1.1rem",
-                objectFit: "contain",
-              }}
-            />
-            <pre
-              style={{
-                marginLeft: "0.3rem",
-                marginBottom: "0",
-                fontSize: "1.2rem",
-                fontFamily: '"Inter", sans-serif',
-                fontWeight: 400,
-              }}
-            >
-              {state.time}
-            </pre>
-          </div>
+                <img
+                src={Calendar}
+                style={{
+                    width: "1.1rem",
+                    height: "1.1rem",
+                    objectFit: "contain",
+                }}
+                />
+                <pre
+                style={{
+                    marginLeft: "0.3rem",
+                    marginBottom: "0",
+                    fontSize: "1.2rem",
+                    fontFamily: '"Inter", sans-serif',
+                    fontWeight: 400,
+                }}
+                >
+                {state.time}
+                </pre>
+            </div>
+            </div>
         </div>
       </div>
       <div
+
+        className="cues-container"
         style={{
           width: "98%",
-          height: "80%",
+          
           backgroundColor: "#F7F7FB",
           overflowY: "scroll",
+          //border:'0.1rem solid blue'
         }}
       >
         {msgLoading == true ? (
@@ -279,6 +314,9 @@ function NewUi() {
                         <FontAwesomeIcon icon={faRecordVinyl} style={{fontSize:'2.5rem',color:'gray',cursor:'pointer'}} onClick={()=>setRecordingActive(p=>!p)}/>
                     } */}
       </div>
+
+      
+      
       <div
         style={{
           width: "98%",
@@ -286,7 +324,7 @@ function NewUi() {
           backgroundColor: "#F7F7FB",
           display: "flex",
           alignItems: "center",
-          marginTop: "1rem",
+          marginTop: "0.5rem",
           borderRadius: "0.5rem",
           //border:'0.1rem solid tomato',
           //new changes
@@ -300,7 +338,7 @@ function NewUi() {
           value={query}
           style={{
             width: "100%",
-            height: "3rem",
+            height: "5rem",
             marginLeft: "1rem",
             background: "transparent",
             border: "none",
@@ -325,32 +363,86 @@ function NewUi() {
           }}
         >
           {/* <FontAwesomeIcon icon={faShare} style={{fontSize:'2rem',color:'gray'}} onClick={()=>{handleQuery(query);setQuery('')}}/> */}
-          <div className="inputContainer">
+          <div 
+          //className="inputContainer"
+          //style={{border:'0.1rem solid red'}}
+          >
             <img
               src={Send}
-              className="sendIcon"
+              //className="sendIcon"
+              style={{width: '2rem',cursor: 'pointer'}}
               onClick={() => {
                 handleQuery(query);
                 setQuery("");
               }}
             />
-            <div className="iconsContainer">
-              <div className="micAndRecorderLogo">
-                <img
-                  src={recordingOn ? redMic : Mic}
-                  className="micIcon"
+            
+            {/* {
+                recordingOn ?
+            <img src={redMic}  style={{cursor:'pointer'}} onClick={() => setRecordingOn((p) => !p)}/>
+                :
+            <img src={Mic}  style={{cursor:'pointer'}} onClick={() => setRecordingOn((p) => !p)}/>
+            } */}
+            
+
+            
+            
+            {/* <FontAwesomeIcon
+                  icon={faMicrophone}
+                  style={{fontSize:'2rem',color:'gray'}}
+                  //src={recordingOn ? redMic : Mic}
+                  //className="micIcon"
                   onClick={() => setRecordingOn((p) => !p)}
-                />
-                <FontAwesomeIcon
+
+            /> */}
+
+            {/* <FontAwesomeIcon
                   icon={faRecordVinyl}
                   className={`recordIcon ${recordingActive ? "active" : ""}`}
                   onClick={() => setRecordingActive((p) => !p)}
-                />
-              </div>
-            </div>
+
+            /> */}
+                <div className="iconsContainer">
+                <div className="micAndRecorderLogo">
+                    
+                </div>
+                </div>
           </div>
         </div>
       </div>
+      <div style={{display:'flex',justifyContent:'center'}}>
+        <CustomFillButtonWithIcon 
+        color="#8236f5" 
+        text="" 
+        icon={faMicrophone}
+        style={{backgroundColor:recordingOn ? 'red':'gray'}} 
+        iconStyle={{fontSize:'2rem',}}
+        onClick={() => setRecordingOn((p) => !p)}
+        />
+
+        <CustomFillButtonWithIcon 
+        color="#8236f5" 
+        text="" 
+        icon={faRecordVinyl}
+        style={{backgroundColor:recordingActive?'red':'gray'}} 
+        iconStyle={{fontSize:'2rem'}}
+        onClick={() => setRecordingActive((p) => !p)}
+        />
+
+        <CustomFillButtonWithIcon 
+        color="#8236f5"
+        text=""
+        icon={faTimes} 
+        //text="End Meeting" 
+        style={{backgroundColor:'red',marginLeft:'2rem'}} 
+        iconStyle={{fontSize:'2rem'}}
+         onClick={()=>endCall()}
+        />
+      </div>
+      <div style={{textAlign:'center'}}>
+        
+      </div>
+      
     </div>
   );
 }

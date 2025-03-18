@@ -104,7 +104,7 @@ export default function Login() {
               if(result.error!==null)
                 setError(result.error)
               if(result.result===true){
-                  setCurrentUser({...result.data,sessionuid:uuidv4()})
+                  setCurrentUser({userid:result.data.sessionid,sessionuid:uuidv4()})
               }
             })
     }

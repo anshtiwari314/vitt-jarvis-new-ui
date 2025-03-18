@@ -1,5 +1,6 @@
 "use client"
 import React from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const buttonStyle = {
     //backgroundColor: color,
@@ -88,6 +89,26 @@ export function CustomFillButton({color,text,style,...rest}){
     
 }
 
+export function CustomFillButtonWithIcon({color,icon,style,iconStyle,...rest}){
+  
+  return (
+      
+      <button
+      style={{...buttonStyle,...style}}
+      onMouseOver={handleMouseOver}
+      onMouseOut={handleMouseOut}
+      {...rest}
+    >
+      
+      <FontAwesomeIcon 
+       icon={icon}
+        style={{...iconStyle}}
+      />
+      
+    </button>
+  )
+  
+}
 
 export function HoverFillButtons () {
   const buttonStyle = {

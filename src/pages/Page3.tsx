@@ -63,10 +63,11 @@ export default function Page3() {
     return (
         <div style={{//border:'0.1rem solid red',
             display:'flex',height:'99vh',position:'relative'}}>
-                <button className='hamburger' ref={btnRef} onClick={onClickOfHamburger}>
-                    <FontAwesomeIcon icon={faBars}  />
-                </button>
-            <div className='Sidebar ResizeTray' ref={ref}>
+                {/* <button className='hamburger' ref={btnRef} onClick={onClickOfHamburger}>
+                    
+                </button> */}
+
+            <div className='Sidebar ResizeTray' ref={ref} style={{}}>
                 <button onClick={onClickCloseHamburger} className='close'><FontAwesomeIcon icon={faXmark} /></button>
                 <div style={{
                     //border:'0.1rem solid blue',

@@ -1,4 +1,5 @@
 import {v4 as uuidv4} from 'uuid'
+import { getTimeStamp } from './generalFn';
 
 // this logic has chunkSize , & used to send a very large file 
 export function xhrUploadFile(uploadFileparam:Blob) {
@@ -107,13 +108,14 @@ export  function sendToServer(blob:any,url:string,SESSION_ID,data){
     reader.onloadend = ()=>{
       let base64data:any = reader.result;
      // console.log(`base64`,base64data)
-     let date = new Date() 
+     
 
      console.log(data)
      
+     
      data = {...data, 
         audiomessage:base64data.split(',')[1],
-        timeStamp:`${date.toLocaleDateString()} ${date.toLocaleTimeString()}.${date.getMilliseconds()}`,
+        
      }
      
     let audioData = JSON.stringify(data)
@@ -127,9 +129,8 @@ export  function sendToServer(blob:any,url:string,SESSION_ID,data){
          'Content-Type':'application/json'
       },
       body:audioData,
-      cache:'default',}).then(res=>{
-         console.log("res from audio server",res)
-      })
+      cache:'default',}).then(res=>res.json())
+      .then(result=>console.log("res from audio server",result))
     }
    reader.readAsDataURL(blob)
   }
