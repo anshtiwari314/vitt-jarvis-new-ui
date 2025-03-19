@@ -314,7 +314,7 @@ export default function Page3() {
                     </div> */}
         </div>
       </div>
-      <div style={{ width: "100%", height: "99.5vh" }}>
+      <div style={{ width: "100%", height: "99.5vh" }} className="main-content">
         {activeTab === 0 ? <NewUi sidebarRef={ref} btnRef={btnRef} /> : null}
         {/* {
                 activeTab === 1? <div style={{//border:'0.1rem solid black',

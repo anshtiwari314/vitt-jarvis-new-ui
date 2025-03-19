@@ -10,20 +10,69 @@
   left: 0;
   transition: left 1s ease-in-out;
 }
-.close {
-  height: 20px;
-  width: 20px;
-  display: none;
-}
+
 .new-ui-container {
   width: 80%;
   padding-left: 4rem;
 }
-.hamburger-container {
-  display: none;
-}
+
 .cues-container {
   height: 74%;
+}
+
+.inputContainer,
+.iconsContainer,
+.micAndRecorderLogo {
+  display: flex;
+  align-items: center;
+}
+
+.inputContainer {
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+}
+
+.iconsContainer {
+  gap: 1rem;
+}
+
+.micAndRecorderLogo {
+  gap: 0.8rem;
+}
+
+.sendIcon,
+.micIcon {
+  width: 2rem;
+  cursor: pointer;
+}
+
+.recordIcon {
+  font-size: 2.5rem;
+  color: gray;
+  cursor: pointer;
+  transition: color 0.3s ease-in-out;
+}
+
+.recordIcon.active {
+  color: red;
+}
+
+.close {
+  display: none;
+  height: 20px;
+  width: 20px;
+}
+
+.close-icon {
+  font-size: 2.5rem;
+  color: whitesmoke;
+  font-weight: bold;
+}
+
+.hamburger,
+.hamburger-container {
+  display: none;
 }
 
 @media screen and (max-width: 1283px) {
@@ -45,6 +94,7 @@
     width: 60%;
     height: 100%;
   }
+  
   .Sidebar {
     font-weight: 500;
     width: 100%;
@@ -52,14 +102,13 @@
     background-color: white;
     height: 100%;
   }
+  
   .close {
     display: block !important;
-    margin: 2px;
-    margin-left: 1.2rem;
-    margin-top: 1.2rem;
+    margin: 1.2rem 2px 0 1.2rem;
     width: 5rem;
     height: 4rem;
-    background: linear-gradient(90deg,red,rgb(234, 159, 159));
+    background: linear-gradient(90deg, red, rgb(234, 159, 159));
     border: none;
     border-radius: 1.1rem;
     color: white;
@@ -67,16 +116,21 @@
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     transition: background 0.3s ease, transform 0.3s ease;
   }
+  
   .close:hover {
     background: linear-gradient(45deg, #c62828, #e53935);
     transform: scale(1.05);
   }
-
+  
+  .hamburger,
+  .hamburger-container {
+    display: flex !important;
+    align-items: center;
+  }
   .hamburger {
-    display: block !important;
     position: absolute;
+    top: 1.2%;
     margin-top: 2px;
-    margin: 1.2%;
     height: 20px;
     width: 30px;
     z-index: 99;
@@ -85,62 +139,33 @@
     width: 100%;
     padding-left: 0;
   }
-  .hamburger-container {
-    display: flex;
-    align-items: center;
-  }
   .cues-container {
     height: 75%;
   }
 }
 
-.hamburger {
-  display: none;
-}
-@media screen and (min-width: 770px) {
-  .hamburger {
-    display: none !important;
+@media screen and (min-width: 760px) and (max-width: 1030px) {
+  .new-ui-container {
+    margin-left: 22%;
   }
-}
-.inputContainer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 1rem;
-}
-
-.sendIcon {
-  width: 2rem;
-  cursor: pointer;
-}
-
-.iconsContainer {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.micAndRecorderLogo {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-}
-
-.micIcon {
-  width: 2rem;
-  cursor: pointer;
-}
-
-.recordIcon {
-  font-size: 2.5rem;
-  color: gray;
-  cursor: pointer;
-  transition: color 0.3s ease-in-out;
-}
-
-.recordIcon.active {
-  color: red;
+  .Sidebar {
+    width: 24%;
+    position: absolute;
+    left: 0;
+    background-color: white;
+    height: 100%;
+    font-size: large;
+    font-weight: 600;
+  }
+  .hamburger {
+    display: flex !important;
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    height: 20px;
+    width: 30px;
+    z-index: 99;
+  }
 }
 
 @media screen and (max-width: 758px) {
@@ -148,33 +173,33 @@
     display: none;
   }
 }
-.close-icon {
-  font-size: 2.5rem;
-  color: whitesmoke;
-  font-weight: bold;
-}
+
 @media (max-width: 768px) {
   .sidebar-panel p {
     font-size: 2rem !important;
   }
+  
   .sidebar-panel img {
     width: 3.5rem;
     margin-left: 1.2rem;
   }
+  
   .sidebar-side-search {
     width: 35rem;
     height: 5rem;
+    display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
     padding: 3.2px;
   }
+  
   .logo-img {
     width: 16rem;
     height: 9rem;
   }
-  
 }
+
 .typing-placeholder {
   position: absolute;
   left: 1rem; 
@@ -182,21 +207,43 @@
   transform: translateY(-50%);
   font-size: 1.5rem;
   font-weight: 300;
-  white-space: nowrap;
-  overflow: hidden;
-  border-right: 2px solid black;
-  animation: typing 3s steps(20) infinite alternate;
 }
 
-@keyframes typing {
-  from {
-      width: 0;
+
+@media screen and (min-width: 610px) and (max-width: 770px) {
+   .Sidebar {
+    font-weight: 400;
+    width: 33%;
+    position: absolute;
+    background-color: white;
+    height: 90%;
   }
-  to {
-      width: 100%;
+
+  .new-ui-container {
+    width: 95%;
+    margin-left: 1rem;
+  }
+   .sidebar-side-search {
+    width: 25rem;
+    height: 4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 3.1px;
+  }
+   .logo-img {
+    width: 14rem !important;
+    height: 7rem !important;
+    margin-bottom: 1rem;
+  }
+  .sidebar-panel p {
+    font-size: 1.7rem !important;
+    margin-left:2px;
+  }
+    .sidebar-panel img {
+    width: 2.9rem;
+    margin-left: 1.1rem;
   }
 }
-/* style={{borderRight:'0.1rem solid gray',
-            width:'20%'
-            //,position:'absolute',left:'-20vw',display:'none'
-            }} */
+
