@@ -253,7 +253,7 @@ function NewUi({sidebarRef,btnRef}) {
 
         className="cues-container"
         style={{
-          width: "98%",
+          width: "100%",
           
           backgroundColor: "#F7F7FB",
           overflowY: "scroll",
@@ -328,7 +328,7 @@ function NewUi({sidebarRef,btnRef}) {
       
       <div
         style={{
-          width: "98%",
+          width: "100%",
           padding: "0.5rem 0",
           backgroundColor: "#F7F7FB",
           display: "flex",

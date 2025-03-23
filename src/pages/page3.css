@@ -220,8 +220,8 @@
   }
 
   .new-ui-container {
-    width: 95%;
-    margin-left: 1rem;
+    width: 100%;
+  
   }
    .sidebar-side-search {
     width: 25rem;
@@ -244,6 +244,14 @@
     .sidebar-panel img {
     width: 2.9rem;
     margin-left: 1.1rem;
+  }
+}
+@media screen and (min-width: 1030px) {
+  .main-content{
+    padding: 0 2rem;
+  }
+  .Sidebar{
+    width: 25%;
   }
 }
 
