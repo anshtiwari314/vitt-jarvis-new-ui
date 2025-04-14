@@ -7,6 +7,7 @@
 .Sidebar {
   border-right: 0.1rem solid gray;
   width: 20%;
+  height:max-content;
   left: 0;
   transition: left 1s ease-in-out;
 }
@@ -40,6 +41,7 @@
         position:absolute;
         left:-60%;
         width:50%;
+        height:100%;
     }
     .Sidebar{
         width: 60%;

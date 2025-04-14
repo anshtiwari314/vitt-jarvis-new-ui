@@ -330,10 +330,10 @@ function NewUi({sidebarRef,btnRef}) {
         className="cues-container"
         style={{
           width: "100%",
-          
+          height:'70vh',
           backgroundColor: "#F7F7FB",
           overflowY: "scroll",
-          //border:'0.1rem solid blue'
+          border:'0.1rem solid blue'
         }}
       >
         {msgLoading == true ? (
