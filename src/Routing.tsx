@@ -8,6 +8,7 @@ import SignIn from './mui-sign-in/SignIn'
 import Login from './pages/Login'
 import ErrorPage from './pages/ErrorPage'
 import DataWrapper, { useData } from './context/DataWrapper'
+import { VadWrapper } from './context/VadWrapper';
 
 export default function Routing() {
   return (
@@ -17,7 +18,7 @@ export default function Routing() {
             {/* @ts-ignore */}
             <Route path='/signup' element={<PrivateRoute component={<SignIn/>}/>}/>
             {/* @ts-ignore */}
-            <Route path='/mainpage' element={<GlobalRoute component={<DataWrapper><Page1/></DataWrapper>}/>}/>
+            <Route path='/mainpage' element={<GlobalRoute component={<DataWrapper><VadWrapper><Page1/></VadWrapper></DataWrapper>}/>}/>
             <Route path='*' element={<ErrorPage/>}/>
     </Routes>
   )

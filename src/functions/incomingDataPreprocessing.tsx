@@ -7,20 +7,20 @@ export function handleData(data:any){
     //@ts-ignore
     let obj:Data = {}
 // "sessionid": <str>, "audiofiletimestamp": <str>
-    let audioUrl = ''
+    let audiourl = null
 
     if(data?.loading){
         return ;
     }
-    if(data?.audiourl!=null){
+    if(data?.audiourl!==null){
         //audioUrlRef.current = data.audiourl
        // setAudioUrlFlag(prev=>!prev)
         //setAudioUrl('https://files.gospeljingle.com/uploads/music/2023/04/Taylor_Swift_-_August.mp3')
        // setAudioUrl(data.audiourl)
-       audioUrl = data.audiourl
+       audiourl = data.audiourl
       }
-    if(data?.audiobase64!=null){
-        audioUrl = `data:audio/mpeg;base64,${data.audiobase64}`
+    if(data?.audiobase64!==null){
+        audiourl = `data:audio/mpeg;base64,${data.audiobase64}`
         //setAudioUrl(`data:audio/mpeg;base64,${data.audiobase64}`)
     }
     if(data?.imageurl){
@@ -133,7 +133,7 @@ export function handleData(data:any){
 
    console.log(arr)
 
-   return {arr,audioUrl} ;
+   return {arr,audiourl} ;
    //setData(prev=>[...arr,...prev])
    //console.log(obj)
 }

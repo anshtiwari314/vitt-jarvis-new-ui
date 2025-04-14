@@ -89,7 +89,7 @@ export function CustomFillButton({color,text,style,...rest}){
     
 }
 
-export function CustomFillButtonWithIcon({color,icon,style,iconStyle,...rest}){
+export function CustomFillButtonWithIcon({color,icon,style,iconComp,iconStyle,...rest}){
   
   return (
       
@@ -100,11 +100,11 @@ export function CustomFillButtonWithIcon({color,icon,style,iconStyle,...rest}){
       {...rest}
     >
       
-      <FontAwesomeIcon 
+      {/* <FontAwesomeIcon 
        icon={icon}
         style={{...iconStyle}}
-      />
-      
+      /> */}
+      {iconComp}
     </button>
   )
   

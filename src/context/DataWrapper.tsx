@@ -20,6 +20,8 @@ import Analytics from '../assets/Analytics.svg'
 import Schedule from '../assets/Schedule.svg'
 import Feedback from '../assets/Feedback.svg'
 
+import useAutoResetState from '../hooks/useAutoResetState';
+import useWasmLoader from '../hooks/useWasmLoader'
 
 const Context = createContext('')
 type Data = {
@@ -59,9 +61,9 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     const recordingActiveStatus = useRef(false)
     //@ts-ignore
     const {currentUser}= useAuth()
-    const [SESSION_ID,setSessionId] = useState(currentUser.userid) 
+    const [SESSION_ID,setSessionId] = useState(currentUser?.userid) 
     const tempRef = useRef("")
-    const [msgLoading,setMsgLoading] = useState<boolean>(false);
+    //const [msgLoading,setMsgLoading] = useState<boolean>(false);
     const [audioArr,setAudioArr] = useState<any>([])
 
     let audioUrlRef = useRef(null)
@@ -70,13 +72,36 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
 
     const [socket,setSocket] = useState<any>(null)
     const [msgId,setMsgId] = useState(uuidv4())
-    let [recordingOn,setRecordingOn] = useState<boolean>(false);
-    let recordingStatus = useRef(false);
+
+    
+    const [manualVadRecordingOn,setManualVadRecordingOn]  = useState<boolean>(false);
+    
     const [progress,setProgress] = useState({uploaded:0,hidden:false})
     const sessionUid = uuidv4()
-
+    //const [ngrokServerUrl,setNgrokServerUrl] = useState('')
+    const vittSalesCopilot = 'https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/sales-copilot-gcp'
+    const ngrokUrl = 'https://c4b4-49-204-211-204.ngrok-free.app/1way'
+    const oneWayUrl = 'https://rr7yg8ikr5.execute-api.ap-south-1.amazonaws.com/test/docretrieval_clientaudio'
+    const [ngrokServerUrl,setNgrokServerUrl]= useState(vittSalesCopilot)
+    const [recordingServerUrl,setRecordingServerUrl] = useState('https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis')
+    const audioRef = useRef(null);
     const [activeTab,setActiveTab ] = useState(0)
-    
+
+    const[msgLoading,setMsgLoading]= useAutoResetState(false,10000)
+
+    const wasmUrls = [
+      'ort-wasm-simd-threaded.jsep.wasm',
+      // 'ort-wasm-simd-threaded.wasm',
+      // 'ort-wasm-simd.jsep.wasm',
+      // 'ort-wasm-simd.wasm',
+      // 'ort-wasm-threaded.wasm',
+      // 'ort-wasm.wasm'
+
+    ];
+
+    //useWasmLoader(wasmUrls)
+    const isFilesLoaded = false
+
     const tabs = [
       {tab:'Dashboard',icon:Home},
       {tab:'Recordings',icon:Meeting},
@@ -102,7 +127,12 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     }
     
     
+    
 
+    useEffect(()=>{
+      console.log("datawrapper ",currentUser)
+    },[currentUser])
+    
     function handleAudio(base64:string,filename:string){
         //@ts-ignore
         setAudioArr(prev=>[...prev,{base64:base64,filename:filename}])
@@ -114,7 +144,17 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         console.log(data)
         let tempObj = {
             query:data,
-            sessionid:SESSION_ID
+            
+            //this one is for jarvis-in-person
+            //sessionid : SESSION_ID,
+
+            //this one is for vitt-sales-copilot
+            sessionid:currentUser?.sessionuid,
+
+            
+           
+            
+            userid:SESSION_ID
         }
         //socket.emit("messagefromclient",tempObj)
         //
@@ -122,8 +162,9 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         let url = 'https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-2way-clientaudio'
         let url2 = 'https://34.100.145.102/'
         let url3 = 'https://ff6e-49-204-210-149.ngrok-free.app'
+        let url4 = 'https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/sales-copilot-gcp'
 
-        fetch(url3,{
+        fetch(ngrokServerUrl,{
           method:'POST',
           headers:{
             'Accept':'application.json',
@@ -222,7 +263,18 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
       xhrUploadFile(audiofile)
     }
 
+    function playAudio(audiourl){
+      let audioElem = audioRef.current;
+    //@ts-ignore
+    audioElem.src = audiourl;
 
+    //@ts-ignore
+    audioElem.addEventListener("canplaythrough", (event) => {
+      /* the audio is now playable; play it if permissions allow */
+      //@ts-ignore
+      audioElem.play();
+    });
+    }
 
     useEffect(()=>{
       console.log("recording acive status",recordingActive)
@@ -297,8 +349,12 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
 
             if(result.sessionid === SESSION_ID){
               console.log(`%c just after filter data for this session id ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
-              
-              const {arr}=handleData(result)
+              setMsgLoading(false)
+              const {arr,audiourl}=handleData(result)
+              //console.log('i am audiourl',audiourl)
+              //setAudioUrl(audiourl)
+              if(audiourl!==null)
+              playAudio(audiourl)
               setData(prev=>[...arr,...prev])
            // handleAudio(data.speech_bytes,data.file_name)
             }
@@ -314,26 +370,15 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
        }
     },[SESSION_ID,socket,msgId])
 
-    function VAD(cb1:CallableFunction,cb2:CallableFunction){
-        return new Promise(async (resolve,reject)=>{
-            //@ts-ignore
-            const myvad = await vad.MicVAD.new({
-              onSpeechStart: cb1,
-              onSpeechEnd: cb2
-            })
-            resolve(myvad)
-            reject(myvad)
-        })
-        
-      }
+    
       
       
 
     useEffect(()=>{
       recordingActiveStatus.current = recordingActive
-
+      let url = 'http://35.200.139.251'
+      let url2 = `https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis`
       let uid = uuidv4()
-
       let timeOutId
       let intervalId
       if(recordingActive===true){
@@ -343,7 +388,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             stream,
             time:4000,
             recordingStatus:recordingActiveStatus,
-            url:`${`http://35.200.139.251`}/save_audio_chunk`,
+            url:`${recordingServerUrl}/save_audio_chunk`,
             sessionid:currentUser.sessionuid,
             userid:currentUser.userid,
             
@@ -354,6 +399,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
 
           console.log('navigator')
           startMediaRecorder(startMediaRecorderArgs)
+          
           intervalId =setInterval(()=>{
             startMediaRecorder(startMediaRecorderArgs)
           },4000)
@@ -365,104 +411,9 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
       return ()=> { timeOutId && clearTimeout(timeOutId);
         intervalId && clearInterval(intervalId)
       }
-    },[recordingActive])
+    },[recordingActive,recordingServerUrl])
 
-    useEffect(()=>{
-      
-      console.log(`%c recordingOn toggle ${new Date().toLocaleTimeString()} ${recordingStatus.current} ${recordingOn}`,'background-color:teal;color:white')
-        recordingStatus.current = recordingOn
     
-        let id:number;
-        if(recordingOn ===true){
-          //setMsg([]);
-          navigator.mediaDevices.getUserMedia({
-            audio:true
-          }).then(stream=>{
-
-            let startMediaRecorderArgs = {
-              stream,
-              //url : 'https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-clientaudio',
-              //url:'http://35.187.246.238/transcription-clientaudio',
-              //url:'https://34.100.145.102/',
-              url:'https://ff6e-49-204-210-149.ngrok-free.app',
-              time:5000,
-              recordingStatus:recordingStatus,
-              audioServerUrl,
-              userid:currentUser.userid,
-              sessionid:currentUser.sessionuid,
-              timeStamp:getTimeStamp()
-              // mob:"anuj",
-              // //roomid	"271083f6-8a51-4db0-b005-7e14923f70d2"
-              // //sessionid	"demo1"
-              // timeStamp:	"3/17/2025 1:52:19 PM:160",
-              // uid	:"anuj"
-            } 
-
-           startMediaRecorder2(startMediaRecorderArgs)
-           //@ts-ignore
-            id = setInterval(()=>{
-              console.log('recording is ',recordingOn)
-              startMediaRecorder2(startMediaRecorderArgs)
-            },5000)
-          })
-    
-         // if(recordingOn ===true) 
-        }
-        return()=>clearInterval(id)
-      },[recordingOn])
-      
-    useEffect(()=>{
-      
-        let tempVad:any
-        let id:undefined|any
-        let timer :undefined|any
-        
-        if(recordingOn ===true){
-          console.log(`%c vad triggered ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
-          
-          
-          //this timeout if user is silence from starting 
-          timer = setTimeout(()=>{
-            tempVad && tempVad.pause() ; tempVad = undefined
-            setRecordingOn(false)
-          },5000)
-    
-          function start(){
-            
-            console.log(`%c audio started ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
-            //end timer
-            timer && clearTimeout(timer); 
-            id && clearTimeout(id) ; id = undefined;
-          }
-          function stop(){
-            
-            console.log(`%c audio stopped ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
-            //start timer
-
-            // id=setTimeout(()=>{
-              
-            //   console.log(`%c if silence after 0.5sec then pause the vad ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
-            //   console.log(tempVad)
-              
-            // },500)
-            tempVad && tempVad.pause()
-              tempVad = undefined
-              setRecordingOn(false)
-          }
-          
-            VAD(start,stop).then((vad:any)=>{
-              tempVad = vad
-              vad.start()
-            })
-            
-          }
-          return ()=>{
-            // if recording On is manually disabled , pause vad 
-            tempVad && tempVad.pause(); tempVad = undefined
-            id && clearInterval(id);id = undefined
-            timer && clearInterval(timer) ; timer = undefined
-          }
-        },[recordingOn])
         
         
 
@@ -489,8 +440,13 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         audioUrlFlag,audioUrlRef,
         handleQuery,
         sessionUid,
-        recordingOn,setRecordingOn,audioUrl,setAudioUrl,
-        recordingActive,setRecordingActive,tabs,activeTab,setActiveTab
+        audioRef,
+       // vadRecordingOn,setVadRecordingOn,
+        manualVadRecordingOn,setManualVadRecordingOn,
+        audioUrl,setAudioUrl,
+        recordingActive,setRecordingActive,tabs,activeTab,setActiveTab,
+        ngrokServerUrl,setNgrokServerUrl,isFilesLoaded,recordingServerUrl,setRecordingServerUrl
+
     }
   return (
       //@ts-ignore

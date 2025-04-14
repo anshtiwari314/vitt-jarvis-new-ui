@@ -184,6 +184,73 @@ function encodeMp3(arrayBuffer:ArrayBuffer) {
   dataBuffer.push(new Int8Array(mp3Lastbuf));
   return dataBuffer;
 }
+
+function getWavBytes(buffer: any, options: any) {
+  const type = options.isFloat ? Float32Array : Uint16Array;
+  const numFrames = buffer.byteLength / type.BYTES_PER_ELEMENT;
+
+  const headerBytes = getWavHeader(
+    Object.assign({}, options, { numFrames })
+  );
+  const wavBytes = new Uint8Array(headerBytes.length + buffer.byteLength);
+
+  // prepend header, then add pcmBytes
+  wavBytes.set(headerBytes, 0);
+  wavBytes.set(new Uint8Array(buffer), headerBytes.length);
+
+  return wavBytes;
+}
+
+function getWavHeader(options: any) {
+  const numFrames = options.numFrames;
+  const numChannels = options.numChannels || 2;
+  const sampleRate = options.sampleRate || 44100;
+  const bytesPerSample = options.isFloat ? 4 : 2;
+  const format = options.isFloat ? 3 : 1;
+
+  const blockAlign = numChannels * bytesPerSample;
+  const byteRate = sampleRate * blockAlign;
+  const dataSize = numFrames * blockAlign;
+
+  const buffer = new ArrayBuffer(44);
+  const dv = new DataView(buffer);
+
+  let p = 0;
+
+  function writeString(s: string) {
+    for (let i = 0; i < s.length; i++) {
+      dv.setUint8(p + i, s.charCodeAt(i));
+    }
+    p += s.length;
+  }
+
+  function writeUint32(d: any) {
+    dv.setUint32(p, d, true);
+    p += 4;
+  }
+
+  function writeUint16(d: any) {
+    dv.setUint16(p, d, true);
+    p += 2;
+  }
+
+  writeString("RIFF"); // ChunkID
+  writeUint32(dataSize + 36); // ChunkSize
+  writeString("WAVE"); // Format
+  writeString("fmt "); // Subchunk1ID
+  writeUint32(16); // Subchunk1Size
+  writeUint16(format); // AudioFormat https://i.stack.imgur.com/BuSmb.png
+  writeUint16(numChannels); // NumChannels
+  writeUint32(sampleRate); // SampleRate
+  writeUint32(byteRate); // ByteRate
+  writeUint16(blockAlign); // BlockAlign
+  writeUint16(bytesPerSample * 8); // BitsPerSample
+  writeString("data"); // Subchunk2ID
+  writeUint32(dataSize); // Subchunk2Size
+
+  return new Uint8Array(buffer);
+}
+
 export default function WavToMp3(wavFileBlob:Blob) {
   let blob;
   //  @ts-ignore
@@ -204,4 +271,54 @@ export default function WavToMp3(wavFileBlob:Blob) {
   
  
   return blob; 
+}
+
+export function AudioBufferToWavBlob(audio){
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const source = audioCtx.createBufferSource();
+
+      const myArrayBuffer = audioCtx.createBuffer(1, audio.length, 16000);
+
+      let nowBuffering;
+      for (
+        let channel = 0;
+        channel < myArrayBuffer.numberOfChannels;
+        channel++
+      ) {
+        // This gives us the actual array that contains the data
+        nowBuffering = myArrayBuffer.getChannelData(channel);
+        //  console.log('array buffer length',myArrayBuffer.length)
+        for (let i = 0; i < myArrayBuffer.length; i++) {
+          // Math.random() is in [0; 1.0]
+          // audio needs to be in [-1.0; 1.0]
+          nowBuffering[i] = audio[i] * 2;
+        }
+      }
+
+      // set the buffer in the AudioBufferSourceNode
+      //source.buffer = myArrayBuffer;
+
+      // connect the AudioBufferSourceNode to the
+      // destination so we can hear the sound
+      //source.connect(audioCtx.destination);
+
+      //start the source playing
+      //console.log("ctx stream source",)
+
+      //source.start();
+
+      //let stream= audioCtx.createMediaStreamDestination()
+      // stream
+
+      const ch1Data = myArrayBuffer.getChannelData(0);
+      const floatArr = new Float32Array(ch1Data.length);
+
+      console.log("duration", myArrayBuffer.duration);
+      const wavBytes = getWavBytes(nowBuffering?.buffer, {
+        isFloat: true, // floating point or 16-bit integer
+        numChannels: 1,
+        sampleRate: 16000,
+      });
+      return new Blob([wavBytes], { type: "audio/ogg" });
+
 }

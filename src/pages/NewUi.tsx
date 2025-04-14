@@ -13,7 +13,8 @@ import {CustomFillButton,CustomFillButtonWithIcon} from '../components/Buttons'
 import PinkPanther from "../../PinkPanther30.wav";
 import { v4 as uuidv4 } from "uuid";
 import {getTimeStamp} from '../functions/generalFn'
-
+import playSound from '../assets/sound-play.gif'
+import rectLoading from '../assets/reactangle-loading.gif'
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {useNavigate} from 'react-router-dom'
 import {useAuth} from '../context/AuthContext'
@@ -22,6 +23,7 @@ import {
   faSearch,
   faMicrophone,
   faMicrophoneSlash,
+  faMicroPhoneAltSlash,
   faPlusCircle,
   faTimesCircle,
   faRecordVinyl,
@@ -32,6 +34,14 @@ import {
   faTimes,
   faBars
 } from "@fortawesome/free-solid-svg-icons";
+import LoadingIcons, { 
+  Audio, BallTriangle, Bars, Circles, Grid, Hearts, Oval, 
+  Puff, Rings, SpinningCircles, TailSpin, ThreeDots 
+} from 'react-loading-icons';
+import FileLoadChecker from '../components/FileLoader'
+import { useVad } from "../context/VadWrapper";
+import LoadingIconsComp from '../components/LoadingIcons'
+import { EntypoMic,EntypoModernMic} from "react-entypo";
 
 function NewUi() {
 
@@ -40,15 +50,20 @@ function NewUi() {
     data,
     msgLoading,
     handleQuery,
-    recordingOn,
-    setRecordingOn,
+    
+    manualVadRecordingOn,
+    setManualVadRecordingOn,
     audioUrl,
     setAudioUrl,
     recordingActive,
     setRecordingActive,
-    sessionUid 
+    sessionUid ,ngrokServerUrl,setNgrokServerUrl,audioRef,isFilesLoaded,
+    recordingServerUrl,setRecordingServerUrl
   }:void = useData();
-  const audioRef = useRef(null);
+  
+  const {manualVadStatus,setManualVadStatus,vadRecordingOn,
+    setVadRecordingOn,vadStatus,setVadStatus,vadInstance,VAD2,userSpeaking} = useVad()
+
   const [query, setQuery] = useState<string>("");
   const [state, setState] = useState({ date: "", time: "" });
   
@@ -147,6 +162,10 @@ function NewUi() {
         
     }
 
+    
+
+
+    //console.log('vad2 in newUi',VAD2)
   return (
     <div 
         className="new-ui-container"
@@ -162,14 +181,60 @@ function NewUi() {
 
       }}
     >
-      <audio style={{ display: "none" }} src={audioUrl} ref={audioRef}></audio>
+      {/* <LoadingIconsComp/> */}
+      <audio style={{ display: "none" }} ref={audioRef}></audio>
 
+      <div>
+        <input
+          type="text"
+          value={ngrokServerUrl}
+         onChange={(e) => setNgrokServerUrl(e.target.value)}
+          placeholder="Enter Server Link ..."
+          style={{
+            width: "100%",
+           // maxWidth: "400px",
+            padding: "12px 16px",
+            border: "1px solid #ccc",
+            borderRadius: "1.2rem",
+            boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+            outline: "none",
+            fontSize: "16px",
+            transition: "box-shadow 0.3s ease",
+            //boxShadow: "0px 4px 12px rgba(37, 99, 235, 0.4)",
+            //...(inputValue && inputFocusStyle),
+          }}
+        />
+        </div>
+        
+      <div>
+      <input
+          type="text"
+          value={recordingServerUrl}
+         onChange={(e) => setRecordingServerUrl(e.target.value)}
+          placeholder="Enter Server Link ..."
+          style={{
+            width: "100%",
+           // maxWidth: "400px",
+            padding: "12px 16px",
+            border: "1px solid #ccc",
+            borderRadius: "1.2rem",
+            boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+            outline: "none",
+            fontSize: "16px",
+            transition: "box-shadow 0.3s ease",
+            //boxShadow: "0px 4px 12px rgba(37, 99, 235, 0.4)",
+            //...(inputValue && inputFocusStyle),
+          }}
+        />
+
+      </div>
       <div 
         style={{
         //    border:'0.1rem solid violet',
             display:'flex'
         }}
       >
+        
         {/* <h2 style={{fontSize:'2.5rem',fontFamily: '"DM Sans", sans-serif',fontWeight:700}}>Meeting title</h2> */}
         <div 
             className="hamburger-container"
@@ -240,6 +305,17 @@ function NewUi() {
             </div>
         </div>
       </div>
+      {/* <FileLoadChecker/> */}
+      {vadInstance !==null && !VAD2.loading ? (
+        <h3 style={{ color: "green",margin:'0.5rem 0',fontWeight:700,textTransform:'capitalize'}}>All files are loaded ✅</h3>
+      ) : (
+        <h3 style={{ color: "red",margin:'0.5rem 0',fontWeight:700,textTransform:'capitalize' }}>Loading files Wait...
+          <img
+              src={rectLoading}
+              style={{height:'4rem',width:'4rem'}}
+            />
+        </h3>
+      )}
       <div
 
         className="cues-container"
@@ -410,32 +486,98 @@ function NewUi() {
           </div>
         </div>
       </div>
-      <div style={{display:'flex',justifyContent:'center'}}>
-        <CustomFillButtonWithIcon 
+      
+      <div style={{display:'flex',justifyContent:'center',alignItems:'center'}}>
+
+      
+        {
+          vadInstance ? 
+
+          <CustomFillButtonWithIcon 
         color="#8236f5" 
         text="" 
         icon={faMicrophone}
-        style={{backgroundColor:recordingOn ? 'red':'gray'}} 
-        iconStyle={{fontSize:'2rem',}}
-        onClick={() => setRecordingOn((p) => !p)}
+        style={{backgroundColor:vadStatus ? 'red':'gray'}} 
+        //iconStyle={{fontSize:'2rem',}}
+        iconComp = {<FontAwesomeIcon icon={faMicrophone} style={{fontSize:'2rem'}}/>} 
+        onClick={() => setVadStatus((p) => !p)}
         />
+        : 
+        <div style={{}}>
+          <TailSpin stroke="red" strokeOpacity={1} speed={.95} style={{margin:'2rem'}}/>
+          </div>
+        
+        }
+        
 
+        {
+          !VAD2.loading ? 
+          <CustomFillButtonWithIcon 
+          color="#8236f5" 
+          text="" 
+          icon={faMicrophoneAlt}
+          style={{backgroundColor:manualVadStatus ? 'red':'gray'}} 
+          //iconStyle={{fontSize:'2rem',}}
+          iconComp = {<FontAwesomeIcon icon={faMicrophoneAlt} style={{fontSize:'2rem'}}/>} 
+          onClick={() => setManualVadStatus((p) => !p)} 
+          />
+        
+        : 
+        <div style={{}}>
+            <TailSpin stroke="red"  strokeOpacity={1} speed={.95} style={{margin:'2rem'}}/>
+        </div>
+        }
+
+        <div style={{height:'4.5rem',width:'8rem',backgroundColor:'white',display:'flex',alignItems:'center',justifyContent:'center'}}>
+          {
+            userSpeaking ? 
+            <img src={playSound} style={{width:'8rem',height:'4.5rem'}}/>:
+            null
+          }
+          {
+            VAD2?.userSpeaking ?             
+            <img src={playSound} style={{width:'8rem',height:'4.5rem'}}/>:
+            null
+          }
+            {/* <img src={playSound} style={{width:'8rem',height:'4.5rem'}}/> */}
+
+        </div>
+        
+        {/* <CustomFillButtonWithIcon 
+        color="#8236f5" 
+        text="" 
+        icon={faMicrophone}
+        style={{backgroundColor:vadStatus ? 'red':'gray'}}
+        iconComp = {<EntypoMic style={{fontSize:'2rem'}}/>} 
+        iconStyle={{fontSize:'2rem',}}
+        //onClick={() => setVadStatus((p) => !p)}
+        /> */}
+
+      
+      {/* <EntypoModernMic style={{fontSize:'2rem'}} /> */}
+      
+       
+        
         <CustomFillButtonWithIcon 
         color="#8236f5" 
         text="" 
         icon={faRecordVinyl}
         style={{backgroundColor:recordingActive?'red':'gray'}} 
         iconStyle={{fontSize:'2rem'}}
+        iconComp = {<FontAwesomeIcon icon={faRecordVinyl} style={{fontSize:'2rem'}}/>} 
         onClick={() => setRecordingActive((p) => !p)}
         />
+
+      
 
         <CustomFillButtonWithIcon 
         color="#8236f5"
         text=""
         icon={faTimes} 
         //text="End Meeting" 
-        style={{backgroundColor:'red',marginLeft:'2rem'}} 
+        style={{backgroundColor:'red',marginLeft:'0.5rem'}} 
         iconStyle={{fontSize:'2rem'}}
+        iconComp = {<FontAwesomeIcon icon={faTimes} style={{fontSize:'2rem'}}/>}
          onClick={()=>endCall()}
         />
       </div>

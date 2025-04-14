@@ -126,7 +126,8 @@ export  function sendToServer(blob:any,url:string,SESSION_ID,data){
       method:'POST',
       headers:{
          'Accept':'application.json',
-         'Content-Type':'application/json'
+         'Content-Type':'application/json',
+         //'mode': 'no-cors'
       },
       body:audioData,
       cache:'default',}).then(res=>res.json())
@@ -142,7 +143,8 @@ export  function sendToServer(blob:any,url:string,SESSION_ID,data){
             method:'POST',
             headers:{
                'Accept':'application.json',
-               'Content-Type':'application/json'
+               'Content-Type':'application/json',
+               //'mode': 'no-cors'
             },
     
             body:JSON.stringify(data),
