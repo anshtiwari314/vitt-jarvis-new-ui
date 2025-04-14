@@ -43,7 +43,7 @@ import { useVad } from "../context/VadWrapper";
 import LoadingIconsComp from '../components/LoadingIcons'
 import { EntypoMic,EntypoModernMic} from "react-entypo";
 
-function NewUi() {
+function NewUi({sidebarRef,btnRef}) {
 
   //@ts-ignore
   const {
@@ -86,6 +86,13 @@ function NewUi() {
     navigator.clipboard.writeText(data[data.length - 1].content);
     window.alert("Content copied");
   }
+   
+    const onClickOfHamburger=()=>{
+        if(sidebarRef.current){
+            sidebarRef.current.classList.remove('ResizeTray')
+            btnRef.current.style.setProperty("display","none","important")
+        }
+    }
 
   useEffect(() => {
     if (audioRef.current === null) return;
@@ -244,6 +251,8 @@ function NewUi() {
             <FontAwesomeIcon 
             icon={faBars}  
             style={{fontSize:'3rem'}}
+            ref={btnRef}
+            onClick={onClickOfHamburger}
             />
         </div>
         
@@ -320,7 +329,7 @@ function NewUi() {
 
         className="cues-container"
         style={{
-          width: "98%",
+          width: "100%",
           
           backgroundColor: "#F7F7FB",
           overflowY: "scroll",
@@ -395,7 +404,7 @@ function NewUi() {
       
       <div
         style={{
-          width: "98%",
+          width: "100%",
           padding: "0.5rem 0",
           backgroundColor: "#F7F7FB",
           display: "flex",

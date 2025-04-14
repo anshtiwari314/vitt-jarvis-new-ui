@@ -1,162 +1,213 @@
-import React,{useEffect, useRef, useState} from 'react'
-import NewUi from './NewUi'
+import React, { useEffect, useRef, useState } from "react";
+import NewUi from "./NewUi";
 
-import Logo from '../assets/vitt-logo3.png'
-import Search from '../assets/Search.svg'
+import Logo from "../assets/vitt-logo3.png";
+import Search from "../assets/Search.svg";
 
-import './page3.css'
+import "./page3.css";
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSearch,faMicrophone,faPlusCircle,faTimesCircle,faRecordVinyl ,faBars,faXmark} from '@fortawesome/free-solid-svg-icons'
-import { useData } from '../context/DataWrapper'
-import { useAuth} from '../context/AuthContext'
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faSearch,
+  faMicrophone,
+  faPlusCircle,
+  faTimesCircle,
+  faRecordVinyl,
+  faBars,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
+import { useData } from "../context/DataWrapper";
+import { useAuth } from "../context/AuthContext";
 
-import Meeting from '../assets/Meeting.svg'
-import Home from '../assets/Home.svg'
-import Setting from '../assets/Setting.svg'
-import Inventory from './assets/Inventory.svg'
-import Library from '../assets/Library.svg'
-import Analytics from '../assets/Analytics.svg'
-import Schedule from '../assets/Schedule.svg'
-import Feedback from '../assets/Feedback.svg'
-import ErrorPage from './ErrorPage'
+import Meeting from "../assets/Meeting.svg";
+import Home from "../assets/Home.svg";
+import Setting from "../assets/Setting.svg";
+import Inventory from "./assets/Inventory.svg";
+import Library from "../assets/Library.svg";
+import Analytics from "../assets/Analytics.svg";
+import Schedule from "../assets/Schedule.svg";
+import Feedback from "../assets/Feedback.svg";
+import ErrorPage from "./ErrorPage";
 
 export default function Page3() {
-    
-    //@ts-ignore
-    const {tabs,activeTab,setActiveTab} = useData()
-    //@ts-ignore
-    const {currentUser} = useAuth()
-    const ref=useRef(null)
-    const btnRef=useRef(null);
-    // const btnCloseRef=useRef(null);
-    const onClickOfHamburger=()=>{
-        if(ref.current){
-            ref.current.classList.remove('ResizeTray')
-            btnRef.current.style.setProperty("display","none","important")
-        }
+  //@ts-ignore
+  const { tabs, activeTab, setActiveTab } = useData();
+  //@ts-ignore
+  const { currentUser } = useAuth();
+  const ref = useRef(null);
+  const btnRef = useRef(null);
+  const btnCloseRef = useRef(null);
+  // const onClickOfHamburger=()=>{
+  //     if(ref.current){
+  //         ref.current.classList.remove('ResizeTray')
+  //         btnRef.current.style.setProperty("display","none","important")
+  //     }
+  // }
+  const onClickCloseHamburger = () => {
+    if (ref.current) {
+      ref.current.classList.add("ResizeTray");
+      btnRef.current.style.setProperty("display", "inline-block", "important");
     }
-    const onClickCloseHamburger=()=>{
-        if(ref.current){
-            ref.current.classList.add('ResizeTray')
-            btnRef.current.style.setProperty("display","inline-block","important")
+  };
+  const [isFocused, setIsFocused] = useState(false);
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 770) {
+        if (ref.current && ref.current.classList.contains("ResizeTray")) {
+          ref.current.classList.remove("ResizeTray");
         }
-    }
-    useEffect(()=>{
-        const handleResize=()=>{
-            if(window.innerWidth>=770){
-                if(ref.current && ref.current.classList.contains('ResizeTray')){
-                    ref.current.classList.remove('ResizeTray')
-                }
-                if(btnRef.current){
-                    btnRef.current.style.setProperty("display","none","important")
-                }
-            }
-        };
-        window.addEventListener('resize', handleResize);
-        handleResize();
-        return () => {
-            window.removeEventListener('resize', handleResize);
+        if (btnRef.current) {
+          btnRef.current.style.setProperty("display", "none", "important");
         }
-    },[]);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    handleResize();
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
-    return (
-        <div style={{//border:'0.1rem solid red',
-            display:'flex',height:'99vh',position:'relative'}}>
-                {/* <button className='hamburger' ref={btnRef} onClick={onClickOfHamburger}>
+  return (
+    <div
+      style={{
+        //border:'0.1rem solid red',
+        display: "flex",
+        height: "99vh",
+        position: "relative",
+      }}
+    >
+      {/* <button className='hamburger' ref={btnRef} onClick={onClickOfHamburger}>
                     
                 </button> */}
 
-            <div className='Sidebar ResizeTray' ref={ref} style={{}}>
-                <button onClick={onClickCloseHamburger} className='close'><FontAwesomeIcon icon={faXmark} /></button>
-                <div style={{
-                    //border:'0.1rem solid blue',
-                    display:'flex',
-                    justifyContent:'center',
-                    alignItems:'center',
-                    flexDirection:'column',
-                    //backgroundColor:'green',
-                    marginBottom:'2rem'
-                    }}>
-                    <div>
-                        <img src={Logo} style={{width:'12rem',height:'8rem',objectFit:'contain'}}/>
-                    </div>
-                    <div style={{
-                        display:'flex',
-                        alignItems:'center',
-                        justifyContent:'center',
-                    }}>
-                        <div style={{
-                            display:'flex',
-                            alignItems:'center',
-                            width:'80%',
-                            backgroundColor:'#F5F5F5',
-                            borderRadius:'0.5rem'
-                            }}>
-                            <div style={{
-                                // border:'0.1rem solid red',
-                                width:'2rem',
-                                display:'flex',
-                                alignItems:'center',
-                                justifyContent:'center',
-                                flex:'0.1',
-                                padding:'0 0.8rem'
-                                }}>
-                                <img src={Search} style={{width:'2rem',height:'2rem'}}/>
-                            </div>
-                            
-                            <div style={{flex:'0.9'}}>
-                                <input 
-                                    placeholder='Search...'
-                                    style={{
-                                        padding:'1rem',
-                                        // border:'0.1rem solid red',
-                                        outline:'none',
-                                        background:'transparent',
-                                        width:'100%',
-                                        border:'none',
-                                        fontSize:'1.5rem',
-                                    }}
-                                />
-                            </div>
-                            {/* <img src={Search} style={{width:'2rem',height:'2rem',margin:'0 0.5rem'}}/> */}
-                            
-                        </div>
-                    </div>
-                    
-                </div>
+      <div className="Sidebar ResizeTray" ref={ref} style={{}}>
+        <button onClick={onClickCloseHamburger} className="close">
+          <FontAwesomeIcon className="close-icon" icon={faXmark} />
+        </button>
+        <div
+          style={{
+            //border:'0.1rem solid blue',
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column",
+            //backgroundColor:'green',
+            marginBottom: "2rem",
+          }}
+        >
+          <div>
+            <img
+              src={Logo}
+              className="logo-img"
+              style={{ width: "14rem", height: "8rem", objectFit: "contain" }}
+            />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                width: "80%",
+                backgroundColor: "#F5F5F5",
+                borderRadius: "0.5rem",
+              }}
+            >
+              <div
+                style={{
+                  // border:'0.1rem solid red',
+                  width: "2rem",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flex: "0.1",
+                  padding: "0 0.8rem",
+                }}
+              >
+                <img
+                  src={Search}
+                  style={{ width: "2.1rem", height: "2.1rem" }}
+                />
+              </div>
 
-                
-                <div style={{
-                   // border:'0.1rem solid tomato',
-                    margin:'5rem 0',
-                    paddingLeft:'2rem',
-                    
-                    }}>
-                        
-                        {
-                    tabs.map((e:any,i:any)=>{
-                        return (
-                            <div style={{
-                                display:'flex',
-                                //alignItems:'center',
-                                justifyContent:'center',
-                                margin:'1.5rem 0',
-                              //  border:'0.1rem solid blue',
-                                padding:'1.5rem 0',
-                                cursor:'pointer'
-                                }} onClick={()=>setActiveTab(i)}>
-                                <span style={{flex:'0.2',display:'flex',justifyContent:'center'}}>
-                                    <img src={e.icon}/>
-                                </span>
-                                <span style={{flex:'0.8'}}>
-                                    <p style={{fontSize:'1.5rem',fontFamily: "'Open Sans', sans-serif",fontWeight:activeTab===i?700:400}}>{e.tab}</p>
-                                </span>
-                            </div>
-                            )
-                        })
-                    }
-                    {/* <div style={{
+              <div
+                style={{ flex: "0.9", position: "relative" }}
+                className="sidebar-side-search"
+              >
+                {!isFocused && (
+                  <span className="typing-placeholder">Search...</span>
+                )}
+                <input
+                  placeholder=""
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  style={{
+                    padding: "1rem",
+                    outline: "none",
+                    background: "transparent",
+                    width: "100%",
+                    border: "none",
+                    fontSize: "1.5rem",
+                  }}
+                />
+              </div>
+              {/* <img src={Search} style={{width:'2rem',height:'2rem',margin:'0 0.5rem'}}/> */}
+            </div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            // border:'0.1rem solid tomato',
+            margin: "5rem 0",
+            paddingLeft: "2rem",
+          }}
+          className="sidebar-panel"
+        >
+          {tabs.map((e: any, i: any) => {
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  //alignItems:'center',
+                  justifyContent: "center",
+                  margin: "1.5rem 0",
+                  //  border:'0.1rem solid blue',
+                  padding: "1.5rem 0",
+                  cursor: "pointer",
+                }}
+                onClick={() => setActiveTab(i)}
+              >
+                <span
+                  style={{
+                    flex: "0.2",
+                    display: "flex",
+                    justifyContent: "center",
+                  }}
+                >
+                  <img src={e.icon} />
+                </span>
+                <span style={{ flex: "0.8" }}>
+                  <p
+                    style={{
+                      fontSize: "1.5rem",
+                      fontFamily: "'Open Sans', sans-serif",
+                      fontWeight: activeTab === i ? 700 : 400,
+                    }}
+                  >
+                    {e.tab}
+                  </p>
+                </span>
+              </div>
+            );
+          })}
+          {/* <div style={{
                         display:'flex',
                         //alignItems:'center',
                         justifyContent:'center',
@@ -261,14 +312,11 @@ export default function Page3() {
                             <p style={{fontSize:'1.5rem',fontFamily: "'Open Sans', sans-serif",fontWeight:400}}>Your Feedback</p>
                         </span>
                     </div> */}
-                </div>  
-            </div>
-            <div style={{width:'100%',height:'99.5vh'}}>
-            {
-                activeTab===0?<NewUi/>:null 
-                    
-            }
-            {/* {
+        </div>
+      </div>
+      <div style={{ width: "100%", height: "99.5vh" }} className="main-content">
+        {activeTab === 0 ? <NewUi sidebarRef={ref} btnRef={btnRef} /> : null}
+        {/* {
                 activeTab === 1? <div style={{//border:'0.1rem solid black',
                     width:'100%',height:'100%'}}>
                         <iframe
@@ -279,13 +327,8 @@ export default function Page3() {
                         </iframe>
                     </div>:null
             } */}
-            { 
-                activeTab >0 ? <ErrorPage/>:null
-
-            }
-            </div>
-        </div>
-    )
+        {activeTab > 0 ? <ErrorPage /> : null}
+      </div>
+    </div>
+  );
 }
-
-
