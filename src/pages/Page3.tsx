@@ -43,11 +43,13 @@ export default function Page3() {
   //         btnRef.current.style.setProperty("display","none","important")
   //     }
   // }
+  const [isHamburgerClosed, setHamburgerClosed] = useState(false);
   const onClickCloseHamburger = () => {
     if (ref.current) {
       ref.current.classList.add("ResizeTray");
       btnRef.current.style.setProperty("display", "inline-block", "important");
     }
+    setHamburgerClosed(true);
   };
   const [isFocused, setIsFocused] = useState(false);
   useEffect(() => {
@@ -75,6 +77,7 @@ export default function Page3() {
         display: "flex",
         height: "fit-content",
         position: "relative",
+        overflow:"hidden"
       }}
     >
       {/* <button className='hamburger' ref={btnRef} onClick={onClickOfHamburger}>
@@ -318,11 +321,15 @@ export default function Page3() {
                     </div> */}
         </div>
       </div>
-      <div style={{ width: "100%",
-         //height: "99.5vh",
-         height:'fit-content',
-         border:'0.1rem solid green'
-          }} className="main-content">
+    <div
+  style={{ 
+    width: "100%", 
+    height: "fit-content", 
+    border: "0.1rem solid green"
+    // marginLeft: isHamburgerClosed ? "0" : "initial" // Remove this inline style for marginLeft
+  }}
+  className={`main-content ${isHamburgerClosed ? "override" : ""}`}
+>
         {activeTab === 0 ? <NewUi sidebarRef={ref} btnRef={btnRef} /> : null}
         {/* {
                 activeTab === 1? <div style={{//border:'0.1rem solid black',

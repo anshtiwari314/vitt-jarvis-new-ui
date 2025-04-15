@@ -195,7 +195,7 @@ function NewUi({sidebarRef,btnRef}) {
         <input
           type="text"
           value={ngrokServerUrl}
-         onChange={(e) => setNgrokServerUrl(e.target.value)}
+          onChange={(e) => setNgrokServerUrl(e.target.value)}
           placeholder="Enter Server Link ..."
           style={{
             width: "100%",
@@ -256,7 +256,7 @@ function NewUi({sidebarRef,btnRef}) {
             />
         </div>
         
-        <div>
+        <div className="on-going">
             <h3
             style={{
                 fontSize: "2rem",
@@ -266,6 +266,7 @@ function NewUi({sidebarRef,btnRef}) {
                 color: "#1B1B1B",
                 
             }}
+            className="ongoing-call-text"
             >
             Ongoing call
             </h3>
