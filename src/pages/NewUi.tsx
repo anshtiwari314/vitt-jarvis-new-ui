@@ -333,7 +333,7 @@ function NewUi({sidebarRef,btnRef}) {
           height:'70vh',
           backgroundColor: "#F7F7FB",
           overflowY: "scroll",
-          border:'0.1rem solid blue'
+          //border:'0.1rem solid blue'
         }}
       >
         {msgLoading == true ? (

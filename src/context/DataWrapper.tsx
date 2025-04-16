@@ -80,9 +80,9 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     const sessionUid = uuidv4()
     //const [ngrokServerUrl,setNgrokServerUrl] = useState('')
     const vittSalesCopilot = 'https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/sales-copilot-gcp'
-    const ngrokUrl = 'https://c4b4-49-204-211-204.ngrok-free.app/1way'
+    const ngrokUrl = 'https://713d-2401-4900-33a7-8a69-8cb2-fe1c-4c6c-43b.ngrok-free.app/1way_test'
     const oneWayUrl = 'https://rr7yg8ikr5.execute-api.ap-south-1.amazonaws.com/test/docretrieval_clientaudio'
-    const [ngrokServerUrl,setNgrokServerUrl]= useState(vittSalesCopilot)
+    const [ngrokServerUrl,setNgrokServerUrl]= useState(ngrokUrl)
     const [recordingServerUrl,setRecordingServerUrl] = useState('https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis')
     const audioRef = useRef(null);
     const [activeTab,setActiveTab ] = useState(0)
@@ -150,7 +150,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
 
             //this one is for vitt-sales-copilot
             sessionid:currentUser?.sessionuid,
-
+            mob: SESSION_ID,
             
            
             
@@ -389,6 +389,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             time:4000,
             recordingStatus:recordingActiveStatus,
             url:`${recordingServerUrl}/save_audio_chunk`,
+            mob:currentUser.userid,
             sessionid:currentUser.sessionuid,
             userid:currentUser.userid,
             

@@ -71,7 +71,7 @@ export default function Page3() {
   return (
     <div
       style={{
-        border:'0.51rem solid red',
+        //border:'0.51rem solid red',
         display: "flex",
         height: "fit-content",
         position: "relative",
@@ -84,7 +84,7 @@ export default function Page3() {
       <div className="Sidebar ResizeTray" ref={ref} 
       style={{
         height:'max-content',
-        border:'0.2rem solid blue',
+        //border:'0.2rem solid blue',
       }}>
         <button onClick={onClickCloseHamburger} className="close">
           <FontAwesomeIcon className="close-icon" icon={faXmark} />
@@ -321,7 +321,7 @@ export default function Page3() {
       <div style={{ width: "100%",
          //height: "99.5vh",
          height:'fit-content',
-         border:'0.1rem solid green'
+         //border:'0.1rem solid green'
           }} className="main-content">
         {activeTab === 0 ? <NewUi sidebarRef={ref} btnRef={btnRef} /> : null}
         {/* {

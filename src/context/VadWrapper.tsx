@@ -76,6 +76,7 @@ export function VadWrapper({children}){
                 //this one is for vitt-sales-copilot
                 
                sessionid:currentUser?.sessionuid,
+               mob:currentUser.userid,
                 userid:currentUser?.userid
             }
             processAudioToBase64(audio,ngrokServerUrl,data)
@@ -101,6 +102,7 @@ export function VadWrapper({children}){
 
             // this change is for vitt-sales-copilot
             sessionid:currentUser.sessionuid,
+            mob: currentUser.userid,
             userid:currentUser.userid
         }
         processAudioToBase64(audio,ngrokServerUrl,data)
