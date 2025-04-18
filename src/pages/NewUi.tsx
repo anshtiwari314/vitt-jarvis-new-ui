@@ -43,7 +43,7 @@ import { useVad } from "../context/VadWrapper";
 import LoadingIconsComp from '../components/LoadingIcons'
 import { EntypoMic,EntypoModernMic} from "react-entypo";
 
-function NewUi({sidebarRef,btnRef}) {
+function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
 
   //@ts-ignore
   const {
@@ -86,11 +86,13 @@ function NewUi({sidebarRef,btnRef}) {
     navigator.clipboard.writeText(data[data.length - 1].content);
     window.alert("Content copied");
   }
-   
+   const [microPhonesHide,setMicroPhonesHide]=useState(false);
     const onClickOfHamburger=()=>{
         if(sidebarRef.current){
             sidebarRef.current.classList.remove('ResizeTray')
-            btnRef.current.style.setProperty("display","none","important")
+            btnRef.current.style.setProperty("display","inline","important")
+            setMicroPhonesHide(true)
+            wasClosedByUserRef.current=false;
         }
     }
 
@@ -512,14 +514,16 @@ function NewUi({sidebarRef,btnRef}) {
         {
           vadInstance ? 
 
-          <CustomFillButtonWithIcon 
-        color="#8236f5" 
-        text="" 
-        icon={faMicrophone}
-        style={{backgroundColor:vadStatus ? 'red':'gray'}} 
-        //iconStyle={{fontSize:'2rem',}}
-        iconComp = {<FontAwesomeIcon icon={faMicrophone} style={{fontSize:'2rem'}}/>} 
-        onClick={() => setVadStatus((p) => !p)}
+         <CustomFillButtonWithIcon 
+          color="#8236f5" 
+          text="" 
+          icon={faMicrophone}
+          style={{
+            backgroundColor: vadStatus ? 'red' : 'gray'
+          }}
+          className={wasClosedByUserRef.current?"microBtn":"hidden"}
+          iconComp={<FontAwesomeIcon icon={faMicrophone} style={{ fontSize: '2rem' }} />} 
+          onClick={() => setVadStatus((p) => !p)}
         />
         : 
         <div style={{}}>
@@ -531,15 +535,17 @@ function NewUi({sidebarRef,btnRef}) {
 
         {
           !VAD2.loading ? 
-          <CustomFillButtonWithIcon 
+         <CustomFillButtonWithIcon 
           color="#8236f5" 
           text="" 
           icon={faMicrophoneAlt}
-          style={{backgroundColor:manualVadStatus ? 'red':'gray'}} 
-          //iconStyle={{fontSize:'2rem',}}
-          iconComp = {<FontAwesomeIcon icon={faMicrophoneAlt} style={{fontSize:'2rem'}}/>} 
-          onClick={() => setManualVadStatus((p) => !p)} 
-          />
+          style={{
+            backgroundColor: manualVadStatus ? 'red' : 'gray'
+          }}
+          className={wasClosedByUserRef.current?"":"hidden"}
+          iconComp={<FontAwesomeIcon icon={faMicrophoneAlt} style={{ fontSize: '2rem' }} />} 
+          onClick={() => setManualVadStatus((p) => !p)}
+        />
         
         : 
         <div style={{}}>

@@ -44,10 +44,12 @@ export default function Page3() {
   //     }
   // }
   const [isHamburgerClosed, setHamburgerClosed] = useState(false);
+  const wasClosedByUserRef = useRef(false); 
   const onClickCloseHamburger = () => {
     if (ref.current) {
       ref.current.classList.add("ResizeTray");
       btnRef.current.style.setProperty("display", "inline-block", "important");
+      wasClosedByUserRef.current=true;
     }
     setHamburgerClosed(true);
   };
@@ -330,7 +332,7 @@ export default function Page3() {
   }}
   className={`main-content ${isHamburgerClosed ? "override" : ""}`}
 >
-        {activeTab === 0 ? <NewUi sidebarRef={ref} btnRef={btnRef} /> : null}
+        {activeTab === 0 ? <NewUi sidebarRef={ref} btnRef={btnRef} wasClosedByUserRef={wasClosedByUserRef}  /> : null}
         {/* {
                 activeTab === 1? <div style={{//border:'0.1rem solid black',
                     width:'100%',height:'100%'}}>

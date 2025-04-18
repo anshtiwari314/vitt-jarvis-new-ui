@@ -124,10 +124,13 @@ html {
   }
 }
 /* mobile done->mobile upto 609(done)  */
+
 @media screen and (max-width: 860px) {
+ 
   .Sidebar {
     width: 100%;
     position: absolute;
+    z-index: 9999;
     left: 0;
     background-color: white;
     height: 100% !important;
