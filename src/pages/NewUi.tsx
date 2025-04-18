@@ -147,7 +147,7 @@ function NewUi({sidebarRef,btnRef}) {
         // api call 
         let baseUrl = ''
 
-        let url = `${'http://35.200.139.251'}/trigger_metric_evaluation`
+        let url = `${'https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis'}/trigger_metric_evaluation`
 
         let data = {
             filename:`${currentUser.sessionuid}.mp3`, 
@@ -157,15 +157,24 @@ function NewUi({sidebarRef,btnRef}) {
             timeStamp:getTimeStamp()
         }
         setLoading(true)
-        let result = await PostReq(url,data)
+        console.log('end call triggewrs')
 
-        if(result){
-            // redirect to login screen 
-            
-            setCurrentUser(null)
-            
+        try{
+          let result = await PostReq(url,data)
+          console.log('from endcall after resp',result)
+          if(result){
+              // redirect to login screen 
+              
+              setCurrentUser(null)
+              
+          }
+        }catch(err){
+          console.log('err',err)
+        }finally{
+          setLoading(false)
         }
-        setLoading(false)
+        
+        
         
     }
 
@@ -192,7 +201,7 @@ function NewUi({sidebarRef,btnRef}) {
       <audio style={{ display: "none" }} ref={audioRef}></audio>
 
       <div>
-        <input
+        {/* <input
           type="text"
           value={ngrokServerUrl}
           onChange={(e) => setNgrokServerUrl(e.target.value)}
@@ -210,11 +219,11 @@ function NewUi({sidebarRef,btnRef}) {
             //boxShadow: "0px 4px 12px rgba(37, 99, 235, 0.4)",
             //...(inputValue && inputFocusStyle),
           }}
-        />
+        /> */}
         </div>
         
       <div>
-      <input
+      {/* <input
           type="text"
           value={recordingServerUrl}
          onChange={(e) => setRecordingServerUrl(e.target.value)}
@@ -232,7 +241,7 @@ function NewUi({sidebarRef,btnRef}) {
             //boxShadow: "0px 4px 12px rgba(37, 99, 235, 0.4)",
             //...(inputValue && inputFocusStyle),
           }}
-        />
+        /> */}
 
       </div>
       <div 

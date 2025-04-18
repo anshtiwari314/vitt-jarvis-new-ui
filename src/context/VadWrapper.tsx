@@ -18,7 +18,7 @@ export function useVad(){
 export function VadWrapper({children}){
 
 
-    const {ngrokServerUrl,setMsgLoading} = useData()
+    const {ngrokServerUrl,setMsgLoading,oneWayUrl} = useData()
     const {currentUser} = useAuth()
     const [vadRecordingOn,setVadRecordingOn] = useState<boolean>(false);
     let recordingStatus = useRef(false);
@@ -79,7 +79,7 @@ export function VadWrapper({children}){
                mob:currentUser.userid,
                 userid:currentUser?.userid
             }
-            processAudioToBase64(audio,ngrokServerUrl,data)
+            processAudioToBase64(audio,oneWayUrl,data)
             setMsgLoading(true)
         }
       })
@@ -105,7 +105,7 @@ export function VadWrapper({children}){
             mob: currentUser.userid,
             userid:currentUser.userid
         }
-        processAudioToBase64(audio,ngrokServerUrl,data)
+        processAudioToBase64(audio,oneWayUrl,data)
         
         
     }

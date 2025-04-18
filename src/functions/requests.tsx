@@ -161,7 +161,7 @@ export  function sendToServer(blob:any,url:string,SESSION_ID,data){
               //  // console.log(result)
               //     resolve(result.data)
               // }
-              resolve(result.data)
+              resolve(result)
             })
         
     })

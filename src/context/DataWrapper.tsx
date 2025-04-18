@@ -80,7 +80,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     const sessionUid = uuidv4()
     //const [ngrokServerUrl,setNgrokServerUrl] = useState('')
     const vittSalesCopilot = 'https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/sales-copilot-gcp'
-    const ngrokUrl = 'https://713d-2401-4900-33a7-8a69-8cb2-fe1c-4c6c-43b.ngrok-free.app/1way_test'
+    const ngrokUrl = 'https://212b-49-204-211-204.ngrok-free.app/1way'
     const oneWayUrl = 'https://rr7yg8ikr5.execute-api.ap-south-1.amazonaws.com/test/docretrieval_clientaudio'
     const [ngrokServerUrl,setNgrokServerUrl]= useState(ngrokUrl)
     const [recordingServerUrl,setRecordingServerUrl] = useState('https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis')
@@ -164,7 +164,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         let url3 = 'https://ff6e-49-204-210-149.ngrok-free.app'
         let url4 = 'https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/sales-copilot-gcp'
 
-        fetch(ngrokServerUrl,{
+        fetch(oneWayUrl,{
           method:'POST',
           headers:{
             'Accept':'application.json',
@@ -347,7 +347,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             
             console.log(result.sessionid ===SESSION_ID,result.sessionid,result,SESSION_ID)
 
-            if(result.sessionid === SESSION_ID){
+            if(result.sessionid === currentUser.sessionuid){
               console.log(`%c just after filter data for this session id ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
               setMsgLoading(false)
               const {arr,audiourl}=handleData(result)
@@ -446,7 +446,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         manualVadRecordingOn,setManualVadRecordingOn,
         audioUrl,setAudioUrl,
         recordingActive,setRecordingActive,tabs,activeTab,setActiveTab,
-        ngrokServerUrl,setNgrokServerUrl,isFilesLoaded,recordingServerUrl,setRecordingServerUrl
+        ngrokServerUrl,setNgrokServerUrl,oneWayUrl,isFilesLoaded,recordingServerUrl,setRecordingServerUrl
 
     }
   return (
