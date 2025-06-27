@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const useAutoResetState = (initialValue = false, duration = 10000) => {
+const useAutoResetState = (initialValue = false, duration = 15000) => {
   const [state, setState] = useState(initialValue);
 
   useEffect(() => {

@@ -66,7 +66,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
 
   const [query, setQuery] = useState<string>("");
   const [state, setState] = useState({ date: "", time: "" });
-  
+  const cuesContainerRef = useRef(null) 
 
   const navigate = useNavigate();
     //@ts-ignore
@@ -81,6 +81,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
     }
   }
 
+  
   function handleCopyToClipboard() {
     //console.log(data[data.length-1].content)
     navigator.clipboard.writeText(data[data.length - 1].content);
@@ -111,6 +112,12 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
       audioElem.play();
     });
   }, [audioUrl]);
+
+  useEffect(()=>{
+    if (cuesContainerRef.current) {
+      cuesContainerRef.current.scrollTop = cuesContainerRef.current.scrollHeight;
+    }
+  },[data])
 
   // useEffect(()=>{
   //     if(audioRef.current===null)
@@ -346,24 +353,19 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
           backgroundColor: "#F7F7FB",
           overflowY: "scroll",
           //border:'0.1rem solid blue'
+
         }}
+        ref= {cuesContainerRef}
       >
-        {msgLoading == true ? (
-          <div className="msg-loader-wrapper">
-            <img
-              src="https://media.tenor.com/On7kvXhzml4AAAAj/loading-gif.gif"
-              className="msg-loader"
-            />
-          </div>
-        ) : null}
+       
         {/* {data && data.map((e:any,i:number)=>{
                     return <Msg e={e} key={e.id}/>
                 })} */}
         {data &&
           data.map((e: any, i: number) => {
-            if (i === 0) {
+            if (e.is_outgoing===true) {
               return (
-                <>
+                <div style={{width:'100%',display:'flex',justifyContent:'flex-end'}}>
                   <TokenMsg e={e} key={e.id} />
                   {/*<button className="btn btn-primary" style={{
                     
@@ -378,12 +380,20 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
                     // justifyContent:'center',
                     outline:'none',border:'none',borderRadius:'1rem'
                 }} onClick={handleCopyToClipboard}>Copy</button>*/}
-                </>
+                </div>
               );
             } else {
               return <TokenMsg e={e} key={e.id} />;
             }
           })}
+           {msgLoading == true ? (
+          <div className="msg-loader-wrapper">
+            <img
+              src="https://media.tenor.com/On7kvXhzml4AAAAj/loading-gif.gif"
+              className="msg-loader"
+            />
+          </div>
+        ) : null}
       </div>
       <div
         style={{
@@ -511,7 +521,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
       <div style={{display:'flex',justifyContent:'center',alignItems:'center'}}>
 
       
-        {
+        {/* {
           vadInstance ? 
 
          <CustomFillButtonWithIcon 
@@ -530,7 +540,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
           <TailSpin stroke="red" strokeOpacity={1} speed={.95} style={{margin:'2rem'}}/>
           </div>
         
-        }
+        } */}
         
 
         {

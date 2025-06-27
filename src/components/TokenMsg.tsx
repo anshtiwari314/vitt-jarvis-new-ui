@@ -60,24 +60,28 @@ function TokenMsg({e}:{e:any}) {
         <div style={{
             //width:'fit-content',
             //minWidth:'60%',
-            width:'85%',
+            minWidth:'30%',
+            width:e.is_outgoing=== true ? 'fit-content':'85%',
             //border:'0.1rem solid tomato',
             display:'flex',
             backgroundColor:'white',
             margin:'2rem 2rem',
-            padding:'2rem 1rem'
+            padding:e.is_outgoing=== true ? 0 :'2rem 1rem',
+            borderRadius:'2rem'
+            //border:'0.1rem solid red'
             }}>
-        <div style={{width:'100%',height:'fit-content',flex:0.8,margin:'1rem 0'}}>
-            <h3 style={{
+        <div style={{width:'100%',height:'fit-content',flex:e.is_outgoing?1: 0.8,margin:'1rem 0'}}>
+            <h5 style={{
                 fontFamily: '"DM Sans", sans-serif',
-                fontWeight:700,
+                //fontWeight:700,
                 padding:'1rem 2rem',
                 lineHeight:'2.8rem',
-                fontSize:'2rem'
+                fontSize:'1.7rem',
+                textAlign:'right'
                 }}>
-                {e.query}    
+                {e.similarity_query}    
                 
-            </h3>
+            </h5>
             <p style={{
                 fontSize:'1.6rem',
                 padding:'1rem 2rem',
@@ -87,6 +91,8 @@ function TokenMsg({e}:{e:any}) {
                 lineHeight:'2.8rem'
                 }}>{Parser(e.content)}</p>
         </div>
+
+        {e.is_outgoing===false &&
         <div style={{
             flex:0.2,
             //border:'0.1rem solid tomato',
@@ -101,27 +107,35 @@ function TokenMsg({e}:{e:any}) {
                width:'80%',
                margin:'0 auto'
                 }}>
-                { feedback===true? 
-                <img src={LikeFilled} style={{fontSize:'1rem',cursor:'pointer'}} />
-                :
-                <img src={Like} style={{fontSize:'1rem',cursor:'pointer'}}  onClick={()=>{setFeedback(true);handleFeedback(e,passFeedbackUrl)}}/>
-                }
-                {
-                feedback===false?
-                <img src={DislikeFiLLed} style={{fontSize:'1rem',cursor:'pointer'}} />
-                :
-                <img src={Dislike} style={{fontSize:'1rem',cursor:'pointer'}} onClick={()=>{setFeedback(false);handleFeedback(e,failFeedbackUrl)}}/>
-                }
-                {
-                togglePinBtn===false ?
-                <img src={Pin} style={{fontSize:'1rem',cursor:'pointer'}}  onClick={()=>setTogglePinBtn(p=>!p)}/>
-                :
-                <img src={PinFilled} style={{fontSize:'1rem',cursor:'pointer'}} onClick={()=>setTogglePinBtn(p=>!p)}/>
-                }
+                
+                    <>
+                    { feedback===true ? 
+                        <img src={LikeFilled} style={{fontSize:'1rem',cursor:'pointer'}} />
+                        :
+                        <img src={Like} style={{fontSize:'1rem',cursor:'pointer'}}  onClick={()=>{setFeedback(true);handleFeedback(e,passFeedbackUrl)}}/>
+                        }
+                        {
+                        feedback===false ?
+                        <img src={DislikeFiLLed} style={{fontSize:'1rem',cursor:'pointer'}} />
+                        :
+                        <img src={Dislike} style={{fontSize:'1rem',cursor:'pointer'}} onClick={()=>{setFeedback(false);handleFeedback(e,failFeedbackUrl)}}/>
+                        }
+                        {
+                        togglePinBtn===false ?
+                        <img src={Pin} style={{fontSize:'1rem',cursor:'pointer'}}  onClick={()=>setTogglePinBtn(p=>!p)}/>
+                        :
+                        <img src={PinFilled} style={{fontSize:'1rem',cursor:'pointer'}} onClick={()=>setTogglePinBtn(p=>!p)}/>
+                        }
+                    </>
+
+                
+                
+                
                 
             </div>
+            
             <div style={{
-                //border:'0.1rem solid violet'\
+                //border:'0.1rem solid violet'
                 }}>
                 <p style={{
                     fontSize:'1.4rem',
@@ -132,6 +146,7 @@ function TokenMsg({e}:{e:any}) {
                     }}>12:48 PM, 6 Apr</p>
             </div>
         </div>
+}
     </div>
     )
 }

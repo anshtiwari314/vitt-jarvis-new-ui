@@ -12,14 +12,14 @@ export function handleData(data:any){
     if(data?.loading){
         return ;
     }
-    if(data?.audiourl!==null){
+    if(data?.audio_url!==null){
         //audioUrlRef.current = data.audiourl
        // setAudioUrlFlag(prev=>!prev)
         //setAudioUrl('https://files.gospeljingle.com/uploads/music/2023/04/Taylor_Swift_-_August.mp3')
        // setAudioUrl(data.audiourl)
-       audiourl = data.audiourl
+       audiourl = data.audio_url
       }
-    if(data?.audiobase64!==null){
+    if(data?.audiobase64 && data?.audiobase64!==null){
         audiourl = `data:audio/mpeg;base64,${data.audiobase64}`
         //setAudioUrl(`data:audio/mpeg;base64,${data.audiobase64}`)
     }
@@ -36,7 +36,7 @@ export function handleData(data:any){
         obj["audiofiletimestamp"]=data.audiofiletimestamp
         obj["istranscription"] = data.istranscription
         //arr.push(obj)
-        arr = [obj,...arr]
+        arr = [...arr,obj]
         //@ts-ignore
         obj = {}
     }
@@ -54,7 +54,7 @@ export function handleData(data:any){
         obj["audiofiletimestamp"]=data.audiofiletimestamp
         obj["istranscription"] = data.istranscription
         //arr.push(obj)
-        arr = [obj,...arr]
+        arr = [...arr,obj]
         //@ts-ignore
         obj = {}
     }
@@ -72,7 +72,7 @@ export function handleData(data:any){
         obj["audiofiletimestamp"]=data.audiofiletimestamp
         obj["istranscription"] = data.istranscription
         //arr.push(obj)
-        arr = [obj,...arr]
+        arr = [...arr,obj]
         //@ts-ignore
         obj={}
     }
@@ -82,6 +82,7 @@ export function handleData(data:any){
             obj["id"]= uuidv4()
             obj["type"]="TextMsg"
             obj["content"] = e 
+            obj["is_outgoing"] = false
             obj["iconName"] = 'fa-solid fa-circle-question'
             obj["color"]= data.color 
             obj["iconColor"] = data.iconColor
@@ -90,7 +91,7 @@ export function handleData(data:any){
             obj["audiofiletimestamp"]=data.audiofiletimestamp
             obj["istranscription"] = data.istranscription
             //arr.push(obj)
-            arr = [obj,...arr]
+            arr = [...arr,obj]
             //@ts-ignore
             obj={}
         })
@@ -125,12 +126,29 @@ export function handleData(data:any){
         obj["audiofiletimestamp"]=data.audiofiletimestamp
         obj["istranscription"] = data.istranscription
         //arr.push(obj)
-        arr = [obj,...arr]
+        arr = [...arr,obj]
         //@ts-ignore
         obj={}
        
     } 
+    if(data?.isOutgoing){
+        obj["id"]= uuidv4()
+        obj["type"] = "SuggestiveMsg"
+        //obj["replies"] = data.replies
+        //obj["color"] = data.color
+        //obj["iconColor"] = data.iconColor 
+        obj["similarity_query"] = data.similarity_query;
+        //obj["iconName"] = 'fa-solid fa-forward-fast'
+        obj["sessionid"] = data.sessionid
+        obj["content"] = '' 
+        obj["is_outgoing"] = true
+        //obj["audiofiletimestamp"]=data.audiofiletimestamp
+        //obj["istranscription"] = data.istranscription
 
+        arr = [...arr,obj]
+        obj = {}
+
+    }
    console.log(arr)
 
    return {arr,audiourl} ;

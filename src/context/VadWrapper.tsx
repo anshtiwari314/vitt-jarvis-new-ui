@@ -29,6 +29,7 @@ export function VadWrapper({children}){
     const vadRef = useRef({ oldVadrecordingStatus:false,myVad:null })
     const [manualVadStatus,setManualVadStatus] = useState(true)
 
+    const initReqStatusRef = useRef(false)
     //const {PostReq } = useRequest()
 
     // ort.env.wasm.wasmPaths = {
@@ -39,6 +40,34 @@ export function VadWrapper({children}){
     //   }
 
     
+    useEffect(()=>{
+      //init req 
+
+      let data = {
+        //this change is for jarvis-in-person-usecase
+        //sessionid:currentUser.userid,
+        
+
+        // this change is for vitt-sales-copilot
+        sessionid:currentUser.sessionuid,
+        mob: currentUser.userid,
+        userid:currentUser.userid,
+        audiomessage:'',
+        timeStamp:getTimeStamp(),
+        init:true
+      }
+
+      if(initReqStatusRef.current ===false){
+        initReqStatusRef.current = true
+        PostReq('https://2265-49-204-210-210.ngrok-free.app/',data).then(resp=>{
+          console.log('init req',resp)
+         })
+      }
+       
+      
+
+    },[])
+
 
     function VAD(cb1:CallableFunction,cb2:CallableFunction){
         return new Promise(async (resolve,reject)=>{

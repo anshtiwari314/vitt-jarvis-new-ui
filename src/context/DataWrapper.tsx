@@ -158,12 +158,17 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         }
         //socket.emit("messagefromclient",tempObj)
         //
-
+        
         let url = 'https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-2way-clientaudio'
         let url2 = 'https://34.100.145.102/'
         let url3 = 'https://ff6e-49-204-210-149.ngrok-free.app'
         let url4 = 'https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/sales-copilot-gcp'
 
+
+        let {arr,audiourl} = handleData({sessionid:currentUser?.sessionuid,similarity_query:data,isOutgoing:true})
+        console.log('arr from handleQuery',arr)
+        setData(prev=>[...prev,...arr])
+        
         fetch(oneWayUrl,{
           method:'POST',
           headers:{
@@ -264,6 +269,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     }
 
     function playAudio(audiourl){
+      console.log('audiourl',audiourl)
       let audioElem = audioRef.current;
     //@ts-ignore
     audioElem.src = audiourl;
@@ -345,7 +351,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             //     return ;
             // }
             
-            console.log(result.sessionid ===SESSION_ID,result.sessionid,result,SESSION_ID)
+            console.log(result.sessionid ===SESSION_ID,result.sessionid,result,SESSION_ID,currentUser)
 
             if(result.sessionid === currentUser.sessionuid){
               console.log(`%c just after filter data for this session id ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
@@ -354,8 +360,9 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
               //console.log('i am audiourl',audiourl)
               //setAudioUrl(audiourl)
               if(audiourl!==null)
-              playAudio(audiourl)
-              setData(prev=>[...arr,...prev])
+                playAudio(audiourl)
+              
+              setData(prev=>[...prev,...arr])
            // handleAudio(data.speech_bytes,data.file_name)
             }
     }
