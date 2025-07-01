@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sales Copilot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .active-nav-item {
+            background-color: #e0f2fe; /* light sky blue */
+            color: #0284c7; /* sky blue 600 */
+            border-left: 4px solid #0369a1; /* sky blue 700 */
+        }
+        .calculation-card {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out, padding 0.5s ease-out;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+        .calculation-card.expanded {
+            max-height: 500px; /* Adjust as needed */
+            transition: max-height 0.5s ease-in, padding 0.5s ease-in;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+        .chevron {
+            transition: transform 0.3s ease-in-out;
+        }
+        .expanded .chevron {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased">
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- Vertical Navigation Sidebar -->
+        <aside class="w-72 bg-white border-r border-slate-200 flex flex-col">
+            <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+                 <a href="#" id="home-button" class="text-slate-500 hover:text-sky-600">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                </a>
+                <div class="text-right">
+                    <div id="current-date" class="font-semibold text-slate-700"></div>
+                    <div id="current-time" class="text-sm text-slate-500"></div>
+                </div>
+            </div>
+            <nav class="flex-1 p-2 space-y-1">
+                <a href="#" id="nav-basicInfo" class="nav-item flex items-center px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    Basic Info
+                </a>
+                <a href="#" id="nav-asset" class="nav-item flex items-center px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200">
+                     <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    Assets
+                </a>
+                <a href="#" id="nav-liability" class="nav-item flex items-center px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                    Liabilities
+                </a>
+                <a href="#" id="nav-financialGoals" class="nav-item flex items-center px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200">
+                     <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h1a2 2 0 002-2v-1a2 2 0 012-2h1.945M12 4v4m0 0l-2-2m2 2l2-2"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18V14m0 4a2 2 0 002-2v-1a2 2 0 00-2-2h-1a2 2 0 00-2 2v1a2 2 0 002 2z"></path></svg>
+                    Financial Goals
+                </a>
+                <a href="#" id="nav-planSummary" class="nav-item flex items-center px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Plan Summary
+                </a>
+                <a href="#" id="nav-productRec" class="nav-item flex items-center px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200">
+                     <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                    Recommendations
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-slate-200">
+                <h3 class="text-sm font-semibold text-slate-600 mb-3">System Status</h3>
+                <div class="space-y-2 text-sm">
+                    <div id="status-audio" class="flex items-center text-slate-500">
+                        <div class="status-indicator w-2.5 h-2.5 rounded-full mr-2 bg-gray-300 transition-colors"></div> Audio Streaming
+                    </div>
+                    <div id="status-transcription" class="flex items-center text-slate-500">
+                        <div class="status-indicator w-2.5 h-2.5 rounded-full mr-2 bg-gray-300 transition-colors"></div> Live Transcription
+                    </div>
+                    <div id="status-processing" class="flex items-center text-slate-500">
+                        <div class="status-indicator w-2.5 h-2.5 rounded-full mr-2 bg-gray-300 transition-colors"></div> AI Processing
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Area -->
+        <div class="flex-1 flex flex-col">
+            <!-- Header -->
+            <header class="bg-white p-4 border-b border-slate-200 flex justify-between items-center sticky top-0 z-10">
+                <div>
+                    <h2 id="page-title" class="text-2xl font-bold text-slate-800">Basic Information</h2>
+                    <p id="client-name-header" class="mt-1 text-lg text-slate-500 hidden"></p>
+                </div>
+                 <div class="flex-shrink-0 flex items-center gap-4">
+                    <button id="skip-pfr-btn" class="bg-white border border-slate-300 text-slate-700 font-bold py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors duration-200">Skip PFR</button>
+                    <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+                        <button id="start-btn" class="p-2 rounded-md hover:bg-slate-200 text-slate-600"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path></svg></button>
+                        <button id="pause-btn" class="p-2 rounded-md hover:bg-slate-200 text-slate-600" disabled><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M5.75 4.5a.75.75 0 00-.75.75v10.5a.75.75 0 001.5 0V5.25A.75.75 0 005.75 4.5zm8.5 0a.75.75 0 00-.75.75v10.5a.75.75 0 001.5 0V5.25a.75.75 0 00-.75-.75z"></path></svg></button>
+                        <button id="stop-btn" class="p-2 rounded-md hover:bg-slate-200 text-slate-600" disabled><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M5 6.25A1.25 1.25 0 003.75 7.5v5A1.25 1.25 0 005 13.75h10A1.25 1.25 0 0016.25 12.5v-5A1.25 1.25 0 0015 6.25H5z"></path></svg></button>
+                    </div>
+                    <div id="timer" class="text-lg font-mono font-semibold text-slate-700 bg-slate-100 px-3 py-2 rounded-lg">00:00</div>
+                </div>
+            </header>
+            <div class="flex-1 flex overflow-hidden">
+                <!-- Main Content -->
+                <main class="flex-1 flex flex-col bg-slate-100 overflow-y-auto p-6 md:p-8">
+                    <!-- Agent Content Pages -->
+                        <!-- Basic Info Page -->
+                        <div id="content-basicInfo" class="page-content">
+                             <div class="space-y-6">
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Client Details</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                        <div><label class="block text-slate-500 mb-1">Name</label><input type="text" value="Anjali Sharma" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                        <div><label class="block text-slate-500 mb-1">Age</label><input type="text" value="34" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                        <div><label class="block text-slate-500 mb-1">City</label><input type="text" value="Mumbai" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                        <div><label class="block text-slate-500 mb-1">Occupation</label><input type="text" value="Software Engineer" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                        <div><label class="block text-slate-500 mb-1">Dependents</label><input type="text" value="3" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Family Structure</h3>
+                                    <div class="space-y-3 text-sm">
+                                        <div class="grid grid-cols-3 gap-3 p-2 rounded-md bg-slate-50"><span>Rohan Sharma</span><span>Husband</span><span>36 years</span></div>
+                                        <div class="grid grid-cols-3 gap-3 p-2 rounded-md bg-slate-50"><span>Priya Sharma</span><span>Daughter</span><span>5 years</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Assets Page -->
+                        <div id="content-asset" class="page-content hidden">
+                            <div class="space-y-6">
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Income & Savings</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                                        <div><label class="block text-slate-500 mb-1">Monthly Income (INR)</label><div class="p-2 font-semibold text-slate-800" id="asset-monthly-income"></div></div>
+                                        <div class="md:col-span-2"><label class="block text-slate-500 mb-1">Savings (FD, PPF, NSC, etc.)</label><textarea class="w-full p-2 border border-slate-300 rounded-md bg-slate-50" rows="3">PPF: ~5,00,000&#x0a;FD with HDFC: 2,00,000</textarea></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Investments & Other Assets</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                                        <div><label class="block text-slate-500 mb-1">Investments (Mutual Funds, Equity)</label><textarea class="w-full p-2 border border-slate-300 rounded-md bg-slate-50" rows="3">Mutual Funds: ~3,00,000&#x0a;Direct Equity: ~1,50,000</textarea></div>
+                                        <div><label class="block text-slate-500 mb-1">Other Assets (Gold, Land, Property)</label><textarea class="w-full p-2 border border-slate-300 rounded-md bg-slate-50" rows="3">20g Digital Gold</textarea></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Existing Life Insurance</h3>
+                                    <div class="space-y-3 text-sm">
+                                        <div class="grid grid-cols-3 gap-3 font-medium text-slate-600 px-2"><span>Insurer Name</span><span class="text-right">Cover Amount (INR)</span><span class="text-right">Annual Premium (INR)</span></div>
+                                        <div class="grid grid-cols-3 gap-3 p-3 rounded-md bg-slate-50"><span>LIC Jeevan Anand</span><span class="text-right">50,00,000</span><span class="text-right">45,000</span></div>
+                                        <div class="grid grid-cols-3 gap-3 p-3 rounded-md bg-slate-50"><span>HDFC Click2Protect</span><span class="text-right">1,00,00,000</span><span class="text-right">18,000</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                         <!-- Liabilities Page -->
+                        <div id="content-liability" class="page-content hidden">
+                            <div class="space-y-6">
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Monthly Outflow</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                                        <div><label class="block text-slate-500 mb-1">Approx. Monthly Expenses (INR)</label><input type="text" value="60,000" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                         <div><label class="block text-slate-500 mb-1">Total Monthly EMI (INR)</label><input type="text" value="38,000" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50 font-semibold"></div>
+                                         <div><label class="block text-slate-500 mb-1">Credit Card Dues (if any)</label><input type="text" value="15,000" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Home Loan Details</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
+                                        <div><label class="block text-slate-500 mb-1">Outstanding Amount (INR)</label><input type="text" value="45,00,000" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                        <div><label class="block text-slate-500 mb-1">Monthly EMI (INR)</label><input type="text" value="30,000" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                        <div><label class="block text-slate-500 mb-1">Remaining Tenure (Months)</label><input type="text" value="180" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Other Loans</h3>
+                                    <div class="space-y-3 text-sm">
+                                        <div class="grid grid-cols-3 gap-3 font-medium text-slate-600 px-2"><span>Loan Type</span><span class="text-right">Outstanding (INR)</span><span class="text-right">Monthly EMI (INR)</span></div>
+                                        <div class="grid grid-cols-3 gap-3 p-3 rounded-md bg-slate-50"><span>Car Loan</span><span class="text-right">3,50,000</span><span class="text-right">8,000</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial Goals Page -->
+                        <div id="content-financialGoals" class="page-content hidden">
+                           <div class="space-y-6">
+                                <div class="bg-white rounded-xl shadow-sm">
+                                    <div class="p-6">
+                                        <div class="flex justify-between items-start">
+                                            <h3 class="text-lg font-semibold text-slate-700">Daughter's Education</h3>
+                                            <span class="bg-red-100 text-red-800 text-xs font-bold px-2.5 py-1 rounded-full">High Priority</span>
+                                        </div>
+                                        <p class="text-sm text-slate-600 mt-2">Fund 5-year-old daughter's higher education.</p>
+                                        <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                                            <div><label class="block text-slate-500">Timeframe</label><p class="font-semibold text-slate-800">13 Years</p></div>
+                                            <div><label class="block text-slate-500">Required Corpus</label><p class="font-semibold text-slate-800" id="goal1-corpus"></p></div>
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-slate-200 px-6 py-2 flex justify-end">
+                                        <button class="toggle-calculation text-sm font-medium text-sky-600 hover:text-sky-800 flex items-center gap-1">
+                                            Show calculation <svg class="w-4 h-4 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="calculation-card bg-slate-50 px-6 border-t border-slate-200">
+                                        <p class="text-sm text-slate-600 font-mono">Current Cost: ₹25,00,000<br>Inflation: 4% annually<br>Calculation: 2500000 * (1 + 0.04)^13</p>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-sm">
+                                    <div class="p-6">
+                                        <div class="flex justify-between items-start">
+                                            <h3 class="text-lg font-semibold text-slate-700">Retirement Planning</h3>
+                                            <span class="bg-orange-100 text-orange-800 text-xs font-bold px-2.5 py-1 rounded-full">Medium Priority</span>
+                                        </div>
+                                        <p class="text-sm text-slate-600 mt-2">Build a corpus for a comfortable retirement.</p>
+                                        <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                                            <div><label class="block text-slate-500">Timeframe</label><p class="font-semibold text-slate-800">~25 Years</p></div>
+                                            <div><label class="block text-slate-500">Required Corpus</label><p class="font-semibold text-slate-800" id="goal2-corpus"></p></div>
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-slate-200 px-6 py-2 flex justify-end">
+                                        <button class="toggle-calculation text-sm font-medium text-sky-600 hover:text-sky-800 flex items-center gap-1">
+                                            Show calculation <svg class="w-4 h-4 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="calculation-card bg-slate-50 px-6 border-t border-slate-200">
+                                        <p class="text-sm text-slate-600 font-mono">Calculation based on future value of current monthly expenses.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Plan Summary Page -->
+                        <div id="content-planSummary" class="page-content hidden">
+                           <div class="space-y-6">
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Immediate Life Cover Analysis</h3>
+                                     <div class="space-y-2 text-sm text-slate-600">
+                                        <div class="flex justify-between"><span>Outstanding Liabilities</span><span id="summary-liabilities"></span></div>
+                                        <div class="flex justify-between"><span>Family Living Expenses (10x)</span><span id="summary-expenses"></span></div>
+                                    </div>
+                                    <div class="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center">
+                                        <span class="font-bold text-slate-800">Total Recommended Cover:</span>
+                                        <span class="text-xl font-bold text-sky-600" id="summary-total-cover"></span>
+                                    </div>
+                                </div>
+                                <h3 class="text-lg font-semibold text-slate-700 pt-4">Goal-Based Corpus Needs</h3>
+                                <div class="bg-white rounded-xl shadow-sm">
+                                    <div class="p-6">
+                                        <h4 class="font-semibold text-slate-700">Daughter's Education</h4>
+                                        <div class="mt-2 grid grid-cols-3 gap-4 text-sm">
+                                            <div><label class="block text-slate-500">Timeframe</label><p class="font-semibold text-slate-800">13 Years</p></div>
+                                            <div><label class="block text-slate-500">Target Year</label><p class="font-semibold text-slate-800">2038</p></div>
+                                            <div><label class="block text-slate-500">Future Corpus</label><p class="font-semibold text-slate-800" id="summary-goal1-corpus"></p></div>
+                                        </div>
+                                    </div>
+                                     <div class="border-t border-slate-200 px-6 py-2 flex justify-end">
+                                        <button class="toggle-calculation text-sm font-medium text-sky-600 hover:text-sky-800 flex items-center gap-1">
+                                            Show calculation <svg class="w-4 h-4 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="calculation-card bg-slate-50 px-6 border-t border-slate-200">
+                                        <p class="text-sm text-slate-600 font-mono">Future Value based on goal details.</p>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-sm">
+                                    <div class="p-6">
+                                        <h4 class="font-semibold text-slate-700">Retirement Planning</h4>
+                                        <div class="mt-2 grid grid-cols-3 gap-4 text-sm">
+                                            <div><label class="block text-slate-500">Timeframe</label><p class="font-semibold text-slate-800">25 Years</p></div>
+                                            <div><label class="block text-slate-500">Target Year</label><p class="font-semibold text-slate-800">2050</p></div>
+                                            <div><label class="block text-slate-500">Future Corpus</label><p class="font-semibold text-slate-800" id="summary-goal2-corpus"></p></div>
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-slate-200 px-6 py-2 flex justify-end">
+                                        <button class="toggle-calculation text-sm font-medium text-sky-600 hover:text-sky-800 flex items-center gap-1">
+                                            Show calculation <svg class="w-4 h-4 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="calculation-card bg-slate-50 px-6 border-t border-slate-200">
+                                        <p class="text-sm text-slate-600 font-mono">Future Value based on goal details.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recommendations Page -->
+                        <div id="content-productRec" class="page-content hidden">
+                             <div class="space-y-6">
+                                <div class="bg-white rounded-xl shadow-sm ring-1 ring-sky-200">
+                                    <div class="p-6">
+                                        <h3 class="text-lg font-semibold text-sky-800 mb-2">Recommendation 1: Term Plan</h3>
+                                        <p class="text-sm text-slate-600 mb-4">Pure protection for financial safety net.</p>
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
+                                            <div><label class="block text-slate-500">Cover</label><p class="font-bold text-xl text-slate-800" id="rec-term-cover"></p></div>
+                                            <div><label class="block text-slate-500">Term</label><p class="font-semibold text-slate-800">30 Years</p></div>
+                                            <div><label class="block text-slate-500">Est. Annual Premium</label><p class="font-semibold text-slate-800" id="rec-term-premium"></p></div>
+                                        </div>
+                                        <div class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">
+                                            <strong>Reason:</strong> Settle liabilities, provide for living expenses.
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-slate-200 px-6 py-2 flex justify-end">
+                                        <button class="toggle-calculation text-sm font-medium text-sky-600 hover:text-sky-800 flex items-center gap-1">
+                                            Show calculation <svg class="w-4 h-4 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="calculation-card bg-slate-50 px-6 border-t border-slate-200">
+                                        <p class="text-sm text-slate-600 font-mono">Heuristic: ₹1,500 per year per ₹1L sum assured<br>Calculation: (1,20,50,000 / 1,00,000) * 1500</p>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-sm">
+                                    <div class="p-6">
+                                        <h3 class="text-lg font-semibold text-slate-700 mb-2">Recommendation 2: Child Plan (for Education)</h3>
+                                        <p class="text-sm text-slate-600 mb-4">Savings-oriented plan for daughter's education.</p>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                                            <div><label class="block text-slate-500">Target Corpus</label><p class="font-bold text-xl text-slate-800" id="rec-child-corpus"></p></div>
+                                            <div><label class="block text-slate-500">Est. Annual Premium</label><p class="font-semibold text-slate-800" id="rec-child-premium"></p></div>
+                                        </div>
+                                        <div class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">
+                                            <strong>Reason:</strong> Aligns with 13-year timeframe for college.
+                                        </div>
+                                    </div>
+                                     <div class="border-t border-slate-200 px-6 py-2 flex justify-end">
+                                        <button class="toggle-calculation text-sm font-medium text-sky-600 hover:text-sky-800 flex items-center gap-1">
+                                            Show calculation <svg class="w-4 h-4 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="calculation-card bg-slate-50 px-6 border-t border-slate-200">
+                                        <p class="text-sm text-slate-600 font-mono">Heuristic: 5% annual compounded return.<br>Reverse calculation to find premium for corpus.</p>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-sm">
+                                    <div class="p-6">
+                                        <h3 class="text-lg font-semibold text-slate-700 mb-2">Recommendation 3: Retirement Plan</h3>
+                                        <p class="text-sm text-slate-600 mb-4">Long-term investment for independent retirement.</p>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                                            <div><label class="block text-slate-500">Target Corpus</label><p class="font-bold text-xl text-slate-800" id="rec-retire-corpus"></p></div>
+                                            <div><label class="block text-slate-500">Est. Annual Premium</label><p class="font-semibold text-slate-800" id="rec-retire-premium"></p></div>
+                                        </div>
+                                        <div class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">
+                                            <strong>Reason:</strong> Long-term wealth creation for lifestyle maintenance.
+                                        </div>
+                                    </div>
+                                     <div class="border-t border-slate-200 px-6 py-2 flex justify-end">
+                                        <button class="toggle-calculation text-sm font-medium text-sky-600 hover:text-sky-800 flex items-center gap-1">
+                                            Show calculation <svg class="w-4 h-4 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="calculation-card bg-slate-50 px-6 border-t border-slate-200">
+                                       <p class="text-sm text-slate-600 font-mono">Heuristic: 5% annual compounded return.<br>Reverse calculation to find premium for corpus.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                </main>
+
+                <!-- AI Cues Sidebar -->
+                <aside class="w-96 bg-white border-l border-slate-200 flex flex-col p-4 space-y-4 overflow-y-auto">
+                     <h3 class="text-lg font-bold text-slate-800 text-right">AI Cues</h3>
+                    <!-- Cue Type 1: Follow-up Question -->
+                    <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                        <h4 class="font-semibold text-blue-800 flex items-center mb-2">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.546-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Follow-up Question
+                        </h4>
+                        <ul class="list-disc list-inside space-y-1 text-blue-700 text-sm">
+                            <li>Primary financial goals?</li>
+                            <li>Typical month financially?</li>
+                        </ul>
+                    </div>
+                    <!-- Cue Type 2: Answer to Query -->
+                    <div class="bg-green-50 border border-green-200 p-4 rounded-lg">
+                        <h4 class="font-semibold text-green-800 flex items-center mb-2">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
+                            Answer to "Why Term Plan?"
+                        </h4>
+                        <ul class="list-disc list-inside space-y-1 text-green-700 text-sm">
+                            <li>Financial safety net.</li>
+                            <li>Covers loans, secures family's future.</li>
+                            <li>Most affordable, high-cover option.</li>
+                        </ul>
+                    </div>
+                     <!-- Cue Type 3: Compliance Alert -->
+                    <div class="bg-amber-50 border border-amber-300 p-4 rounded-lg">
+                        <h4 class="font-semibold text-amber-800 flex items-center mb-2">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            Compliance Alert
+                        </h4>
+                        <ul class="list-disc list-inside space-y-1 text-amber-700 text-sm">
+                            <li>Disclose commission structures if asked.</li>
+                            <li>Avoid guaranteeing returns.</li>
+                        </ul>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- Elements ---
+            const navItems = document.querySelectorAll('.nav-item');
+            const contentPages = document.querySelectorAll('.page-content');
+            const pageTitle = document.getElementById('page-title');
+            const clientNameHeader = document.getElementById('client-name-header');
+            const homeButton = document.getElementById('home-button');
+            const dateEl = document.getElementById('current-date');
+            const timeEl = document.getElementById('current-time');
+            const timerEl = document.getElementById('timer');
+            const startBtn = document.getElementById('start-btn');
+            const pauseBtn = document.getElementById('pause-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const calcToggles = document.querySelectorAll('.toggle-calculation');
+
+            // --- State ---
+            const pageDetails = {
+                basicInfo: "Basic Information",
+                asset: "Assets",
+                liability: "Liabilities",
+                financialGoals: "Financial Goals",
+                planSummary: "Plan Summary",
+                productRec: "Recommendations",
+            };
+            let timerInterval;
+            let timerSeconds = 0;
+            let timerState = 'stopped'; // 'stopped', 'running', 'paused'
+
+            // --- Functions ---
+            function setActiveAgent(agentId) {
+                navItems.forEach(item => {
+                    item.classList.remove('active-nav-item');
+                    if (item.id === `nav-${agentId}`) {
+                        item.classList.add('active-nav-item');
+                    }
+                });
+
+                contentPages.forEach(page => {
+                    page.style.display = 'none';
+                });
+                
+                const activePage = document.getElementById(`content-${agentId}`);
+                if (activePage) {
+                    activePage.style.display = 'block';
+                }
+                
+                pageTitle.textContent = pageDetails[agentId] || "Dashboard";
+            }
+
+            function updateDateTime() {
+                const now = new Date();
+                dateEl.textContent = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                timeEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            }
+            
+            function formatCurrency(num) {
+                if (isNaN(num)) return '₹ 0';
+                const crores = num / 10000000;
+                const lakhs = num / 100000;
+                let shorthand = '';
+
+                if (crores >= 1) {
+                    shorthand = `(${crores.toFixed(1)} Cr)`;
+                } else if (lakhs >= 1) {
+                    shorthand = `(${lakhs.toFixed(1)} Lk)`;
+                }
+                
+                const formattedNum = new Intl.NumberFormat('en-IN').format(num);
+
+                return `₹ ${formattedNum} <span class="text-slate-500 font-normal text-xs">${shorthand}</span>`;
+            }
+
+            function updateAllNumbers() {
+                document.getElementById('asset-monthly-income').innerHTML = formatCurrency(150000);
+                document.getElementById('goal1-corpus').innerHTML = formatCurrency(4000000);
+                document.getElementById('goal2-corpus').innerHTML = formatCurrency(50000000);
+                // Summary Page
+                document.getElementById('summary-liabilities').innerHTML = formatCurrency(4850000);
+                document.getElementById('summary-expenses').innerHTML = `+ ${formatCurrency(7200000)}`;
+                document.getElementById('summary-total-cover').innerHTML = formatCurrency(12050000);
+                document.getElementById('summary-goal1-corpus').innerHTML = formatCurrency(4000000);
+                document.getElementById('summary-goal2-corpus').innerHTML = formatCurrency(50000000);
+                // Reco Page
+                document.getElementById('rec-term-cover').innerHTML = formatCurrency(12050000);
+                document.getElementById('rec-term-premium').innerHTML = formatCurrency(22500);
+                document.getElementById('rec-child-corpus').innerHTML = formatCurrency(4000000);
+                document.getElementById('rec-child-premium').innerHT<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sales Copilot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .active-nav-item {
+            background-color: #e0f2fe; /* light sky blue */
+            color: #0284c7; /* sky blue 600 */
+            border-left: 4px solid #0369a1; /* sky blue 700 */
+        }
+        .calculation-card {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out, padding 0.5s ease-out;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+        .calculation-card.expanded {
+            max-height: 500px; /* Adjust as needed */
+            transition: max-height 0.5s ease-in, padding 0.5s ease-in;
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+        .chevron {
+            transition: transform 0.3s ease-in-out;
+        }
+        .expanded .chevron {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased">
+
+    <div class="flex h-screen overflow-hidden">
+        <!-- Vertical Navigation Sidebar -->
+        <aside class="w-72 bg-white border-r border-slate-200 flex flex-col">
+            <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+                 <a href="#" id="home-button" class="text-slate-500 hover:text-sky-600">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                </a>
+                <div class="text-right">
+                    <div id="current-date" class="font-semibold text-slate-700"></div>
+                    <div id="current-time" class="text-sm text-slate-500"></div>
+                </div>
+            </div>
+            <nav class="flex-1 p-2 space-y-1">
+                <a href="#" id="nav-basicInfo" class="nav-item flex items-center px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    Basic Info
+                </a>
+                <a href="#" id="nav-asset" class="nav-item flex items-center px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200">
+                     <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    Assets
+                </a>
+                <a href="#" id="nav-liability" class="nav-item flex items-center px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                    Liabilities
+                </a>
+                <a href="#" id="nav-financialGoals" class="nav-item flex items-center px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200">
+                     <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h1a2 2 0 002-2v-1a2 2 0 012-2h1.945M12 4v4m0 0l-2-2m2 2l2-2"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18V14m0 4a2 2 0 002-2v-1a2 2 0 00-2-2h-1a2 2 0 00-2 2v1a2 2 0 002 2z"></path></svg>
+                    Financial Goals
+                </a>
+                <a href="#" id="nav-planSummary" class="nav-item flex items-center px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200">
+                    <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Plan Summary
+                </a>
+                <a href="#" id="nav-productRec" class="nav-item flex items-center px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200">
+                     <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                    Recommendations
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-slate-200">
+                <h3 class="text-sm font-semibold text-slate-600 mb-3">System Status</h3>
+                <div class="space-y-2 text-sm">
+                    <div id="status-audio" class="flex items-center text-slate-500">
+                        <div class="status-indicator w-2.5 h-2.5 rounded-full mr-2 bg-gray-300 transition-colors"></div> Audio Streaming
+                    </div>
+                    <div id="status-transcription" class="flex items-center text-slate-500">
+                        <div class="status-indicator w-2.5 h-2.5 rounded-full mr-2 bg-gray-300 transition-colors"></div> Live Transcription
+                    </div>
+                    <div id="status-processing" class="flex items-center text-slate-500">
+                        <div class="status-indicator w-2.5 h-2.5 rounded-full mr-2 bg-gray-300 transition-colors"></div> AI Processing
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Area -->
+        <div class="flex-1 flex flex-col">
+            <!-- Header -->
+            <header class="bg-white p-4 border-b border-slate-200 flex justify-between items-center sticky top-0 z-10">
+                <div>
+                    <h2 id="page-title" class="text-2xl font-bold text-slate-800">Basic Information</h2>
+                    <p id="client-name-header" class="mt-1 text-lg text-slate-500 hidden"></p>
+                </div>
+                 <div class="flex-shrink-0 flex items-center gap-4">
+                    <button id="skip-pfr-btn" class="bg-white border border-slate-300 text-slate-700 font-bold py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors duration-200">Skip PFR</button>
+                    <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+                        <button id="start-btn" class="p-2 rounded-md hover:bg-slate-200 text-slate-600"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path></svg></button>
+                        <button id="pause-btn" class="p-2 rounded-md hover:bg-slate-200 text-slate-600" disabled><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M5.75 4.5a.75.75 0 00-.75.75v10.5a.75.75 0 001.5 0V5.25A.75.75 0 005.75 4.5zm8.5 0a.75.75 0 00-.75.75v10.5a.75.75 0 001.5 0V5.25a.75.75 0 00-.75-.75z"></path></svg></button>
+                        <button id="stop-btn" class="p-2 rounded-md hover:bg-slate-200 text-slate-600" disabled><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M5 6.25A1.25 1.25 0 003.75 7.5v5A1.25 1.25 0 005 13.75h10A1.25 1.25 0 0016.25 12.5v-5A1.25 1.25 0 0015 6.25H5z"></path></svg></button>
+                    </div>
+                    <div id="timer" class="text-lg font-mono font-semibold text-slate-700 bg-slate-100 px-3 py-2 rounded-lg">00:00</div>
+                </div>
+            </header>
+            <div class="flex-1 flex overflow-hidden">
+                <!-- Main Content -->
+                <main class="flex-1 flex flex-col bg-slate-100 overflow-y-auto p-6 md:p-8">
+                    <!-- Agent Content Pages -->
+                        <!-- Basic Info Page -->
+                        <div id="content-basicInfo" class="page-content">
+                             <div class="space-y-6">
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Client Details</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                        <div><label class="block text-slate-500 mb-1">Name</label><input type="text" value="Anjali Sharma" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                        <div><label class="block text-slate-500 mb-1">Age</label><input type="text" value="34" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                        <div><label class="block text-slate-500 mb-1">City</label><input type="text" value="Mumbai" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                        <div><label class="block text-slate-500 mb-1">Occupation</label><input type="text" value="Software Engineer" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                        <div><label class="block text-slate-500 mb-1">Dependents</label><input type="text" value="3" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Family Structure</h3>
+                                    <div class="space-y-3 text-sm">
+                                        <div class="grid grid-cols-3 gap-3 p-2 rounded-md bg-slate-50"><span>Rohan Sharma</span><span>Husband</span><span>36 years</span></div>
+                                        <div class="grid grid-cols-3 gap-3 p-2 rounded-md bg-slate-50"><span>Priya Sharma</span><span>Daughter</span><span>5 years</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Assets Page -->
+                        <div id="content-asset" class="page-content hidden">
+                            <div class="space-y-6">
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Income & Savings</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                                        <div><label class="block text-slate-500 mb-1">Monthly Income (INR)</label><div class="p-2 font-semibold text-slate-800" id="asset-monthly-income"></div></div>
+                                        <div class="md:col-span-2"><label class="block text-slate-500 mb-1">Savings (FD, PPF, NSC, etc.)</label><textarea class="w-full p-2 border border-slate-300 rounded-md bg-slate-50" rows="3">PPF: ~5,00,000&#x0a;FD with HDFC: 2,00,000</textarea></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Investments & Other Assets</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                                        <div><label class="block text-slate-500 mb-1">Investments (Mutual Funds, Equity)</label><textarea class="w-full p-2 border border-slate-300 rounded-md bg-slate-50" rows="3">Mutual Funds: ~3,00,000&#x0a;Direct Equity: ~1,50,000</textarea></div>
+                                        <div><label class="block text-slate-500 mb-1">Other Assets (Gold, Land, Property)</label><textarea class="w-full p-2 border border-slate-300 rounded-md bg-slate-50" rows="3">20g Digital Gold</textarea></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Existing Life Insurance</h3>
+                                    <div class="space-y-3 text-sm">
+                                        <div class="grid grid-cols-3 gap-3 font-medium text-slate-600 px-2"><span>Insurer Name</span><span class="text-right">Cover Amount (INR)</span><span class="text-right">Annual Premium (INR)</span></div>
+                                        <div class="grid grid-cols-3 gap-3 p-3 rounded-md bg-slate-50"><span>LIC Jeevan Anand</span><span class="text-right">50,00,000</span><span class="text-right">45,000</span></div>
+                                        <div class="grid grid-cols-3 gap-3 p-3 rounded-md bg-slate-50"><span>HDFC Click2Protect</span><span class="text-right">1,00,00,000</span><span class="text-right">18,000</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                         <!-- Liabilities Page -->
+                        <div id="content-liability" class="page-content hidden">
+                            <div class="space-y-6">
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Monthly Outflow</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+                                        <div><label class="block text-slate-500 mb-1">Approx. Monthly Expenses (INR)</label><input type="text" value="60,000" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                         <div><label class="block text-slate-500 mb-1">Total Monthly EMI (INR)</label><input type="text" value="38,000" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50 font-semibold"></div>
+                                         <div><label class="block text-slate-500 mb-1">Credit Card Dues (if any)</label><input type="text" value="15,000" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Home Loan Details</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
+                                        <div><label class="block text-slate-500 mb-1">Outstanding Amount (INR)</label><input type="text" value="45,00,000" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                        <div><label class="block text-slate-500 mb-1">Monthly EMI (INR)</label><input type="text" value="30,000" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                        <div><label class="block text-slate-500 mb-1">Remaining Tenure (Months)</label><input type="text" value="180" class="w-full p-2 border border-slate-300 rounded-md bg-slate-50"></div>
+                                    </div>
+                                </div>
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Other Loans</h3>
+                                    <div class="space-y-3 text-sm">
+                                        <div class="grid grid-cols-3 gap-3 font-medium text-slate-600 px-2"><span>Loan Type</span><span class="text-right">Outstanding (INR)</span><span class="text-right">Monthly EMI (INR)</span></div>
+                                        <div class="grid grid-cols-3 gap-3 p-3 rounded-md bg-slate-50"><span>Car Loan</span><span class="text-right">3,50,000</span><span class="text-right">8,000</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial Goals Page -->
+                        <div id="content-financialGoals" class="page-content hidden">
+                           <div class="space-y-6">
+                                <div class="bg-white rounded-xl shadow-sm">
+                                    <div class="p-6">
+                                        <div class="flex justify-between items-start">
+                                            <h3 class="text-lg font-semibold text-slate-700">Daughter's Education</h3>
+                                            <span class="bg-red-100 text-red-800 text-xs font-bold px-2.5 py-1 rounded-full">High Priority</span>
+                                        </div>
+                                        <p class="text-sm text-slate-600 mt-2">Fund 5-year-old daughter's higher education.</p>
+                                        <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                                            <div><label class="block text-slate-500">Timeframe</label><p class="font-semibold text-slate-800">13 Years</p></div>
+                                            <div><label class="block text-slate-500">Required Corpus</label><p class="font-semibold text-slate-800" id="goal1-corpus"></p></div>
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-slate-200 px-6 py-2 flex justify-end">
+                                        <button class="toggle-calculation text-sm font-medium text-sky-600 hover:text-sky-800 flex items-center gap-1">
+                                            Show calculation <svg class="w-4 h-4 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="calculation-card bg-slate-50 px-6 border-t border-slate-200">
+                                        <p class="text-sm text-slate-600 font-mono">Current Cost: ₹25,00,000<br>Inflation: 4% annually<br>Calculation: 2500000 * (1 + 0.04)^13</p>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-sm">
+                                    <div class="p-6">
+                                        <div class="flex justify-between items-start">
+                                            <h3 class="text-lg font-semibold text-slate-700">Retirement Planning</h3>
+                                            <span class="bg-orange-100 text-orange-800 text-xs font-bold px-2.5 py-1 rounded-full">Medium Priority</span>
+                                        </div>
+                                        <p class="text-sm text-slate-600 mt-2">Build a corpus for a comfortable retirement.</p>
+                                        <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                                            <div><label class="block text-slate-500">Timeframe</label><p class="font-semibold text-slate-800">~25 Years</p></div>
+                                            <div><label class="block text-slate-500">Required Corpus</label><p class="font-semibold text-slate-800" id="goal2-corpus"></p></div>
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-slate-200 px-6 py-2 flex justify-end">
+                                        <button class="toggle-calculation text-sm font-medium text-sky-600 hover:text-sky-800 flex items-center gap-1">
+                                            Show calculation <svg class="w-4 h-4 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="calculation-card bg-slate-50 px-6 border-t border-slate-200">
+                                        <p class="text-sm text-slate-600 font-mono">Calculation based on future value of current monthly expenses.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Plan Summary Page -->
+                        <div id="content-planSummary" class="page-content hidden">
+                           <div class="space-y-6">
+                                <div class="bg-white p-6 rounded-xl shadow-sm">
+                                    <h3 class="text-lg font-semibold text-slate-700 mb-4">Immediate Life Cover Analysis</h3>
+                                     <div class="space-y-2 text-sm text-slate-600">
+                                        <div class="flex justify-between"><span>Outstanding Liabilities</span><span id="summary-liabilities"></span></div>
+                                        <div class="flex justify-between"><span>Family Living Expenses (10x)</span><span id="summary-expenses"></span></div>
+                                    </div>
+                                    <div class="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center">
+                                        <span class="font-bold text-slate-800">Total Recommended Cover:</span>
+                                        <span class="text-xl font-bold text-sky-600" id="summary-total-cover"></span>
+                                    </div>
+                                </div>
+                                <h3 class="text-lg font-semibold text-slate-700 pt-4">Goal-Based Corpus Needs</h3>
+                                <div class="bg-white rounded-xl shadow-sm">
+                                    <div class="p-6">
+                                        <h4 class="font-semibold text-slate-700">Daughter's Education</h4>
+                                        <div class="mt-2 grid grid-cols-3 gap-4 text-sm">
+                                            <div><label class="block text-slate-500">Timeframe</label><p class="font-semibold text-slate-800">13 Years</p></div>
+                                            <div><label class="block text-slate-500">Target Year</label><p class="font-semibold text-slate-800">2038</p></div>
+                                            <div><label class="block text-slate-500">Future Corpus</label><p class="font-semibold text-slate-800" id="summary-goal1-corpus"></p></div>
+                                        </div>
+                                    </div>
+                                     <div class="border-t border-slate-200 px-6 py-2 flex justify-end">
+                                        <button class="toggle-calculation text-sm font-medium text-sky-600 hover:text-sky-800 flex items-center gap-1">
+                                            Show calculation <svg class="w-4 h-4 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="calculation-card bg-slate-50 px-6 border-t border-slate-200">
+                                        <p class="text-sm text-slate-600 font-mono">Future Value based on goal details.</p>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-sm">
+                                    <div class="p-6">
+                                        <h4 class="font-semibold text-slate-700">Retirement Planning</h4>
+                                        <div class="mt-2 grid grid-cols-3 gap-4 text-sm">
+                                            <div><label class="block text-slate-500">Timeframe</label><p class="font-semibold text-slate-800">25 Years</p></div>
+                                            <div><label class="block text-slate-500">Target Year</label><p class="font-semibold text-slate-800">2050</p></div>
+                                            <div><label class="block text-slate-500">Future Corpus</label><p class="font-semibold text-slate-800" id="summary-goal2-corpus"></p></div>
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-slate-200 px-6 py-2 flex justify-end">
+                                        <button class="toggle-calculation text-sm font-medium text-sky-600 hover:text-sky-800 flex items-center gap-1">
+                                            Show calculation <svg class="w-4 h-4 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="calculation-card bg-slate-50 px-6 border-t border-slate-200">
+                                        <p class="text-sm text-slate-600 font-mono">Future Value based on goal details.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recommendations Page -->
+                        <div id="content-productRec" class="page-content hidden">
+                             <div class="space-y-6">
+                                <div class="bg-white rounded-xl shadow-sm ring-1 ring-sky-200">
+                                    <div class="p-6">
+                                        <h3 class="text-lg font-semibold text-sky-800 mb-2">Recommendation 1: Term Plan</h3>
+                                        <p class="text-sm text-slate-600 mb-4">Pure protection for financial safety net.</p>
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
+                                            <div><label class="block text-slate-500">Cover</label><p class="font-bold text-xl text-slate-800" id="rec-term-cover"></p></div>
+                                            <div><label class="block text-slate-500">Term</label><p class="font-semibold text-slate-800">30 Years</p></div>
+                                            <div><label class="block text-slate-500">Est. Annual Premium</label><p class="font-semibold text-slate-800" id="rec-term-premium"></p></div>
+                                        </div>
+                                        <div class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">
+                                            <strong>Reason:</strong> Settle liabilities, provide for living expenses.
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-slate-200 px-6 py-2 flex justify-end">
+                                        <button class="toggle-calculation text-sm font-medium text-sky-600 hover:text-sky-800 flex items-center gap-1">
+                                            Show calculation <svg class="w-4 h-4 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="calculation-card bg-slate-50 px-6 border-t border-slate-200">
+                                        <p class="text-sm text-slate-600 font-mono">Heuristic: ₹1,500 per year per ₹1L sum assured<br>Calculation: (1,20,50,000 / 1,00,000) * 1500</p>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-sm">
+                                    <div class="p-6">
+                                        <h3 class="text-lg font-semibold text-slate-700 mb-2">Recommendation 2: Child Plan (for Education)</h3>
+                                        <p class="text-sm text-slate-600 mb-4">Savings-oriented plan for daughter's education.</p>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                                            <div><label class="block text-slate-500">Target Corpus</label><p class="font-bold text-xl text-slate-800" id="rec-child-corpus"></p></div>
+                                            <div><label class="block text-slate-500">Est. Annual Premium</label><p class="font-semibold text-slate-800" id="rec-child-premium"></p></div>
+                                        </div>
+                                        <div class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">
+                                            <strong>Reason:</strong> Aligns with 13-year timeframe for college.
+                                        </div>
+                                    </div>
+                                     <div class="border-t border-slate-200 px-6 py-2 flex justify-end">
+                                        <button class="toggle-calculation text-sm font-medium text-sky-600 hover:text-sky-800 flex items-center gap-1">
+                                            Show calculation <svg class="w-4 h-4 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="calculation-card bg-slate-50 px-6 border-t border-slate-200">
+                                        <p class="text-sm text-slate-600 font-mono">Heuristic: 5% annual compounded return.<br>Reverse calculation to find premium for corpus.</p>
+                                    </div>
+                                </div>
+                                <div class="bg-white rounded-xl shadow-sm">
+                                    <div class="p-6">
+                                        <h3 class="text-lg font-semibold text-slate-700 mb-2">Recommendation 3: Retirement Plan</h3>
+                                        <p class="text-sm text-slate-600 mb-4">Long-term investment for independent retirement.</p>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                                            <div><label class="block text-slate-500">Target Corpus</label><p class="font-bold text-xl text-slate-800" id="rec-retire-corpus"></p></div>
+                                            <div><label class="block text-slate-500">Est. Annual Premium</label><p class="font-semibold text-slate-800" id="rec-retire-premium"></p></div>
+                                        </div>
+                                        <div class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">
+                                            <strong>Reason:</strong> Long-term wealth creation for lifestyle maintenance.
+                                        </div>
+                                    </div>
+                                     <div class="border-t border-slate-200 px-6 py-2 flex justify-end">
+                                        <button class="toggle-calculation text-sm font-medium text-sky-600 hover:text-sky-800 flex items-center gap-1">
+                                            Show calculation <svg class="w-4 h-4 chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        </button>
+                                    </div>
+                                    <div class="calculation-card bg-slate-50 px-6 border-t border-slate-200">
+                                       <p class="text-sm text-slate-600 font-mono">Heuristic: 5% annual compounded return.<br>Reverse calculation to find premium for corpus.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                </main>
+
+                <!-- AI Cues Sidebar -->
+                <aside class="w-96 bg-white border-l border-slate-200 flex flex-col p-4 space-y-4 overflow-y-auto">
+                     <h3 class="text-lg font-bold text-slate-800 text-right">AI Cues</h3>
+                    <!-- Cue Type 1: Follow-up Question -->
+                    <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                        <h4 class="font-semibold text-blue-800 flex items-center mb-2">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.546-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Follow-up Question
+                        </h4>
+                        <ul class="list-disc list-inside space-y-1 text-blue-700 text-sm">
+                            <li>Primary financial goals?</li>
+                            <li>Typical month financially?</li>
+                        </ul>
+                    </div>
+                    <!-- Cue Type 2: Answer to Query -->
+                    <div class="bg-green-50 border border-green-200 p-4 rounded-lg">
+                        <h4 class="font-semibold text-green-800 flex items-center mb-2">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
+                            Answer to "Why Term Plan?"
+                        </h4>
+                        <ul class="list-disc list-inside space-y-1 text-green-700 text-sm">
+                            <li>Financial safety net.</li>
+                            <li>Covers loans, secures family's future.</li>
+                            <li>Most affordable, high-cover option.</li>
+                        </ul>
+                    </div>
+                     <!-- Cue Type 3: Compliance Alert -->
+                    <div class="bg-amber-50 border border-amber-300 p-4 rounded-lg">
+                        <h4 class="font-semibold text-amber-800 flex items-center mb-2">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            Compliance Alert
+                        </h4>
+                        <ul class="list-disc list-inside space-y-1 text-amber-700 text-sm">
+                            <li>Disclose commission structures if asked.</li>
+                            <li>Avoid guaranteeing returns.</li>
+                        </ul>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- Elements ---
+            const navItems = document.querySelectorAll('.nav-item');
+            const contentPages = document.querySelectorAll('.page-content');
+            const pageTitle = document.getElementById('page-title');
+            const clientNameHeader = document.getElementById('client-name-header');
+            const homeButton = document.getElementById('home-button');
+            const dateEl = document.getElementById('current-date');
+            const timeEl = document.getElementById('current-time');
+            const timerEl = document.getElementById('timer');
+            const startBtn = document.getElementById('start-btn');
+            const pauseBtn = document.getElementById('pause-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const calcToggles = document.querySelectorAll('.toggle-calculation');
+
+            // --- State ---
+            const pageDetails = {
+                basicInfo: "Basic Information",
+                asset: "Assets",
+                liability: "Liabilities",
+                financialGoals: "Financial Goals",
+                planSummary: "Plan Summary",
+                productRec: "Recommendations",
+            };
+            let timerInterval;
+            let timerSeconds = 0;
+            let timerState = 'stopped'; // 'stopped', 'running', 'paused'
+
+            // --- Functions ---
+            function setActiveAgent(agentId) {
+                navItems.forEach(item => {
+                    item.classList.remove('active-nav-item');
+                    if (item.id === `nav-${agentId}`) {
+                        item.classList.add('active-nav-item');
+                    }
+                });
+
+                contentPages.forEach(page => {
+                    page.style.display = 'none';
+                });
+                
+                const activePage = document.getElementById(`content-${agentId}`);
+                if (activePage) {
+                    activePage.style.display = 'block';
+                }
+                
+                pageTitle.textContent = pageDetails[agentId] || "Dashboard";
+            }
+
+            function updateDateTime() {
+                const now = new Date();
+                dateEl.textContent = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                timeEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+            }
+            
+            function formatCurrency(num) {
+                if (isNaN(num)) return '₹ 0';
+                const crores = num / 10000000;
+                const lakhs = num / 100000;
+                let shorthand = '';
+
+                if (crores >= 1) {
+                    shorthand = `(${crores.toFixed(1)} Cr)`;
+                } else if (lakhs >= 1) {
+                    shorthand = `(${lakhs.toFixed(1)} Lk)`;
+                }
+                
+                const formattedNum = new Intl.NumberFormat('en-IN').format(num);
+
+                return `₹ ${formattedNum} <span class="text-slate-500 font-normal text-xs">${shorthand}</span>`;
+            }
+
+            function updateAllNumbers() {
+                document.getElementById('asset-monthly-income').innerHTML = formatCurrency(150000);
+                document.getElementById('goal1-corpus').innerHTML = formatCurrency(4000000);
+                document.getElementById('goal2-corpus').innerHTML = formatCurrency(50000000);
+                // Summary Page
+                document.getElementById('summary-liabilities').innerHTML = formatCurrency(4850000);
+                document.getElementById('summary-expenses').innerHTML = `+ ${formatCurrency(7200000)}`;
+                document.getElementById('summary-total-cover').innerHTML = formatCurrency(12050000);
+                document.getElementById('summary-goal1-corpus').innerHTML = formatCurrency(4000000);
+                document.getElementById('summary-goal2-corpus').innerHTML = formatCurrency(50000000);
+                // Reco Page
+                document.getElementById('rec-term-cover').innerHTML = formatCurrency(12050000);
+                document.getElementById('rec-term-premium').innerHTML = formatCurrency(22500);
+                document.getElementById('rec-child-corpus').innerHTML = formatCurrency(4000000);
+                document.getElementById('rec-child-premium').innerHTML = formatCurrency(226000);
+                document.getElementById('rec-retire-corpus').innerHTML = formatCurrency(50000000);
+                document.getElementById('rec-retire-premium').innerHTML = formatCurrency(1048000);
+            }
+
+            function updateTimer() {
+                timerSeconds++;
+                const minutes = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+                const seconds = (timerSeconds % 60).toString().padStart(2, '0');
+                timerEl.textContent = `${minutes}:${seconds}`;
+            }
+
+            function handleTimerControls(action) {
+                if (action === 'start') {
+                    if (timerState !== 'running') {
+                        timerInterval = setInterval(updateTimer, 1000);
+                        timerState = 'running';
+                        startBtn.disabled = true;
+                        pauseBtn.disabled = false;
+                        stopBtn.disabled = false;
+                        startBtn.classList.add('text-sky-600');
+                        pauseBtn.classList.remove('text-sky-600');
+                    }
+                } else if (action === 'pause') {
+                    if (timerState === 'running') {
+                        clearInterval(timerInterval);
+                        timerState = 'paused';
+                        startBtn.disabled = false;
+                        pauseBtn.disabled = true;
+                        startBtn.classList.remove('text-sky-600');
+                        pauseBtn.classList.add('text-sky-600');
+                    }
+                } else if (action === 'stop') {
+                    clearInterval(timerInterval);
+                    timerState = 'stopped';
+                    timerSeconds = 0;
+                    timerEl.textContent = '00:00';
+                    startBtn.disabled = false;
+                    pauseBtn.disabled = true;
+                    stopBtn.disabled = true;
+                    startBtn.classList.remove('text-sky-600');
+                    pauseBtn.classList.remove('text-sky-600');
+                }
+            }
+
+            // --- Event Listeners ---
+            navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const agentId = item.id.replace('nav-', '');
+                    setActiveAgent(agentId);
+                });
+            });
+            
+            homeButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                setActiveAgent('basicInfo');
+            });
+
+            startBtn.addEventListener('click', () => handleTimerControls('start'));
+            pauseBtn.addEventListener('click', () => handleTimerControls('pause'));
+            stopBtn.addEventListener('click', () => handleTimerControls('stop'));
+
+            calcToggles.forEach(button => {
+                button.addEventListener('click', () => {
+                    const card = button.closest('.rounded-xl');
+                    const calculationSection = card.querySelector('.calculation-card');
+                    if (calculationSection) {
+                        calculationSection.classList.toggle('expanded');
+                        button.classList.toggle('expanded');
+                    }
+                });
+            });
+
+            function simulateStatus() {
+                const statuses = ['audio', 'transcription', 'processing'];
+                let currentStatusIndex = 0;
+                setInterval(() => {
+                    if (timerState !== 'running') {
+                        statuses.forEach(s => {
+                            const el = document.getElementById(`status-${s}`);
+                            if (el && el.querySelector('.status-indicator')) {
+                                el.querySelector('.status-indicator').classList.remove('bg-green-500');
+                                el.querySelector('.status-indicator').classList.add('bg-gray-300');
+                                el.classList.add('text-slate-500');
+                                el.classList.remove('text-slate-700', 'font-medium');
+                            }
+                        });
+                        return;
+                    };
+
+                    const statusId = statuses[currentStatusIndex];
+                    const statusElement = document.getElementById(`status-${statusId}`);
+                    
+                    if (statusElement) {
+                        const indicator = statusElement.querySelector('.status-indicator');
+                        indicator.classList.add('bg-green-500');
+                        statusElement.classList.add('text-slate-700', 'font-medium');
+                    }
+                    
+                    currentStatusIndex = (currentStatusIndex + 1);
+                    
+                    if (currentStatusIndex >= statuses.length) {
+                       currentStatusIndex = 0;
+                       setTimeout(() => {
+                            if (timerState === 'running') { // Re-check state before resetting
+                                statuses.forEach(s => {
+                                     const el = document.getElementById(`status-${s}`);
+                                     if (el && el.querySelector('.status-indicator')) {
+                                        el.querySelector('.status-indicator').classList.remove('bg-green-500');
+                                        el.classList.add('bg-gray-300');
+                                        el.classList.remove('text-slate-700', 'font-medium');
+                                        el.classList.add('text-slate-500');
+                                     }
+                                });
+                            }
+                       }, 500);
+                    }
+                }, 750);
+            }
+
+            // --- Initialization ---
+            updateDateTime();
+            setInterval(updateDateTime, 1000 * 30); // Update time every 30s
+            setActiveAgent('basicInfo');
+            updateAllNumbers();
+            simulateStatus();
+            
+            setTimeout(() => {
+                clientNameHeader.textContent = '| Client: Anjali Sharma';
+                clientNameHeader.classList.remove('hidden');
+            }, 2000);
+        });
+    </script>
+
+</body>
+</html>
+
+ML = formatCurrency(226000);
+                document.getElementById('rec-retire-corpus').innerHTML = formatCurrency(50000000);
+                document.getElementById('rec-retire-premium').innerHTML = formatCurrency(1048000);
+            }
+
+            function updateTimer() {
+                timerSeconds++;
+                const minutes = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+                const seconds = (timerSeconds % 60).toString().padStart(2, '0');
+                timerEl.textContent = `${minutes}:${seconds}`;
+            }
+
+            function handleTimerControls(action) {
+                if (action === 'start') {
+                    if (timerState !== 'running') {
+                        timerInterval = setInterval(updateTimer, 1000);
+                        timerState = 'running';
+                        startBtn.disabled = true;
+                        pauseBtn.disabled = false;
+                        stopBtn.disabled = false;
+                        startBtn.classList.add('text-sky-600');
+                        pauseBtn.classList.remove('text-sky-600');
+                    }
+                } else if (action === 'pause') {
+                    if (timerState === 'running') {
+                        clearInterval(timerInterval);
+                        timerState = 'paused';
+                        startBtn.disabled = false;
+                        pauseBtn.disabled = true;
+                        startBtn.classList.remove('text-sky-600');
+                        pauseBtn.classList.add('text-sky-600');
+                    }
+                } else if (action === 'stop') {
+                    clearInterval(timerInterval);
+                    timerState = 'stopped';
+                    timerSeconds = 0;
+                    timerEl.textContent = '00:00';
+                    startBtn.disabled = false;
+                    pauseBtn.disabled = true;
+                    stopBtn.disabled = true;
+                    startBtn.classList.remove('text-sky-600');
+                    pauseBtn.classList.remove('text-sky-600');
+                }
+            }
+
+            // --- Event Listeners ---
+            navItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const agentId = item.id.replace('nav-', '');
+                    setActiveAgent(agentId);
+                });
+            });
+            
+            homeButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                setActiveAgent('basicInfo');
+            });
+
+            startBtn.addEventListener('click', () => handleTimerControls('start'));
+            pauseBtn.addEventListener('click', () => handleTimerControls('pause'));
+            stopBtn.addEventListener('click', () => handleTimerControls('stop'));
+
+            calcToggles.forEach(button => {
+                button.addEventListener('click', () => {
+                    const card = button.closest('.rounded-xl');
+                    const calculationSection = card.querySelector('.calculation-card');
+                    if (calculationSection) {
+                        calculationSection.classList.toggle('expanded');
+                        button.classList.toggle('expanded');
+                    }
+                });
+            });
+
+            function simulateStatus() {
+                const statuses = ['audio', 'transcription', 'processing'];
+                let currentStatusIndex = 0;
+                setInterval(() => {
+                    if (timerState !== 'running') {
+                        statuses.forEach(s => {
+                            const el = document.getElementById(`status-${s}`);
+                            if (el && el.querySelector('.status-indicator')) {
+                                el.querySelector('.status-indicator').classList.remove('bg-green-500');
+                                el.querySelector('.status-indicator').classList.add('bg-gray-300');
+                                el.classList.add('text-slate-500');
+                                el.classList.remove('text-slate-700', 'font-medium');
+                            }
+                        });
+                        return;
+                    };
+
+                    const statusId = statuses[currentStatusIndex];
+                    const statusElement = document.getElementById(`status-${statusId}`);
+                    
+                    if (statusElement) {
+                        const indicator = statusElement.querySelector('.status-indicator');
+                        indicator.classList.add('bg-green-500');
+                        statusElement.classList.add('text-slate-700', 'font-medium');
+                    }
+                    
+                    currentStatusIndex = (currentStatusIndex + 1);
+                    
+                    if (currentStatusIndex >= statuses.length) {
+                       currentStatusIndex = 0;
+                       setTimeout(() => {
+                            if (timerState === 'running') { // Re-check state before resetting
+                                statuses.forEach(s => {
+                                     const el = document.getElementById(`status-${s}`);
+                                     if (el && el.querySelector('.status-indicator')) {
+                                        el.querySelector('.status-indicator').classList.remove('bg-green-500');
+                                        el.classList.add('bg-gray-300');
+                                        el.classList.remove('text-slate-700', 'font-medium');
+                                        el.classList.add('text-slate-500');
+                                     }
+                                });
+                            }
+                       }, 500);
+                    }
+                }, 750);
+            }
+
+            // --- Initialization ---
+            updateDateTime();
+            setInterval(updateDateTime, 1000 * 30); // Update time every 30s
+            setActiveAgent('basicInfo');
+            updateAllNumbers();
+            simulateStatus();
+            
+            setTimeout(() => {
+                clientNameHeader.textContent = '| Client: Anjali Sharma';
+                clientNameHeader.classList.remove('hidden');
+            }, 2000);
+        });
+    </script>
+
+</body>
+</html>
+
