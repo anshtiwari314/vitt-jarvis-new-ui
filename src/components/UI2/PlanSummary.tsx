@@ -1,23 +1,6 @@
 import React from 'react'
 
-interface Props {
-    data: {
-        lifeCover: {
-            outstandingLiabilities: number;
-            familyLivingExpenses: number;
-            totalRecommendedCover: number;
-        };
-        goalCorpus: {
-            id: string;
-            title: string;
-            timeframe: string;
-            targetYear: string;
-            futureCorpus: number;
-            calculationDetails: string;
-        }[];
-    };
-    formatCurrency: (num: number) => string;
-}
+
 
 export default function PlanSummary({ data, formatCurrency }: Props){
     const [expandedSummary, setExpandedSummary] = React.useState<{ [key: string]: boolean }>({});

@@ -1,92 +1,3 @@
-import { createSlice,current } from "@reduxjs/toolkit";
-
-// Define types for our data structure for type safety
-interface PfrData {
-  basicInfo: {
-    clientDetails: { [key: string]: string | number };
-    familyStructure: {
-      name: string;
-      relation: string;
-      age: string;
-    }[];
-  };
-  assets: {
-    incomeAndSavings: {
-      monthlyIncome: number;
-      savings: string;
-    };
-    investmentsAndOther: {
-      investments: string;
-      otherAssets: string;
-    };
-    existingLifeInsurance: {
-      insurer: string;
-      cover: number;
-      premium: number;
-    }[];
-  };
-  liabilities: {
-    monthlyOutflow: {
-      monthlyExpenses: number;
-      totalMonthlyEMI: number;
-      creditCardDues: number;
-    };
-    homeLoan: {
-      outstanding: number;
-      emi: number;
-      tenure: number;
-    };
-    otherLoans: {
-      type: string;
-      outstanding: number;
-      emi: number;
-    }[];
-  };
-  financialGoals: {
-    id: string;
-    title: string;
-    priority: string;
-    priorityClass: string;
-    description: string;
-    timeframe: string;
-    requiredCorpus: number;
-    calculationDetails: string;
-  }[];
-  planSummary: {
-    lifeCover: {
-      outstandingLiabilities: number;
-      familyLivingExpenses: number;
-      totalRecommendedCover: number;
-    };
-    goalCorpus: {
-      id: string;
-      title: string;
-      timeframe: string;
-      targetYear: string;
-      futureCorpus: number;
-      calculationDetails: string;
-    }[];
-  };
-  recommendations: {
-    id: string;
-    title: string;
-    description: string;
-    cover?: number;
-    targetCorpus?: number;
-    term?: string;
-    premium: number;
-    reason: string;
-    calculationDetails: string;
-    isPrimary: boolean;
-  }[];
-}
-
-interface SalesCopilotState {
-  navigation: string;
-  chat: any[];
-  pfrData: PfrData;
-}
-
 const initialCopilotState= {
   navigation: 'basic-info',
   
@@ -135,11 +46,17 @@ const initialCopilotState= {
         table_values:[
           ['LIC Jeevan Anand',5000000,45000],
           ['HDFC Click2Protect','₹ 1,00,00,000 (1.0 Cr)','₹ 18,000']
-          
+          // ['roshan Sharma','Husband','36 yrs','Mumbai'],
+          // ['Priya Sharma','Daughter','5 yrs']
           
         ]
       } 
-     
+      //incomeAndSavings: { monthlyIncome: 150000, savings: "PPF: ~5,00,000\nFD with HDFC: 2,00,000" },
+      //investmentsAndOther: { investments: "Mutual Funds: ~3,00,000\nDirect Equity: ~1,50,000", otherAssets: "20g Digital Gold" },
+      // existingLifeInsurance: [
+      //   { insurer: "LIC Jeevan Anand", cover: 5000000, premium: 45000 },
+      //   { insurer: "HDFC Click2Protect", cover: 10000000, premium: 18000 }
+      // ]
       
     },
     liabilities: {
@@ -167,16 +84,20 @@ const initialCopilotState= {
         table_values:[
           ['Car Loan','₹ 3,50,000 (3.5 Lk)','₹ 8,000'],
 
-         
+          // ['LIC Jeevan Anand',5000000,45000],
+          // ['HDFC Click2Protect','₹ 1,00,00,000 (1.0 Cr)','₹ 18,000']
+          // ['roshan Sharma','Husband','36 yrs','Mumbai'],
+          // ['Priya Sharma','Daughter','5 yrs']
           
         ]
       } 
-      
+      //monthlyOutflow: { monthlyExpenses: 60000, totalMonthlyEMI: 38000, creditCardDues: 15000 },
+      //homeLoan: { outstanding: 4500000, emi: 30000, tenure: 180 },
+      //otherLoans: [{ type: "Car Loan", outstanding: 350000, emi: 8000 }]
     },
     financialGoals: [
       
         {
-          id:'unique',
           header:"Daughter's Education",
           sub_header:"Fund 5-year-old daughter's higher education.",
           priority:"High Priority",
@@ -187,7 +108,8 @@ const initialCopilotState= {
           }
         }
       
-      
+      // { id: "goal1", title: "Daughter's Education", priority: "High Priority", priorityClass: "bg-red-100 text-red-800", description: "Fund 5-year-old daughter's higher education.", timeframe: "13 Years", requiredCorpus: 4000000, calculationDetails: "Current Cost: ₹25,00,000\nInflation: 4% annually\nCalculation: 2500000 * (1 + 0.04)^13" },
+      // { id: "goal2", title: "Retirement Planning", priority: "Medium Priority", priorityClass: "bg-orange-100 text-orange-800", description: "Build a corpus for a comfortable retirement.", timeframe: "~25 Years", requiredCorpus: 50000000, calculationDetails: "Calculation based on future value of current monthly expenses." }
     ],
     planSummary: [
       {
@@ -220,7 +142,11 @@ const initialCopilotState= {
         reason:'',
 
       }
-      
+      //lifeCover: { outstandingLiabilities: 4850000, familyLivingExpenses: 7200000, totalRecommendedCover: 12050000 },
+      // goalCorpus: [
+      //   { id: "summary1", title: "Daughter's Education", timeframe: "13 Years", targetYear: "2038", futureCorpus: 4000000, calculationDetails: "Future Value based on goal details." },
+      //   { id: "summary2", title: "Retirement Planning", timeframe: "25 Years", targetYear: "2050", futureCorpus: 50000000, calculationDetails: "Future Value based on goal details." }
+      // ]
     ],
     recommendations: [
       {
@@ -238,7 +164,9 @@ const initialCopilotState= {
         reason:'Reason: Settle liabilities, provide for living expenses.',
 
       }
-    
+     // { id: "rec1", title: "Recommendation 1: Term Plan", description: "Pure protection for financial safety net.", cover: 12050000, term: "30 Years", premium: 22500, reason: "Settle liabilities, provide for living expenses.", calculationDetails: "Heuristic: ₹1,500 per year per ₹1L sum assured\nCalculation: (1,20,50,000 / 1,00,000) * 1500", isPrimary: true },
+      //{ id: "rec2", title: "Recommendation 2: Child Plan (for Education)", description: "Savings-oriented plan for daughter's education.", targetCorpus: 4000000, premium: 226000, reason: "Aligns with 13-year timeframe for college.", calculationDetails: "Heuristic: 5% annual compounded return.\nReverse calculation to find premium for corpus.", isPrimary: false },
+      //{ id: "rec3", title: "Recommendation 3: Retirement Plan", description: "Long-term investment for independent retirement.", targetCorpus: 50000000, premium: 1048000, reason: "Long-term wealth creation for lifestyle maintenance.", calculationDetails: "Heuristic: 5% annual compounded return.\nReverse calculation to find premium for corpus.", isPrimary: false }
     ],
     followUpQn:{
       header:'Follow-up Question',
@@ -284,26 +212,4 @@ const initialCopilotState= {
       ]
     }
   }
-};
-
-
-const salesCopilotSlice = createSlice({
-  name: "salesCopilotReducer", // Changed from "usersReducer" for consistency
-  initialState: initialCopilotState,
-  reducers: {
-    addChat: (state, action) => {
-      console.log('add chat triggers', action.payload, current(state));
-      // Correct way to add to an array within a Redux Toolkit slice
-      state.chat.push(action.payload);
-    },
-    setNavigation: (state, action) => {
-      state.navigation = action.payload;
-    }
-  },
-});
-
-export const { addChat, setNavigation } = salesCopilotSlice.actions;
-
-export default {
-  salesCopilotReducer: salesCopilotSlice.reducer,
 };
