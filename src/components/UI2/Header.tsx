@@ -1,8 +1,11 @@
 import React from "react"
 import { useAppSelector } from '../../store/store';
+import { useVad } from "../../context/VadWrapper";
 
 export default function Header(){
     const currentNavigation = useAppSelector(state => state.salesCopilotReducer.navigation);
+    //@ts-ignore
+    const {manualVadStatus,setManualVadStatus} = useVad()
 
     const pageDetails: { [key: string]: string } = {
         basicInfo: "Basic Information",
@@ -121,22 +124,39 @@ export default function Header(){
             <div className="flex-shrink-0 flex items-center gap-4">
                 <button id="skip-pfr-btn" className="bg-white border border-slate-300 text-slate-700 font-bold py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors duration-200">Skip PFR</button>
                 <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
-                    <button
-                        id="start-btn"
-                        className={`p-2 rounded-md hover:bg-slate-200 text-slate-600 ${timerState === 'running' ? 'text-sky-600' : ''}`}
-                        onClick={() => handleTimerControls('start')}
-                        disabled={timerState === 'running'}
-                    >
-                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path></svg>
-                    </button>
-                    <button
+
+                    {
+                        manualVadStatus? 
+
+                        <button
                         id="pause-btn"
                         className={`p-2 rounded-md hover:bg-slate-200 text-slate-600 ${timerState === 'paused' ? 'text-sky-600' : ''}`}
-                        onClick={() => handleTimerControls('pause')}
+                        
+                        onClick={() => {
+                            setManualVadStatus(false)
+                            //handleTimerControls('start')
+                        }}
+                        //onClick={() => handleTimerControls('pause')}
                         disabled={timerState !== 'running'}
                     >
                         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M5.75 4.5a.75.75 0 00-.75.75v10.5a.75.75 0 001.5 0V5.25A.75.75 0 005.75 4.5zm8.5 0a.75.75 0 00-.75.75v10.5a.75.75 0 001.5 0V5.25a.75.75 0 00-.75-.75z"></path></svg>
                     </button>
+                        :
+
+                        <button
+                        id="start-btn"
+                        className={`p-2 rounded-md hover:bg-slate-200 text-slate-600 ${timerState === 'running' ? 'text-sky-600' : ''}`}
+                        onClick={() => {
+                            setManualVadStatus(true)
+                            //handleTimerControls('start')
+                        }}
+                        //disabled={timerState === 'running'}
+                    >
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path></svg>
+                    </button>
+                    }
+                    
+                    
                     <button
                         id="stop-btn"
                         className="p-2 rounded-md hover:bg-slate-200 text-slate-600"

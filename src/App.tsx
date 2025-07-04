@@ -58,7 +58,7 @@ export default function App() {
 
   return (
     
-    <body className="bg-slate-50 text-slate-800 antialiased">
+    <div className="bg-slate-50 text-slate-800 antialiased">
         <div className="flex h-screen overflow-hidden">
             <SideNavigation/>
             <div className="flex-1 flex flex-col">
@@ -75,7 +75,7 @@ export default function App() {
                 </div>
             </div>
         </div>
-    </body>
+    </div>
     
   )
 }
