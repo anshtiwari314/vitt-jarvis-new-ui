@@ -1,8 +1,5 @@
 import React from "react"
 
-
-
-
 export default function FinancialGoals({ data, formatCurrency }: Props){
     const [expandedGoals, setExpandedGoals] = React.useState<{ [key: string]: boolean }>({});
 

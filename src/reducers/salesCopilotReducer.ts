@@ -1,7 +1,7 @@
 import { createSlice,current } from "@reduxjs/toolkit";
 
 // Define types for our data structure for type safety
-interface PfrData {
+export interface PfrData {
   basicInfo: {
     clientDetails: { [key: string]: string | number };
     familyStructure: {
@@ -183,7 +183,7 @@ const initialCopilotState= {
           text_area_value:'Current Cost: ₹25,00,000 \n Inflation: 4% annually \n Calculation: 2500000 * (1 + 0.04)^13',
           cols:{
             'TimeFrame':'13 yrs',
-            'Required Corpus':'₹4,00,000'
+            'Required Corpus':'₹40,00,000'
           }
         }
       
