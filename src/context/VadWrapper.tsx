@@ -4,9 +4,10 @@ import { getTimeStamp,getOldTimeStamp,generateBase64 } from '../functions/genera
 import WavToMp3 from '../functions/wavToMp3';
 import { useData } from './DataWrapper';
 import { useAuth } from './AuthContext';
-import { useMicVAD} from "@ricky0123/vad-react"
+import { useMicVAD, utils} from "@ricky0123/vad-react"
+//import { } from "@ricky0123/vad-react"
 import { PostReq } from '../functions/requests';
-import { processAudioToBase64 } from '../functions/generalFn';
+//import { processAudioToBase64 } from '../functions/generalFn';
 //import useRequest from '../hooks/requests';
 
 const VadContext = createContext('vadContext')
@@ -18,7 +19,7 @@ export function useVad(){
 export default function VadWrapper({children}){
 
 
-    const {ngrokServerUrl,setMsgLoading,oneWayUrl} = useData()
+    const {ngrokServerUrl,setMsgLoading,oneWayUrl,socket} = useData()
     const {currentUser} = useAuth()
     const [vadRecordingOn,setVadRecordingOn] = useState<boolean>(false);
     let recordingStatus = useRef(false);
@@ -40,30 +41,80 @@ export default function VadWrapper({children}){
     //   }
 
     
+  async function processAudioToBase64(audio,url,data){
+    console.log("vad stopped")
+    const wavBuffer = utils.encodeWAV(audio)
+      // const base64 = utils.arrayBufferToBase64(wavBuffer)
+      // console.log("hello world",base64)
+
+         // let wavBlob =processingToWav(audio)
+      let wavBlob = new Blob([wavBuffer], { type: 'audio/wav' })
+      let mp3Blob = await WavToMp3(wavBlob)
+      
+      //generate base64 of that blob 
+      let base64data = await generateBase64(mp3Blob)
+
+
+      data = {...data,
+        audiomessage:base64data.split(',')[1],
+        timeStamp:getTimeStamp()
+      }
+
+
+      //let resp = await PostReq(url,data)
+      //console.log('resp',resp)
+      //return resp
+      console.log("from inside send to server", data);
+      socket.emit("ai_suggestion_req_ins_v2", data);
+
+}
+
+
     useEffect(()=>{
+      if(socket===null)
+        return ;
+
       //init req 
 
-      let data = {
-        //this change is for jarvis-in-person-usecase
-        //sessionid:currentUser.userid,
+      // let data = {
+      //   //this change is for jarvis-in-person-usecase
+      //   //sessionid:currentUser.userid,
         
 
-        // this change is for vitt-sales-copilot
-        sessionid:currentUser?.sessionuid,
-        mob: currentUser?.userid,
-        userid:currentUser?.userid,
-        audiomessage:'',
-        timeStamp:getTimeStamp(),
-        init:true
-      }
 
-      if(initReqStatusRef.current ===false){
-        initReqStatusRef.current = true
-        PostReq('https://2265-49-204-210-210.ngrok-free.app/',data).then(resp=>{
-          console.log('init req',resp)
-         })
-      }
-       
+      //   // this change is for vitt-sales-copilot
+      //   sessionid:currentUser.sessionuid,
+      //   mob: currentUser.userid,
+      //   userid:currentUser.userid,
+      //   audiomessage:'',
+      //   timeStamp:getTimeStamp(),
+      //   init:true
+      // }
+
+
+    let questionsApiReqPayload = {
+        roomid: 'abc-def-ghi',
+        jobid: 'abcde',
+        agentid: 'bayya-bayya',
+        //custemailid: custEmailId,
+        //isHost: isHost,
+        name: 'varun bayya', 
+        // roomid: "abc-123-fgh-456",
+        // jobid: "1",
+        // agentid: "1234",
+        
+      //isHost:isHost
+    };
+
+      // if(initReqStatusRef.current ===false){
+      //   initReqStatusRef.current = true
+      //   PostReq('https://2265-49-204-210-210.ngrok-free.app/',data).then(resp=>{
+      //     console.log('init req',resp)
+      //    })
+      // }
+
+      //this will trigger only after socket is connected & only once 
+      socket.emit("questions_loader_req_ins_v2", questionsApiReqPayload);
       
 
     },[])
@@ -98,18 +149,23 @@ export default function VadWrapper({children}){
           console.log("Speech start")
         },
         onSpeechEnd:(audio)=>{
-            let data = {
-              // this one is for jarvis-in-person
-              //sessionid:currentUser?.userid,
+            console.log('getting data from vad2')
+          let speechStopDate = new Date();
 
-                //this one is for vitt-sales-copilot
-                
-               sessionid:currentUser?.sessionuid,
-               mob:currentUser.userid,
-                userid:currentUser?.userid
+            let data = {
+              
+              roomid: 'abc-def-ghi',
+              jobid: 'abcde',
+              agentid: 'bayya-bayya',
+              //custemailid: custEmailId,
+              //isHost: isHost,
+              name: 'varun bayya', 
+              //sessionid:usersArrRef.current[0]?.id,
+               
+              speech_stop_time:`${speechStopDate.toLocaleDateString()} ${speechStopDate.toLocaleTimeString()}:${speechStopDate.getMilliseconds()}`
             }
-            processAudioToBase64(audio,oneWayUrl,data)
-            setMsgLoading(true)
+
+          processAudioToBase64(audio,oneWayUrl,data)
         }
       })
 
@@ -130,9 +186,9 @@ export default function VadWrapper({children}){
             
 
             // this change is for vitt-sales-copilot
-            sessionid:currentUser.sessionuid,
-            mob: currentUser.userid,
-            userid:currentUser.userid
+            // sessionid:currentUser.sessionuid,
+            // mob: currentUser.userid,
+            // userid:currentUser.userid
         }
         processAudioToBase64(audio,oneWayUrl,data)
         
@@ -217,8 +273,8 @@ export default function VadWrapper({children}){
     /** manual vad logic  begins here ( offline logic)*/
 
     useEffect(()=>{
-      console.log('useEffect manual vad paused runs',VAD2)
-      VAD2?.pause()
+      //console.log('useEffect manual vad paused runs',VAD2)
+      //VAD2?.pause()
     },[])
 
       useEffect(()=>{
@@ -227,14 +283,14 @@ export default function VadWrapper({children}){
         let tempVad = null
 
         
-        
-        if (typeof VAD2 !== "object" || VAD2?.vadOptions ===undefined)
+        //|| VAD2?.vadOptions ===undefined
+        if (typeof VAD2 !== "object" )
         return ;
 
         if(manualVadStatus===true){
             console.log('vad2',VAD2)
-            VAD2.vadOptions.positiveSpeechThreshold=0.9 
-            VAD2.vadOptions.negativeSpeechThreshold=0.85
+            //VAD2.vadOptions.positiveSpeechThreshold=0.9 
+            //VAD2.vadOptions.negativeSpeechThreshold=0.85
             VAD2?.start()
             //console.log('manual vad is active',VAD2)
             console.log('vad2 after changing parameteres',VAD2)
@@ -245,6 +301,10 @@ export default function VadWrapper({children}){
         }
       },[manualVadStatus])
     
+      useEffect(()=>{
+        setManualVadStatus(false)
+        console.log('manual vad status',manualVadStatus,VAD2?.listening)
+      },[])
     
 
     /* (Automatic vad old ) this logic has time delay bcz of startMediaRecorder function the data only send after when 
@@ -272,8 +332,8 @@ export default function VadWrapper({children}){
                 time:10000,
                 recordingStatus:recordingStatus,
                 
-                userid:currentUser.userid,
-                sessionid:currentUser.sessionuid,
+                // userid:currentUser.userid,
+                // sessionid:currentUser.sessionuid,
                 timeStamp:getTimeStamp()
                 // mob:"anuj",
                 // //roomid	"271083f6-8a51-4db0-b005-7e14923f70d2"

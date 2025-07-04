@@ -7,7 +7,7 @@ import { initSalesState ,updateBasicInfo,updateAssets,
 
  } from '../reducers/salesCopilotReducer';
 import { useDispatch } from "react-redux";
-import { useAppSelector } from "@/store/store";
+import { useAppSelector } from "../store/store";
 
 const Context = createContext('')
 
@@ -21,7 +21,9 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     console.log("aaya")
 
     const [socket,setSocket] = useState<any>(null)
-    // const useAppSelector((state) => state.nvReducer);
+    const navigation = useAppSelector((state) => state.salesCopilotReducer.navigation);
+
+    console.log('sales state',navigation)
 
     function updateSalesState(data:{type:string;payload:any}){
         console.log('handle incoming data',data," the data type",data.type);
@@ -99,6 +101,22 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             tempSocket.off('update-state',updateSalesState)
         }
     },[dispatch])
+
+
+    useEffect(()=>{
+        if(socket===null)
+            return ;
+
+        let data = {
+            roomid:'abc-def-ghi', 
+            jobid:'abcde', 
+            agentid:'bayya-bayya', 
+            name:'varun bayya', 
+            selected_topic:navigation
+        }
+        socket.emit('selected_topic_req_v2',data)
+    },[navigation,socket])
+
 
     let values = {
        socket,setSocket
