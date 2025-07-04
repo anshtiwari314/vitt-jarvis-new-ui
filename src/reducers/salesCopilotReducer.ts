@@ -293,6 +293,9 @@ const salesCopilotSlice = createSlice({
   name: "salesCopilotReducer", // Changed from "usersReducer" for consistency
   initialState: initialCopilotState,
   reducers: {
+    initSalesState:(state,action)=>{
+
+    },
     updateBasicInfo: (state, action) => {
       console.log('add chat triggers', action.payload, current(state));
       // Correct way to add to an array within a Redux Toolkit slice
@@ -328,7 +331,12 @@ const salesCopilotSlice = createSlice({
   },
 });
 
-export const { addChat, setNavigation } = salesCopilotSlice.actions;
+export const { initSalesState,
+  updateBasicInfo,updateAssets, 
+  updateLiabilities,updateFinancialGoals,
+  updatePlanSummary,updateRecommendations,
+  updateFollowUpQn,updateCues,updateAlerts,
+  setNavigation } = salesCopilotSlice.actions;
 
 export default {
   salesCopilotReducer: salesCopilotSlice.reducer,

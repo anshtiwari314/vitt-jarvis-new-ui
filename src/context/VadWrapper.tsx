@@ -15,7 +15,7 @@ export function useVad(){
     return useContext(VadContext)
 }
 
-export function VadWrapper({children}){
+export default function VadWrapper({children}){
 
 
     const {ngrokServerUrl,setMsgLoading,oneWayUrl} = useData()
