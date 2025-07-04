@@ -15,7 +15,8 @@ import Header from './components/UI2/Header'
 import RightPanel from './components/UI2/RightPanel'
 
 export default function App() {
-  const { navigation: currentNavigation, pfrData } = useAppSelector(state => state.salesCopilotReducer);
+   const { navigation: currentNavigation, salesData } = useAppSelector((state) => state.salesCopilotReducer)
+  console.log(currentNavigation,"basic sales data is ",salesData.liabilities);
 
 
     // Helper function for currency formatting (moved from index2.html)
@@ -39,19 +40,19 @@ export default function App() {
     const renderContent = () => {
         switch (currentNavigation) {
             case 'basicInfo':
-                return <BasicInfo data={pfrData.basicInfo} />;
+                return <BasicInfo data={salesData.basicInfo} />;
             case 'asset':
-                return <Assets data={pfrData.assets} formatCurrency={formatCurrency} />;
+                return <Assets data={salesData.assets} formatCurrency={formatCurrency} />;
             case 'liability':
-                return <Liabilities data={pfrData.liabilities} formatCurrency={formatCurrency} />;
+                return <Liabilities data={salesData.liabilities} formatCurrency={formatCurrency} />;
             case 'financialGoals':
-                return <FinancialGoals data={pfrData.financialGoals} formatCurrency={formatCurrency} />;
+                return <FinancialGoals data={salesData.financialGoals} formatCurrency={formatCurrency} />;
             case 'planSummary':
-                return <PlanSummary data={pfrData.planSummary} formatCurrency={formatCurrency} />;
+                return <PlanSummary data={salesData.planSummary} formatCurrency={formatCurrency} />;
             case 'productRec':
-                return <Recommendations data={pfrData.recommendations} formatCurrency={formatCurrency} />;
+                return <Recommendations data={salesData.recommendations} formatCurrency={formatCurrency} />;
             default:
-                return <BasicInfo data={pfrData.basicInfo} />; // Default to Basic Info
+                return <BasicInfo data={salesData.basicInfo} />; // Default to Basic Info
         }
     };
 
@@ -86,3 +87,4 @@ export default function App() {
 //           </Router>
 //       {/* </DataWrapper> */}
 //     </AuthContext> */}
+//plan summarty,recoomendation(d),finacial (d)!!!imp

@@ -1,46 +1,66 @@
-import React from "react";
-import ToggleableCard from "./ToggleableCard";
- 
+import React from "react"
+import RecommendationToggleCard from "./RecommendationToggleCard"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { faLightbulb } from "@fortawesome/free-solid-svg-icons"
+
+interface Recommendation {
+  id: string
+  title: string
+  description: string
+  calculationDetails: string
+  isPrimary?: boolean
+  cover?: number
+  targetCorpus?: number
+  term?: string
+  premium: number
+  reason: string
+  header?: string
+  sub_header?: string
+  text_area_value?: string
+  cols?: { [key: string]: string }
+  calculation?: { [key: string]: string }
+}
+
 interface RecommendationsProps {
-    data: any[]; // Define a more specific type if possible
-    formatCurrency: (value: any) => string;
+  data: Recommendation[]
+  formatCurrency: (value: number) => string
 }
 
 export default function Recommendations({ data, formatCurrency }: RecommendationsProps) {
-    const [expandedRecs, setExpandedRecs] = React.useState<{ [key: string]: boolean }>({});
+  const [expandedRecs, setExpandedRecs] = React.useState<{ [key: string]: boolean }>({})
 
-    const toggleCalculation = (recId: string) => {
-        setExpandedRecs(prevState => ({
-            ...prevState,
-            [recId]: !prevState[recId],
-        }));
-    };
+  console.log(data, "the data i received")
 
+  const toggleCalculation = (recId: string) => {
+    setExpandedRecs((prevState) => ({
+      ...prevState,
+      [recId]: !prevState[recId],
+    }))
+  }
+
+  if (!data || data.length === 0) {
     return (
-        <div className="space-y-6">
-            {data.map(rec => (
-                <ToggleableCard
-                    key={rec.id}
-                    id={rec.id}
-                    title={rec.title}
-                    calculationDetails={rec.calculationDetails}
-                    expandedState={expandedRecs}
-                    toggleFunction={toggleCalculation}
-                    headerClassName={rec.isPrimary ? 'text-sky-800' : 'text-slate-700'}
-                    cardClassName={rec.isPrimary ? 'ring-1 ring-sky-200' : ''}
-                >
-                    <p className="text-sm text-slate-600 mb-4">{rec.description}</p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
-                        {rec.cover && <div><label className="block text-slate-500">Cover</label><p className="font-bold text-xl text-slate-800" dangerouslySetInnerHTML={{ __html: formatCurrency(rec.cover) }}></p></div>}
-                        {rec.targetCorpus && <div><label className="block text-slate-500">Target Corpus</label><p className="font-bold text-xl text-slate-800" dangerouslySetInnerHTML={{ __html: formatCurrency(rec.targetCorpus) }}></p></div>}
-                        {rec.term && <div><label className="block text-slate-500">Term</label><p className="font-semibold text-slate-800">{rec.term}</p></div>}
-                        <div><label className="block text-slate-500">Est. Annual Premium</label><p className="font-semibold text-slate-800" dangerouslySetInnerHTML={{ __html: formatCurrency(rec.premium) }}></p></div>
-                    </div>
-                    <div className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">
-                        <strong>Reason:</strong> {rec.reason}
-                    </div>
-                </ToggleableCard>
-            ))}
+      <div className="flex flex-col items-center justify-center py-12 px-4">
+        <div className="text-center">
+          <FontAwesomeIcon icon={faLightbulb} className="w-16 h-16 text-gray-300 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">No Recommendations Available</h3>
+          <p className="text-gray-500">Recommendations will appear here based on your financial profile.</p>
         </div>
-    );
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {data.map((rec) => (
+        <RecommendationToggleCard
+          key={rec.id}
+          recommendation={rec}
+          formatCurrency={formatCurrency}
+          isExpanded={expandedRecs[rec.id] || false}
+          onToggle={toggleCalculation}
+        />
+      ))}
+    </div>
+  )
 }
