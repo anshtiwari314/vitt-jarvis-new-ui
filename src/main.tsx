@@ -11,9 +11,11 @@ import VadWrapper  from './context/VadWrapper';
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <ReduxProvider>
+    <DataWrapper>
     <VadWrapper>
     <App/>
     </VadWrapper>
+      </DataWrapper>  
     </ReduxProvider>
   </React.StrictMode>,
 )

@@ -89,6 +89,10 @@ interface SalesCopilotState {
 
 const initialCopilotState= {
   navigation: 'basic-info',
+  chat:[
+    "hi how are you",
+    "hello"
+  ],
   
   salesData: {
     basicInfo: {
@@ -294,7 +298,7 @@ const salesCopilotSlice = createSlice({
   initialState: initialCopilotState,
   reducers: {
     initSalesState:(state,action)=>{
-
+      return action.payload;
     },
     updateBasicInfo: (state, action) => {
       console.log('add chat triggers', action.payload, current(state));
@@ -302,32 +306,49 @@ const salesCopilotSlice = createSlice({
       state.chat.push(action.payload);
     },
     updateAssets:(state,action)=>{
-
+      state.salesData.assets={
+        ...state.salesData.assets,
+        ...action.payload,
+      }
     },
-    updateLiabilities:()=>{
-
+    updateLiabilities:(state,action)=>{
+      state.salesData.liabilities={
+        ...state.salesData.liabilities,
+        ...action.payload
+      }
     },
-    updateFinancialGoals:()=>{
-
+    updateFinancialGoals: (state, action) => {
+      state.salesData.financialGoals = action.payload;
     },
-    updatePlanSummary:()=>{
 
+    updatePlanSummary: (state, action) => {
+      state.salesData.planSummary = action.payload;
     },
-    updateRecommendations:()=>{
 
+    updateRecommendations: (state, action) => {
+      state.salesData.recommendations = action.payload;
     },
-    updateFollowUpQn:()=>{
-
+    updateFollowUpQn:(state,action)=>{
+      state.salesData.followUpQn={
+        ...state.salesData.followUpQn,
+        data:action.payload
+      }
     },
-    updateCues:()=>{
-
+    updateCues: (state, action) => {
+      state.salesData.cues = {
+        ...state.salesData.cues,
+        data: action.payload,
+      };
     },
-    updateAlerts:()=>{
-
+    updateAlerts: (state, action) => {
+      state.salesData.alert = {
+        ...state.salesData.alert,
+        data: action.payload,
+      };
     },
-    setNavigation: (state, action) => {
+   setNavigation: (state, action) => {
       state.navigation = action.payload;
-    }
+    },
   },
 });
 

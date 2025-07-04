@@ -49,9 +49,9 @@ export default function VadWrapper({children}){
         
 
         // this change is for vitt-sales-copilot
-        sessionid:currentUser.sessionuid,
-        mob: currentUser.userid,
-        userid:currentUser.userid,
+        sessionid:currentUser?.sessionuid,
+        mob: currentUser?.userid,
+        userid:currentUser?.userid,
         audiomessage:'',
         timeStamp:getTimeStamp(),
         init:true

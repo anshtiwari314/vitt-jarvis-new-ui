@@ -2,7 +2,7 @@ import React from "react"
 import RecommendationToggleCard from "./RecommendationToggleCard"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faLightbulb } from "@fortawesome/free-solid-svg-icons"
-
+ 
 interface Recommendation {
   id: string
   title: string
@@ -20,24 +20,24 @@ interface Recommendation {
   cols?: { [key: string]: string }
   calculation?: { [key: string]: string }
 }
-
+ 
 interface RecommendationsProps {
   data: Recommendation[]
   formatCurrency: (value: number) => string
 }
-
+ 
 export default function Recommendations({ data, formatCurrency }: RecommendationsProps) {
   const [expandedRecs, setExpandedRecs] = React.useState<{ [key: string]: boolean }>({})
-
+ 
   console.log(data, "the data i received")
-
+ 
   const toggleCalculation = (recId: string) => {
     setExpandedRecs((prevState) => ({
       ...prevState,
       [recId]: !prevState[recId],
     }))
   }
-
+ 
   if (!data || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4">
@@ -49,18 +49,21 @@ export default function Recommendations({ data, formatCurrency }: Recommendation
       </div>
     )
   }
-
+ 
   return (
     <div className="space-y-4">
-      {data.map((rec) => (
+     {data.map((rec, idx) => {
+      const realId = rec.id || `rec-${idx}` //if no id than let be this the id
+      return (
         <RecommendationToggleCard
-          key={rec.id}
+          key={realId}
           recommendation={rec}
           formatCurrency={formatCurrency}
-          isExpanded={expandedRecs[rec.id] || false}
-          onToggle={toggleCalculation}
+          isExpanded={expandedRecs[realId] || false}
+          onToggle={() => toggleCalculation(realId)}
         />
-      ))}
+      )
+    })}
     </div>
   )
 }
