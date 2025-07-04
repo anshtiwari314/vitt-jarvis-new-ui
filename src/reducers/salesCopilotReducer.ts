@@ -201,7 +201,7 @@ const initialCopilotState= {
           "Outstanding Liabilities":"₹ 48,50,000 (48.5 Lk)",
           "Family Living Expenses (10x)":"+₹ 72,000 (72 K)"
         },
-        text_area_value:'Current Cost: ₹25,00,000 \n Inflation: 4% annually \n Calculation: 2500000 * (1 + 0.04)^13',
+        text_area_value:'',
         reason:'<h3 style="font-size:3rem">Total Recommended Cover <p style="color:blue">₹ 1,20,50,000 (1.2 Cr)</p></h3>',
 
       },
@@ -287,14 +287,40 @@ const initialCopilotState= {
 };
 
 
+
+
 const salesCopilotSlice = createSlice({
   name: "salesCopilotReducer", // Changed from "usersReducer" for consistency
   initialState: initialCopilotState,
   reducers: {
-    addChat: (state, action) => {
+    updateBasicInfo: (state, action) => {
       console.log('add chat triggers', action.payload, current(state));
       // Correct way to add to an array within a Redux Toolkit slice
       state.chat.push(action.payload);
+    },
+    updateAssets:(state,action)=>{
+
+    },
+    updateLiabilities:()=>{
+
+    },
+    updateFinancialGoals:()=>{
+
+    },
+    updatePlanSummary:()=>{
+
+    },
+    updateRecommendations:()=>{
+
+    },
+    updateFollowUpQn:()=>{
+
+    },
+    updateCues:()=>{
+
+    },
+    updateAlerts:()=>{
+
     },
     setNavigation: (state, action) => {
       state.navigation = action.payload;
