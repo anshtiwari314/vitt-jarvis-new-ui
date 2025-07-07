@@ -58,7 +58,8 @@ export default function VadWrapper({children}){
       let base64data = await generateBase64(mp3Blob)
 
 
-      data = {...data,
+      data = {
+        ...data,
         audiomessage:base64data.split(',')[1],
         timeStamp:getTimeStamp()
       }
@@ -67,7 +68,7 @@ export default function VadWrapper({children}){
       //let resp = await PostReq(url,data)
       //console.log('resp',resp)
       //return resp
-      console.log("from inside send to server", data);
+      console.log("from inside send to server[DEBUGGGG]", data);
       socket.emit("ai_suggestion_req_ins_v2", data);
 
 }
@@ -100,9 +101,9 @@ export default function VadWrapper({children}){
 
 
     let questionsApiReqPayload = {
-        roomid: 'abc-def-ghi',
+        roomid: '12344',
         jobid: 'abcde',
-        agentid: 'bayya-bayya',
+        agentid: '1234',
         //custemailid: custEmailId,
         //isHost: isHost,
         name: 'varun bayya', 
@@ -121,10 +122,13 @@ export default function VadWrapper({children}){
       // }
 
       //this will trigger only after socket is connected & only once 
+     if(!initReqStatusRef.current){
+      initReqStatusRef.current = true
+      console.log("ama i coming here");
       socket.emit("questions_loader_req_ins_v2", questionsApiReqPayload);
       
 
-    },[socket,isSocketConnected])
+    },[])
 
 
     function VAD(cb1:CallableFunction,cb2:CallableFunction){
@@ -161,7 +165,7 @@ export default function VadWrapper({children}){
 
             let data = {
               
-              roomid: 'abc-def-ghi',
+              roomid: '12344',
               jobid: 'abcde',
               agentid: 'bayya-bayya',
               //custemailid: custEmailId,

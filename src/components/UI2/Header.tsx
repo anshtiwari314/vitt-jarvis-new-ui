@@ -11,14 +11,13 @@ export default function Header(){
     const {manualVadStatus,setManualVadStatus,VAD2} = useVad()
 
     const pageDetails: { [key: string]: string } = {
-        basicInfo: "Basic Information",
-        asset: "Assets",
-        liability: "Liabilities",
-        financialGoals: "Financial Goals",
-        planSummary: "Plan Summary",
-        productRec: "Recommendations",
+        "Basic Info": "Basic Information",
+        "Assets": "Assets",
+        "Liabilities": "Liabilities",
+        "Financial Goals": "Financial Goals",
+        "Plan Summary": "Plan Summary",
+        "Recommendations": "Recommendations",
     };
-
     // Timer state and functions (moved from index2.html)
     const [timerSeconds, setTimerSeconds] = React.useState(0);
     const [timerState, setTimerState] = React.useState<'stopped' | 'running' | 'paused'>('stopped');

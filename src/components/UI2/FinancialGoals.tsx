@@ -22,7 +22,7 @@ interface FinancialGoalsProps {
 export default function FinancialGoals({ data, formatCurrency }: FinancialGoalsProps) {
   const [expandedGoals, setExpandedGoals] = React.useState<{ [key: string]: boolean }>({})
 
-  console.log("the data taht is  received data", data) 
+  // console.log("the data taht is  received data", data) 
 
   const toggleCalculation = (goalId: string) => {
     setExpandedGoals((prevState) => ({

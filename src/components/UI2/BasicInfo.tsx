@@ -3,21 +3,20 @@ import React from 'react';
 interface Props {
   data: {
     boxA?: {
-      data?: { [key: string]: string | number };
+      data?: { [key: string]: string | number | null | undefined };
       header?: string;
     };
     table?: {
       header?: string;
       table_header?: string[];
-      table_values?: string[][];
+      table_values?: (string | number | null | undefined)[][];
     };
   };
 }
 
 export default function BasicInfo({ data }: Props) {
-  const formatLabel = (key: string) => {
-    return key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
-  };
+  const formatLabel = (key: string) =>
+    key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
 
   if (!data || !data.boxA?.data || !data.table) {
     return <div className="p-4 text-slate-500">Loading client data...</div>;
@@ -29,15 +28,15 @@ export default function BasicInfo({ data }: Props) {
         {/* Client Info */}
         <div className="bg-white p-4 rounded-xl shadow-sm">
           <h3 className="text-lg font-semibold text-slate-700 mb-3">
-            {data?.boxA?.header || 'Client Details'}
+            {data.boxA.header || 'Client Details'}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            {Object.entries(data?.boxA?.data || {}).map(([key, value]) => (
+            {Object.entries(data.boxA.data).map(([key, value]) => (
               <div key={key}>
                 <label className="block text-slate-500 mb-1">{formatLabel(key)}</label>
                 <input
                   type="text"
-                  defaultValue={value}
+                  defaultValue={value ?? ''} // Show blank if null or undefined
                   className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
                   readOnly
                 />
@@ -49,7 +48,7 @@ export default function BasicInfo({ data }: Props) {
         {/* Family Table */}
         <div className="bg-white p-6 rounded-xl shadow-sm">
           <h3 className="text-lg font-semibold text-slate-700 mb-4">
-            {data?.table?.header || 'Family Structure'}
+            {data.table.header || 'Family Structure'}
           </h3>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm text-left">
@@ -65,9 +64,9 @@ export default function BasicInfo({ data }: Props) {
               <tbody>
                 {(data.table.table_values || []).map((row, rowIndex) => (
                   <tr key={rowIndex} className="border-b">
-                    {(data?.table.table_header || []).map((_, colIndex) => (
+                    {(data.table.table_header || []).map((_, colIndex) => (
                       <td key={colIndex} className="px-4 py-2">
-                        {row[colIndex] || '-'}
+                        {(row[colIndex] ?? '')}
                       </td>
                     ))}
                   </tr>

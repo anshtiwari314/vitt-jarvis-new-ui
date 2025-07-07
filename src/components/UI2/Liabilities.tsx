@@ -4,31 +4,30 @@ interface Props {
   data: {
     boxA: {
       header: string;
-      data: { [key: string]: string | number };
+      data: { [key: string]: string | number | null | undefined };
     };
     boxB: {
       header: string;
-      data: { [key: string]: string | number };
+      data: { [key: string]: string | number | null | undefined };
     };
     table: {
       header: string;
       table_header: string[];
-      table_values: (string | number)[][];
+      table_values: (string | number | null | undefined)[][];
     };
   };
   formatCurrency: (num: number) => string;
 }
 
 export default function Liabilities({ data, formatCurrency }: Props) {
-  console.log(data, "From the liabilities", data, formatCurrency);
+  const renderFormattedValue = (value: string | number | null | undefined) => {
+    if (value === null || value === undefined || value === "") return "";
 
-  const renderFormattedValue = (value: string | number) => {
     if (typeof value === "number") {
-      console.log(formatCurrency(value), "the curr");
-      return formatCurrency(value).replace(/<[^>]+>/g, '');
+      return formatCurrency(value).replace(/<[^>]+>/g, "");
     }
 
-    return String(value).replace(/<[^>]+>/g, '');
+    return String(value).replace(/<[^>]+>/g, "");
   };
 
   return (
@@ -92,18 +91,22 @@ export default function Liabilities({ data, formatCurrency }: Props) {
                 key={rowIndex}
                 className="grid grid-cols-3 gap-3 p-3 rounded-md bg-slate-50"
               >
-                {row.map((cell, colIdx) => (
-                  <span
-                    key={colIdx}
-                    className={colIdx === 0 ? "" : "text-right"}
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        typeof cell === "number" && colIdx > 0
-                          ? formatCurrency(cell)
-                          : String(cell),
-                    }}
-                  />
-                ))}
+                {row.map((cell, colIdx) => {
+                  const cellValue =
+                    cell === null || cell === undefined || cell === ""
+                      ? ""
+                      : typeof cell === "number" && colIdx > 0
+                      ? formatCurrency(cell)
+                      : String(cell);
+
+                  return (
+                    <span
+                      key={colIdx}
+                      className={colIdx === 0 ? "" : "text-right"}
+                      dangerouslySetInnerHTML={{ __html: cellValue }}
+                    />
+                  );
+                })}
               </div>
             ))}
           </div>

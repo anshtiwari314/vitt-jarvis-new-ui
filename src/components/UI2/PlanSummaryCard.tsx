@@ -6,10 +6,10 @@ interface PlanSummaryItem {
   id?: string
   header: string
   sub_header?: string
-  cols?: { [key: string]: string }
-  calculation?: { [key: string]: string }
-  text_area_value?: string
-  reason?: string
+  cols?: { [key: string]: string | null | undefined }
+  calculation?: { [key: string]: string | null | undefined }
+  text_area_value?: string | null | undefined
+  reason?: string | null | undefined
   type?: "lifeCover" | "goalCorpus" | "general"
 }
 
@@ -32,7 +32,7 @@ export default function PlanSummaryCard({
     return Number.parseInt(cleanString, 10) || 0
   }
 
-  const extractTotalCover = (reasonHtml: string) => {
+  const extractTotalCover = (reasonHtml: string | null | undefined) => {
     if (!reasonHtml) return ""
     const match = reasonHtml.match(/<p[^>]*>(.*?)<\/p>/i)
     return match ? match[1] : reasonHtml
@@ -52,7 +52,8 @@ export default function PlanSummaryCard({
   const cardType = getCardType()
   const cols = summaryItem?.cols
   const calculation = summaryItem?.calculation
-  const summaryId = summaryItem.id || `summary-${summaryItem.header.replace(/\s+/g, "-").toLowerCase()}`
+  const summaryId =
+    summaryItem.id || `summary-${summaryItem.header.replace(/\s+/g, "-").toLowerCase()}`
 
   const contentRef = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState("0px")
@@ -61,7 +62,6 @@ export default function PlanSummaryCard({
     if (isExpanded && contentRef.current) {
       setHeight(`${contentRef.current.scrollHeight}px`)
 
-      // Smooth scroll when expanding
       setTimeout(() => {
         contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
       }, 200)
@@ -69,6 +69,9 @@ export default function PlanSummaryCard({
       setHeight("0px")
     }
   }, [isExpanded])
+
+  const safeValue = (value: string | null | undefined) =>
+    value === null || value === undefined || value === "" ? "" : value
 
   if (cardType === "lifeCover") {
     return (
@@ -80,7 +83,10 @@ export default function PlanSummaryCard({
             {Object.entries(calculation).map(([key, value]) => (
               <div key={key} className="flex justify-between items-center">
                 <span className="text-slate-600">{key}</span>
-                <span className="font-medium text-slate-800" dangerouslySetInnerHTML={{ __html: value }} />
+                <span
+                  className="font-medium text-slate-800"
+                  dangerouslySetInnerHTML={{ __html: safeValue(value) }}
+                />
               </div>
             ))}
           </div>
@@ -88,7 +94,9 @@ export default function PlanSummaryCard({
 
         {summaryItem.reason && (
           <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-            <span className="text-lg font-semibold text-slate-800">Total Recommended Cover:</span>
+            <span className="text-lg font-semibold text-slate-800">
+              Total Recommended Cover:
+            </span>
             <span
               className="text-base text-xl font-bold text-sky-600"
               dangerouslySetInnerHTML={{ __html: extractTotalCover(summaryItem.reason) }}
@@ -96,9 +104,10 @@ export default function PlanSummaryCard({
           </div>
         )}
 
+        <div className="-mx-4 border-t border-gray-200 mt-2 mb-1" />
+
         {summaryItem.text_area_value && (
-          <>
-              <div className="-mx-4 border-t border-gray-200 mt-2 mb-1" />
+          <div>
             <div className="flex justify-end">
               <button
                 onClick={() => onToggle(summaryId)}
@@ -107,19 +116,24 @@ export default function PlanSummaryCard({
                 <span className="text-[1.05rem] font-medium tracking-tight">Show calculation</span>
                 <FontAwesomeIcon
                   icon={isExpanded ? faChevronUp : faChevronDown}
-                  className={`w-3 h-3 transition-transform duration-500 ${isExpanded ? "rotate-180" : "rotate-0"}`}
+                  className={`w-3 h-3 transition-transform duration-500 ${
+                    isExpanded ? "rotate-180" : "rotate-0"
+                  }`}
                 />
               </button>
             </div>
 
-            <div style={{ height }} className="transition-all duration-[1500ms] ease-in-out overflow-hidden">
+            <div
+              style={{ height }}
+              className="transition-all duration-[1500ms] ease-in-out overflow-hidden"
+            >
               <div ref={contentRef} className="pt-3">
                 <div className="text-sm text-slate-700 whitespace-pre-line font-mono bg-gray-50 p-3 rounded border">
-                  {summaryItem.text_area_value}
+                  {safeValue(summaryItem.text_area_value)}
                 </div>
               </div>
             </div>
-          </>
+          </div>
         )}
       </div>
     )
@@ -136,9 +150,9 @@ export default function PlanSummaryCard({
               <p className="text-slate-500 text-md mb-1">{key}</p>
               <p className="text-slate-800 font-semibold">
                 {key.toLowerCase().includes("corpus") ? (
-                  <span dangerouslySetInnerHTML={{ __html: value }} />
+                  <span dangerouslySetInnerHTML={{ __html: safeValue(value) }} />
                 ) : (
-                  value
+                  safeValue(value)
                 )}
               </p>
             </div>
@@ -146,9 +160,10 @@ export default function PlanSummaryCard({
         </div>
       )}
 
+      <div className="-mx-4 border-t border-gray-200 mt-2 mb-1" />
+
       {summaryItem.text_area_value && (
-        <>
-            <div className="-mx-4 border-t border-gray-200 mt-2 mb-1" />
+        <div>
           <div className="flex justify-end">
             <button
               onClick={() => onToggle(summaryId)}
@@ -157,19 +172,24 @@ export default function PlanSummaryCard({
               <span className="text-[1.05rem] font-medium tracking-tight">Show calculation</span>
               <FontAwesomeIcon
                 icon={isExpanded ? faChevronUp : faChevronDown}
-                className={`w-3 h-3 transition-transform duration-500 ${isExpanded ? "rotate-180" : "rotate-0"}`}
+                className={`w-3 h-3 transition-transform duration-500 ${
+                  isExpanded ? "rotate-180" : "rotate-0"
+                }`}
               />
             </button>
           </div>
 
-          <div style={{ height }} className="transition-all duration-[1500ms] ease-in-out overflow-hidden">
+          <div
+            style={{ height }}
+            className="transition-all duration-[1500ms] ease-in-out overflow-hidden"
+          >
             <div ref={contentRef} className="pt-3">
               <div className="text-sm text-slate-700 whitespace-pre-line font-mono bg-gray-50 p-3 rounded border">
-                {summaryItem.text_area_value}
+                {safeValue(summaryItem.text_area_value)}
               </div>
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   )
