@@ -16,7 +16,7 @@ import RightPanel from './components/UI2/RightPanel'
 
 export default function App() {
    const { navigation: currentNavigation, salesData } = useAppSelector((state) => state.salesCopilotReducer)
-  console.log(currentNavigation,"basic sales data is ",salesData.liabilities);
+//   console.log(currentNavigation,"basic sales data is ",salesData.liabilities);
 
 
     // Helper function for currency formatting (moved from index2.html)
@@ -38,23 +38,24 @@ export default function App() {
     };
 
     const renderContent = () => {
-        switch (currentNavigation) {
-            case 'basicInfo':
-                return <BasicInfo data={salesData.basicInfo} />;
-            case 'asset':
-                return <Assets data={salesData.assets} formatCurrency={formatCurrency} />;
-            case 'liability':
-                return <Liabilities data={salesData.liabilities} formatCurrency={formatCurrency} />;
-            case 'financialGoals':
-                return <FinancialGoals data={salesData.financialGoals} formatCurrency={formatCurrency} />;
-            case 'planSummary':
-                return <PlanSummary data={salesData.planSummary} formatCurrency={formatCurrency} />;
-            case 'productRec':
-                return <Recommendations data={salesData.recommendations} formatCurrency={formatCurrency} />;
-            default:
-                return <BasicInfo data={salesData.basicInfo} />; // Default to Basic Info
-        }
-    };
+    switch (currentNavigation) {
+        case 'Basic Info':
+            return <BasicInfo data={salesData.basicInfo} />;
+        case 'Assets':
+            return <Assets data={salesData.assets} formatCurrency={formatCurrency} />;
+        case 'Liabilities':
+            return <Liabilities data={salesData.liabilities} formatCurrency={formatCurrency} />;
+        case 'Financial Goals':
+            return <FinancialGoals data={salesData.financialGoals} formatCurrency={formatCurrency} />;
+        case 'Plan Summary':
+            return <PlanSummary data={salesData.planSummary} formatCurrency={formatCurrency} />;
+        case 'Recommendations':
+            return <Recommendations data={salesData.recommendations} formatCurrency={formatCurrency} />;
+        default:
+            return <BasicInfo data={salesData.basicInfo} />; // Default to Basic Info
+    }
+};
+
 
   return (
     

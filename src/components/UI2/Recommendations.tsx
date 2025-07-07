@@ -29,7 +29,7 @@ interface RecommendationsProps {
 export default function Recommendations({ data, formatCurrency }: RecommendationsProps) {
   const [expandedRecs, setExpandedRecs] = React.useState<{ [key: string]: boolean }>({})
  
-  console.log(data, "the data i received")
+  // console.log(data, "the data i received")
  
   const toggleCalculation = (recId: string) => {
     setExpandedRecs((prevState) => ({

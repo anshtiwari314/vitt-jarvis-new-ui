@@ -5,18 +5,18 @@ interface Recommendation {
   id: string
   title: string
   description: string
-  calculationDetails: string
+  calculationDetails: string | null | undefined
   isPrimary?: boolean
   cover?: number
   targetCorpus?: number
   term?: string
   premium: number
-  reason: string
+  reason: string | null | undefined
   header?: string
   sub_header?: string
-  text_area_value?: string
-  cols?: { [key: string]: string }
-  calculation?: { [key: string]: string }
+  text_area_value?: string | null | undefined
+  cols?: { [key: string]: string | null | undefined }
+  calculation?: { [key: string]: string | null | undefined }
 }
 
 interface RecommendationToggleCardProps {
@@ -32,25 +32,28 @@ export default function RecommendationToggleCard({
   isExpanded,
   onToggle,
 }: RecommendationToggleCardProps) {
-  const parseCorpusValue = (corpusString: string): number => {
+  const parseCorpusValue = (corpusString: string | null | undefined): number => {
     if (!corpusString) return 0
     let cleanString = corpusString.replace(/₹|\s/g, "")
-    if (cleanString.includes(",")) {
-      cleanString = cleanString.replace(/,/g, "")
-    }
-    const numericValue = Number.parseInt(cleanString, 10)
-    return numericValue || 0
+    cleanString = cleanString.replace(/,/g, "")
+    return Number.parseInt(cleanString, 10) || 0
   }
+
+  const safeValue = (val: string | null | undefined) =>
+    val === null || val === undefined || val === "" ? "" : val
 
   const cols = recommendation?.cols
   const calculation = recommendation?.calculation
 
   return (
     <div className="bg-white rounded-2xl border-b border-t border-l border-r border-sky-500 p-3 shadow-sm ring-2 ring-sky-600">
-    
-      <h3 className="text-xl font-semibold text-slate-800 mb-2">{recommendation?.header || recommendation?.title}</h3>
+      <h3 className="text-xl font-semibold text-slate-800 mb-2">
+        {safeValue(recommendation?.header || recommendation?.title)}
+      </h3>
 
-      <p className="text-slate-600 text-sm mb-3">{recommendation?.sub_header || recommendation?.description}</p>
+      <p className="text-slate-600 text-sm mb-3">
+        {safeValue(recommendation?.sub_header || recommendation?.description)}
+      </p>
 
       {/* map of the cols */}
       {cols && Object.keys(cols).length > 0 && (
@@ -62,9 +65,13 @@ export default function RecommendationToggleCard({
                 {key.toLowerCase().includes("premium") ||
                 key.toLowerCase().includes("cover") ||
                 key.toLowerCase().includes("corpus") ? (
-                  <span dangerouslySetInnerHTML={{ __html: formatCurrency(parseCorpusValue(value)) }} />
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: formatCurrency(parseCorpusValue(safeValue(value))),
+                    }}
+                  />
                 ) : (
-                  value
+                  safeValue(value)
                 )}
               </p>
             </div>
@@ -75,11 +82,10 @@ export default function RecommendationToggleCard({
       {recommendation.reason && (
         <div className="bg-gray-50 p-3 rounded mb-2">
           <span className="text-slate-700 text-sm">
-            <strong>Reason:</strong> {recommendation.reason}
+            <strong>Reason:</strong> {safeValue(recommendation.reason)}
           </span>
         </div>
       )}
-
 
       <div className="-mx-4 border-t border-gray-200 my-3" />
 
@@ -89,10 +95,12 @@ export default function RecommendationToggleCard({
           onClick={() => onToggle(recommendation.id)}
           className="flex items-center gap-2 text-sky-600 hover:text-sky-700 text-sm font-medium"
         >
-         <span className="text-[1.06rem] font-medium tracking-tight">Show calculation</span>
+          <span className="text-[1.06rem] font-medium tracking-tight">Show calculation</span>
           <FontAwesomeIcon
             icon={isExpanded ? faChevronUp : faChevronDown}
-            className={`w-3 h-3 transition-transform duration-[1500ms] ${isExpanded ? "rotate-180" : "rotate-0"}`}
+            className={`w-3 h-3 transition-transform duration-[1500ms] ${
+              isExpanded ? "rotate-180" : "rotate-0"
+            }`}
           />
         </button>
       </div>
@@ -107,12 +115,16 @@ export default function RecommendationToggleCard({
           {/* Calculation breakdown object if it exists */}
           {calculation && Object.keys(calculation).length > 0 && (
             <div className="mb-3">
-              <h5 className="text-sm font-semibold text-slate-700 mb-2">Calculation Breakdown:</h5>
+              <h5 className="text-sm font-semibold text-slate-700 mb-2">
+                Calculation Breakdown:
+              </h5>
               <div className="space-y-2 bg-gray-50 rounded p-3 border">
                 {Object.entries(calculation).map(([key, value]) => (
                   <div key={key} className="flex justify-between items-center text-sm">
                     <span className="text-slate-600">{key}:</span>
-                    <span className="font-medium text-slate-800">{value}</span>
+                    <span className="font-medium text-slate-800">
+                      {safeValue(value)}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -121,7 +133,7 @@ export default function RecommendationToggleCard({
 
           {/* Text area fallback */}
           <div className="text-sm text-slate-700 whitespace-pre-line font-mono bg-gray-50 p-3 rounded border">
-            {recommendation.calculationDetails || recommendation.text_area_value}
+            {safeValue(recommendation.calculationDetails || recommendation.text_area_value)}
           </div>
         </div>
       </div>

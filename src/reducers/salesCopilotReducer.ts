@@ -1,4 +1,5 @@
 import { createSlice,current } from "@reduxjs/toolkit";
+import { act } from "react";
 
 // Define types for our data structure for type safety
 export interface PfrData {
@@ -88,7 +89,7 @@ interface SalesCopilotState {
 }
 
 const initialCopilotState= {
-  navigation: 'basic-info',
+  navigation: 'Basic Info',
   chat:[
     "hi how are you",
     "hello"
@@ -303,7 +304,13 @@ const salesCopilotSlice = createSlice({
     updateBasicInfo: (state, action) => {
       console.log('add chat triggers', action.payload, current(state));
       // Correct way to add to an array within a Redux Toolkit slice
-      state.chat.push(action.payload);
+      // state.chat.push(action.payload);
+      console.log("in the reducer[DEBUG00]",action.payload);
+      state.salesData.basicInfo={
+        ...state.salesData.basicInfo,
+        ...action.payload
+      }
+      // console.log("afyter update",state.salesData.basicInfo,"Debug")
     },
     updateAssets:(state,action)=>{
       state.salesData.assets={
@@ -329,10 +336,12 @@ const salesCopilotSlice = createSlice({
       state.salesData.recommendations = action.payload;
     },
     updateFollowUpQn:(state,action)=>{
+      console.log("follow up question that came",action.payload);
       state.salesData.followUpQn={
         ...state.salesData.followUpQn,
         data:action.payload
       }
+      console.log("follow up question that got updated",state.salesData.followUpQn);
     },
     updateCues: (state, action) => {
       state.salesData.cues = {
@@ -346,8 +355,21 @@ const salesCopilotSlice = createSlice({
         data: action.payload,
       };
     },
+
    setNavigation: (state, action) => {
-      state.navigation = action.payload;
+        console.log("it got hitted");
+
+        const navMap = {
+          basicInfo: "Basic Info",
+          asset: "Assets",
+          liability: "Liabilities",
+          financialGoals: "Financial Goals",
+          planSummary: "Plan Summary",
+          productRec: "Recommendations",
+        };
+
+      const readableName = navMap[action.payload] || action.payload; 
+      state.navigation = readableName;
     },
   },
 });
