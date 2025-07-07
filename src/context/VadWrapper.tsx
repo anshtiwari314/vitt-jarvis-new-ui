@@ -18,9 +18,10 @@ export function useVad(){
 
 export default function VadWrapper({children}){
 
-
-    const {ngrokServerUrl,setMsgLoading,oneWayUrl,socket} = useData()
-    const {currentUser} = useAuth()
+    const oneWayUrl = ''
+    const ngrokServerUrl = ''
+    const {socket,isSocketConnected} = useData()
+    //const {currentUser} = useAuth()
     const [vadRecordingOn,setVadRecordingOn] = useState<boolean>(false);
     let recordingStatus = useRef(false);
 
@@ -30,7 +31,9 @@ export default function VadWrapper({children}){
     const vadRef = useRef({ oldVadrecordingStatus:false,myVad:null })
     const [manualVadStatus,setManualVadStatus] = useState(true)
 
-    const initReqStatusRef = useRef(false)
+    const initReqStatusRef = useRef(false);
+    const isQuestionLoaderRunsFirstTime = useRef(true)
+
     //const {PostReq } = useRequest()
 
     // ort.env.wasm.wasmPaths = {
@@ -69,11 +72,15 @@ export default function VadWrapper({children}){
 
 }
 
+    // useEffect(()=>{
+    //   console.log('socket is connected',socket)
+    // },[isSocketConnected])
 
     useEffect(()=>{
-      if(socket===null)
+      if(socket===null || isSocketConnected===false || isQuestionLoaderRunsFirstTime.current===false)
         return ;
 
+      isQuestionLoaderRunsFirstTime.current = false
       //init req 
 
       // let data = {
@@ -117,7 +124,7 @@ export default function VadWrapper({children}){
       socket.emit("questions_loader_req_ins_v2", questionsApiReqPayload);
       
 
-    },[])
+    },[socket,isSocketConnected])
 
 
     function VAD(cb1:CallableFunction,cb2:CallableFunction){
@@ -301,10 +308,7 @@ export default function VadWrapper({children}){
         }
       },[manualVadStatus])
     
-      useEffect(()=>{
-        setManualVadStatus(false)
-        console.log('manual vad status',manualVadStatus,VAD2?.listening)
-      },[])
+      
     
 
     /* (Automatic vad old ) this logic has time delay bcz of startMediaRecorder function the data only send after when 
@@ -411,6 +415,7 @@ export default function VadWrapper({children}){
           },[vadRecordingOn])
 
     let values = {
+
         vadRecordingOn,
     setVadRecordingOn,
         manualVadStatus,setManualVadStatus,

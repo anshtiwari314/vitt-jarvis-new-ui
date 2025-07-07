@@ -21,6 +21,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     console.log("aaya")
 
     const [socket,setSocket] = useState<any>(null)
+    const [isSocketConnected,setIsSocketConnected] = useState<boolean>(false)
+
     const navigation = useAppSelector((state) => state.salesCopilotReducer.navigation);
 
     console.log('sales state',navigation)
@@ -65,16 +67,17 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     }
 
     useEffect(()=>{
-        const socketUrl = 'http://localhost:3001'
+        const socketUrl = 'http://localhost:5000'
 
         const tempSocket = io(socketUrl)
 
-        console.log('Socket has been created',tempSocket)
+       // console.log('Socket has been created',tempSocket)
 
 
         function connected() {
-            console.log("Socket is connected",tempSocket?.id);
+           // console.log("Socket is connected",tempSocket?.id);
             tempSocket.emit("connected",tempSocket.id);
+            setIsSocketConnected(true)
             //   if (firstTimeConnectRef.current === true) {
             //     console.log("socket 1st connect triggered");
             //   } else {
@@ -85,6 +88,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
 
         function disconnect() {
         console.log("Socket disconnected");
+        setIsSocketConnected(false)
         }
 
         tempSocket.on("connect", connected);
@@ -97,7 +101,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         return ()=>{
             tempSocket.off('connect',connected)
             tempSocket.off("disconnect", disconnect);
-            tempSocket.off('init-state',initSalesState);
+            tempSocket.off('init-state',initialisationSalesState);
             tempSocket.off('update-state',updateSalesState)
         }
     },[dispatch])
@@ -119,7 +123,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
 
 
     let values = {
-       socket,setSocket
+       socket,setSocket,isSocketConnected
     }
     return (
         //@ts-ignore
