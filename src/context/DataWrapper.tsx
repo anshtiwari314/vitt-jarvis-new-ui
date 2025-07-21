@@ -81,8 +81,10 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     //const [ngrokServerUrl,setNgrokServerUrl] = useState('')
     const vittSalesCopilot = 'https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/sales-copilot-gcp'
     const ngrokUrl = 'https://212b-49-204-211-204.ngrok-free.app/1way'
-    const oneWayUrl = 'https://rr7yg8ikr5.execute-api.ap-south-1.amazonaws.com/test/docretrieval_clientaudio'
+    //https://rr7yg8ikr5.execute-api.ap-south-1.amazonaws.com/test/docretrieval_clientaudio
+    const oneWayUrl = 'https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/tezz_nbfc'
     const [ngrokServerUrl,setNgrokServerUrl]= useState(ngrokUrl)
+    //https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis
     const [recordingServerUrl,setRecordingServerUrl] = useState('https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis')
     const audioRef = useRef(null);
     const [activeTab,setActiveTab ] = useState(0)

@@ -216,10 +216,10 @@ export function VadWrapper({children}){
 
     /** manual vad logic  begins here ( offline logic)*/
 
-    useEffect(()=>{
-      console.log('useEffect manual vad paused runs',VAD2)
-      VAD2?.pause()
-    },[])
+    // useEffect(()=>{
+    //   console.log('useEffect manual vad paused runs',VAD2)
+    //   VAD2?.pause()
+    // },[])
 
       useEffect(()=>{
 
@@ -228,13 +228,13 @@ export function VadWrapper({children}){
 
         
         
-        if (typeof VAD2 !== "object" || VAD2?.vadOptions ===undefined)
+        if (typeof VAD2 !== "object" )
         return ;
 
         if(manualVadStatus===true){
             console.log('vad2',VAD2)
-            VAD2.vadOptions.positiveSpeechThreshold=0.9 
-            VAD2.vadOptions.negativeSpeechThreshold=0.85
+           // VAD2.vadOptions.positiveSpeechThreshold=0.9 
+           // VAD2.vadOptions.negativeSpeechThreshold=0.85
             VAD2?.start()
             //console.log('manual vad is active',VAD2)
             console.log('vad2 after changing parameteres',VAD2)
