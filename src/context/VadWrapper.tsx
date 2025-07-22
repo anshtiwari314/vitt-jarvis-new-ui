@@ -49,6 +49,7 @@ export function VadWrapper({children}){
         
 
         // this change is for vitt-sales-copilot
+        
         sessionid:currentUser.sessionuid,
         mob: currentUser.userid,
         userid:currentUser.userid,
@@ -108,7 +109,8 @@ export function VadWrapper({children}){
                mob:currentUser.userid,
                 userid:currentUser?.userid
             }
-            processAudioToBase64(audio,oneWayUrl,data)
+            let url = 'https://dfa916b9aa2e.ngrok-free.app/transcribe-pcm'
+            processAudioToBase64(audio,url,data)
             setMsgLoading(true)
         }
       })
@@ -228,13 +230,13 @@ export function VadWrapper({children}){
 
         
         
-        if (typeof VAD2 !== "object" || VAD2?.vadOptions ===undefined)
+        if (typeof VAD2 !== "object" )
         return ;
 
         if(manualVadStatus===true){
             console.log('vad2',VAD2)
-            VAD2.vadOptions.positiveSpeechThreshold=0.9 
-            VAD2.vadOptions.negativeSpeechThreshold=0.85
+           // VAD2.vadOptions.positiveSpeechThreshold=0.9 
+            //VAD2.vadOptions.negativeSpeechThreshold=0.85
             VAD2?.start()
             //console.log('manual vad is active',VAD2)
             console.log('vad2 after changing parameteres',VAD2)
