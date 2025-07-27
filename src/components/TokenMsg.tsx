@@ -89,7 +89,9 @@ function TokenMsg({e}:{e:any}) {
                 fontWeight:400,
                 color:'#343541',
                 lineHeight:'2.8rem'
-                }}>{Parser(e.content)}</p>
+                }}>
+                    {Parser(e.content)}
+                </p>
         </div>
 
         {e.is_outgoing===false &&

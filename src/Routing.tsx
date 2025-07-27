@@ -2,13 +2,27 @@ import React from 'react'
 import {Route,Routes} from 'react-router-dom';
 import PrivateRoute from './components/PrivateRoute';
 import GlobalRoute from './components/GlobalRoute';
-import Page1 from './pages/Page3'
+import Page3 from './pages/Page3'
 import SignIn from './mui-sign-in/SignIn'
 //import SignUp from './components/SignUp';
 import Login from './pages/Login'
 import ErrorPage from './pages/ErrorPage'
 import DataWrapper, { useData } from './context/DataWrapper'
 import { VadWrapper } from './context/VadWrapper';
+import MediaRecorderWrapper from './context/MediaRecorderWrapper';
+
+export function MainComponent(){
+  return (
+    <DataWrapper>
+      <VadWrapper>
+        <MediaRecorderWrapper>
+            <Page3/>
+        </MediaRecorderWrapper>
+        
+      </VadWrapper>
+    </DataWrapper>
+  )
+}
 
 export default function Routing() {
   return (
@@ -18,7 +32,7 @@ export default function Routing() {
             {/* @ts-ignore */}
             <Route path='/signup' element={<PrivateRoute component={<SignIn/>}/>}/>
             {/* @ts-ignore */}
-            <Route path='/mainpage' element={<GlobalRoute component={<DataWrapper><VadWrapper><Page1/></VadWrapper></DataWrapper>}/>}/>
+            <Route path='/mainpage' element={<GlobalRoute component={<MainComponent/>}/>}/>
             <Route path='*' element={<ErrorPage/>}/>
     </Routes>
   )

@@ -21,7 +21,7 @@ import {useAuth} from '../context/AuthContext'
 import {PostReq} from '../functions/requests'
 import {
   faSearch,
-  faMicrophone,
+  //faMicrophone,
   faMicrophoneSlash,
   faMicroPhoneAltSlash,
   faPlusCircle,
@@ -32,12 +32,15 @@ import {
   faWonSign,
   faShare,
   faTimes,
-  faBars
+  faBars,
+  faMicrophone
 } from "@fortawesome/free-solid-svg-icons";
+// import {} from "@fortawesome/free-regular-svg-icons";
 import LoadingIcons, { 
   Audio, BallTriangle, Bars, Circles, Grid, Hearts, Oval, 
   Puff, Rings, SpinningCircles, TailSpin, ThreeDots 
 } from 'react-loading-icons';
+
 import FileLoadChecker from '../components/FileLoader'
 import { useVad } from "../context/VadWrapper";
 import LoadingIconsComp from '../components/LoadingIcons'
@@ -58,7 +61,8 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
     recordingActive,
     setRecordingActive,
     sessionUid ,ngrokServerUrl,setNgrokServerUrl,audioRef,isFilesLoaded,
-    recordingServerUrl,setRecordingServerUrl
+    recordingServerUrl,setRecordingServerUrl,toggleChunking,setToggleChunking,
+    toggleContinuousChunking,setToggleContinuousChunking
   }:void = useData();
   
   const {manualVadStatus,setManualVadStatus,vadRecordingOn,
@@ -67,6 +71,9 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
   const [query, setQuery] = useState<string>("");
   const [state, setState] = useState({ date: "", time: "" });
   const cuesContainerRef = useRef(null) 
+
+  //const transcriptionState = useAppSelector(state => state.trcpReducer);
+    const transcriptionState = []
 
   const navigate = useNavigate();
     //@ts-ignore
@@ -119,6 +126,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
     }
   },[data])
 
+  //console.log('i am transcriptuon',transcriptionState)
   // useEffect(()=>{
   //     if(audioRef.current===null)
   //     return ;
@@ -210,7 +218,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
       <audio style={{ display: "none" }} ref={audioRef}></audio>
 
       <div>
-        {/* <input
+        <input
           type="text"
           value={ngrokServerUrl}
           onChange={(e) => setNgrokServerUrl(e.target.value)}
@@ -228,7 +236,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
             //boxShadow: "0px 4px 12px rgba(37, 99, 235, 0.4)",
             //...(inputValue && inputFocusStyle),
           }}
-        /> */}
+        />
         </div>
         
       <div>
@@ -414,12 +422,12 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
                         recordingOn?
                         <FontAwesomeIcon icon={faMicrophone} style={{fontSize:'2.5rem',cursor:'pointer',color:'gray'}} onClick={()=>setRecordingOn((p:any)=>!p)}/>:
                         <FontAwesomeIcon icon={faMicrophoneSlash} style={{fontSize:'2.5rem',cursor:'pointer',color:'gray'}} onClick={()=>setRecordingOn((p:any)=>!p)}/>
-                    }
-                    {
+        } */}
+                    {/* {
                         recordingActive?
                         <FontAwesomeIcon icon={faRecordVinyl} style={{fontSize:'2.5rem',color:'red',cursor:'pointer'}} onClick={()=>setRecordingActive(p=>!p)}/>:
                         <FontAwesomeIcon icon={faRecordVinyl} style={{fontSize:'2.5rem',color:'gray',cursor:'pointer'}} onClick={()=>setRecordingActive(p=>!p)}/>
-                    } */}
+                    }  */}
       </div>
 
       
@@ -543,7 +551,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
         } */}
         
 
-        {
+        {/* {
           !VAD2.loading ? 
          <CustomFillButtonWithIcon 
           color="#8236f5" 
@@ -561,9 +569,9 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
         <div style={{}}>
             <TailSpin stroke="red"  strokeOpacity={1} speed={.95} style={{margin:'2rem'}}/>
         </div>
-        }
+        } */}
 
-        <div style={{height:'4.5rem',width:'8rem',backgroundColor:'white',display:'flex',alignItems:'center',justifyContent:'center'}}>
+        {/* <div style={{height:'4.5rem',width:'8rem',backgroundColor:'white',display:'flex',alignItems:'center',justifyContent:'center'}}>
           {
             userSpeaking ? 
             <img src={playSound} style={{width:'8rem',height:'4.5rem'}}/>:
@@ -574,10 +582,46 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
             <img src={playSound} style={{width:'8rem',height:'4.5rem'}}/>:
             null
           }
-            {/* <img src={playSound} style={{width:'8rem',height:'4.5rem'}}/> */}
+            {/* <img src={playSound} style={{width:'8rem',height:'4.5rem'}}/> 
 
-        </div>
-        
+        </div> */}
+          
+        {/* <div>
+          
+          <CustomFillButtonWithIcon 
+          color="#8236f5" 
+          text="" 
+          icon={faMicrophone}
+          style={{
+            backgroundColor:  toggleChunking ? 'red' : 'gray'
+          }}
+          className={wasClosedByUserRef.current?"":"hidden"}
+          iconComp={<FontAwesomeIcon icon={faMicrophone} style={{ fontSize: '2rem' }} />} 
+          onClick={() => setToggleChunking((p) => !p)}
+          />
+
+        </div> */}
+
+        {/* <div>
+          
+          <CustomFillButtonWithIcon 
+          color="#8236f5" 
+          text="" 
+          icon={faMicrophone}
+          style={{
+            backgroundColor:  toggleContinuousChunking ? 'red' : 'gray'
+          }}
+          className={wasClosedByUserRef.current?"":"hidden"}
+          iconComp={<FontAwesomeIcon icon={faMicrophone} style={{ fontSize: '2rem' }} />} 
+          onClick={() => setToggleContinuousChunking((p) => !p)}
+          />
+
+        </div> */}
+
+        {/* <div style={{backgroundColor:'red'}}>
+           <FontAwesomeIcon icon={faMicrophone} style={{ fontSize: '2rem' }} /> 
+        </div> */}
+
         {/* <CustomFillButtonWithIcon 
         color="#8236f5" 
         text="" 
@@ -593,7 +637,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
       
        
         
-        <CustomFillButtonWithIcon 
+        {/* <CustomFillButtonWithIcon 
         color="#8236f5" 
         text="" 
         icon={faRecordVinyl}
@@ -614,7 +658,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
         iconStyle={{fontSize:'2rem'}}
         iconComp = {<FontAwesomeIcon icon={faTimes} style={{fontSize:'2rem'}}/>}
          onClick={()=>endCall()}
-        />
+        /> */}
       </div>
       <div style={{textAlign:'center'}}>
         

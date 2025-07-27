@@ -6,8 +6,10 @@ import { useData } from './DataWrapper';
 import { useAuth } from './AuthContext';
 import { useMicVAD} from "@ricky0123/vad-react"
 import { PostReq } from '../functions/requests';
-import { processAudioToBase64 } from '../functions/generalFn';
+//import { processAudioToBase64 } from '../functions/generalFn';
 //import useRequest from '../hooks/requests';
+import { addTranscription } from '../reducers/transcriptionReducer';
+import { utils } from "@ricky0123/vad-react"
 
 const VadContext = createContext('vadContext')
 
@@ -59,14 +61,14 @@ export function VadWrapper({children}){
 
       if(initReqStatusRef.current ===false){
         initReqStatusRef.current = true
-        PostReq('https://2265-49-204-210-210.ngrok-free.app/',data).then(resp=>{
+        PostReq(`${ngrokServerUrl}/stream_audio`,data).then(resp=>{
           console.log('init req',resp)
          })
       }
        
       
 
-    },[])
+    },[ngrokServerUrl])
 
 
     function VAD(cb1:CallableFunction,cb2:CallableFunction){
@@ -85,6 +87,43 @@ export function VadWrapper({children}){
         
       }
     
+
+      async function processAudioToBase64(audio,url,data){
+    console.log("vad stopped")
+    const wavBuffer = utils.encodeWAV(audio)
+      // const base64 = utils.arrayBufferToBase64(wavBuffer)
+      // console.log("hello world",base64)
+
+         // let wavBlob =processingToWav(audio)
+      let wavBlob = new Blob([wavBuffer], { type: 'audio/wav' })
+      let mp3Blob = await WavToMp3(wavBlob)
+      
+      //generate base64 of that blob 
+      let base64data = await generateBase64(mp3Blob)
+
+
+      data = {...data,
+        audiomessage:base64data.split(',')[1],
+        timeStamp:getTimeStamp()
+      }
+
+
+      let resp = await PostReq(url,data)
+      console.log('resp',resp)
+      //console.log('resp2',resp.audiobase64)
+
+      // let tempTranscription = {
+      //     id: 'unique',
+      //     speaker: "saurabh",
+      //     transcription: "How can you utilize JPEG and JPEGJPEG to enhance your interactions on your webpages?",
+      //     timeStamp: "13:59:01",
+      //     isCandidate: false
+      // }
+
+      //addTranscription(tempTranscription)
+      return resp
+}
+
 
       const VAD2 = useMicVAD({
         workletURL: `./vad.worklet.bundle.min.js`,
@@ -108,8 +147,8 @@ export function VadWrapper({children}){
                mob:currentUser.userid,
                 userid:currentUser?.userid
             }
-            processAudioToBase64(audio,oneWayUrl,data)
-            setMsgLoading(true)
+            //processAudioToBase64(audio,`${ngrokServerUrl}`,data)
+            //setMsgLoading(true)
         }
       })
 

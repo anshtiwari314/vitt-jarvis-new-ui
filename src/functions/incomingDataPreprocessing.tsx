@@ -20,7 +20,7 @@ export function handleData(data:any){
        audiourl = data.audio_url
       }
     if(data?.audiobase64 && data?.audiobase64!==null){
-        audiourl = `data:audio/mpeg;base64,${data.audiobase64}`
+        audiourl = `data:audio/wav;base64,${data.audiobase64}`
         //setAudioUrl(`data:audio/mpeg;base64,${data.audiobase64}`)
     }
     if(data?.imageurl){
