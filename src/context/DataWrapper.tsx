@@ -56,6 +56,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     let audioServerUrl =`https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-clientaudio`
     //let url1 = 'http://localhost:3008/'
     let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
+    //let socketUrl = 'http://localhost:5000'
     const globalStreamRef = useRef<any>(null)
     const [recordingActive,setRecordingActive] = useState(false)
     const recordingActiveStatus = useRef(false)
@@ -64,11 +65,24 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     const [SESSION_ID,setSessionId] = useState(currentUser?.userid) 
     const tempRef = useRef("")
     //const [msgLoading,setMsgLoading] = useState<boolean>(false);
-    const [audioArr,setAudioArr] = useState<any>([])
-
+    
+    
+    const audioQueueRef = useRef<string[]>([])
+    const [audioQueue,setAudioQueue] = useState<string[]>([])
+    const [audioArr,setAudioArr] = useState<string[]>([])
+    const isAudioStillPlaying = useRef<boolean>(false)
+    const [resetAudioPlayerState,setResetAudioPlayerState] = useState('')
     let audioUrlRef = useRef(null)
     const [audioUrlFlag,setAudioUrlFlag] = useState<boolean>(false)
     const [audioUrl,setAudioUrl] = useState('')
+
+    //  this state is used for stt record (media recorder start & stop several times)
+    const [toggleChunking,setToggleChunking] = useState(false)
+    const chunkingActiveStatus = useRef(false)
+
+    // this state is used for continuous media recorder without stopping & send data when available 
+    // without processing it to mp3  
+    const [toggleContinuousChunking,setToggleContinuousChunking] = useState(false)  
 
     const [socket,setSocket] = useState<any>(null)
     const [msgId,setMsgId] = useState(uuidv4())
@@ -80,9 +94,14 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     const sessionUid = uuidv4()
     //const [ngrokServerUrl,setNgrokServerUrl] = useState('')
     const vittSalesCopilot = 'https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/sales-copilot-gcp'
-    const ngrokUrl = 'https://212b-49-204-211-204.ngrok-free.app/1way'
+    const ngrokUrl = 'https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis'
+    //const ngrokUrl = 'https://54f228149b21.ngrok-free.app'
     //https://rr7yg8ikr5.execute-api.ap-south-1.amazonaws.com/test/docretrieval_clientaudio
-    const oneWayUrl = 'https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/tezz_nbfc'
+    //const oneWayUrl = 'http://35.200.139.251/tezz_nbfc'
+    //const oneWayUrl = 'https://cd824b8dabc9.ngrok-free.app/tezz_nbfc'
+    //const oneWayUrl = 'https://e1433db306a2.ngrok-free.app'
+    
+    const [oneWayUrl,setOneWayUrl] = useState('http://35.200.139.251/tezz_nbfc')
     const [ngrokServerUrl,setNgrokServerUrl]= useState(ngrokUrl)
     //https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis
     const [recordingServerUrl,setRecordingServerUrl] = useState('https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis')
@@ -137,7 +156,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     
     function handleAudio(base64:string,filename:string){
         //@ts-ignore
-        setAudioArr(prev=>[...prev,{base64:base64,filename:filename}])
+        //setAudioArr(prev=>[...prev,{base64:base64,filename:filename}])
     }
    
 
@@ -270,18 +289,106 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
       xhrUploadFile(audiofile)
     }
 
+    useEffect(()=>{
+
+      let audioElem = audioRef.current;
+      if(!audioElem) return;
+
+    function handlePlay(){
+      //console.log(`%c audio play event ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+      isAudioStillPlaying.current = true
+    }
+    function handlePause(){
+      //console.log(`%c audio paused ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+    }
+    function handleEnded(){
+      //console.log(`%c audio ended ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+      //chk if audioArr has more than one element
+      
+      if(audioQueueRef.current.length>0){
+        setAudioUrl(audioQueueRef.current.shift())
+       // setAudioQueue(audioQueueRef.current)
+        setResetAudioPlayerState(uuidv4())
+      }else {
+        isAudioStillPlaying.current = false
+      }
+      
+    
+    }
+    function handlePlaying(){
+      //console.log(`%c audio playing ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+      isAudioStillPlaying.current = true
+    }
+    function handleWaiting(){
+      //console.log(`%c audio waiting ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+     // isAudioStillPlaying.current = false 
+    }
+    
+    audioElem.addEventListener('play', handlePlay)
+
+    audioElem.addEventListener('pause', handlePause)
+
+    audioElem.addEventListener('ended', handleEnded)
+
+    audioElem.addEventListener('playing', handlePlaying)
+
+    audioElem.addEventListener('waiting',handleWaiting)
+
+    console.log(`%c listeners added to audio elem ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+    
+    return () => {
+      audioElem.removeEventListener('play', handlePlay);
+      audioElem.removeEventListener('pause', handlePause);
+      audioElem.removeEventListener('ended', handleEnded );
+      audioElem.removeEventListener('playing', handlePlaying);
+      audioElem.removeEventListener('waiting', handleWaiting);
+      console.log(`%c listeners removed from audio elem ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+    }
+  },[])
+
+
+  useEffect(()=>{
+    let audioElem = audioRef.current;
+    if(!audioElem) return;
+    if(audioUrl === '') return;
+
+    //console.log(`%c audioArr ${audioArr} ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+    
+    function handleCanPlayThough(){
+      console.log(`%c audio started ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+      audioElem.play();
+    }
+
+    
+    audioElem.addEventListener("canplaythrough",handleCanPlayThough);
+
+    console.log('just before changing audio url')
+    audioElem.src = audioUrl;
+
+    return ()=>{
+      audioElem.removeEventListener("canplaythrough",handleCanPlayThough);
+    }
+
+  },[audioUrl,resetAudioPlayerState])
+
     function playAudio(audiourl){
-      console.log('audiourl',audiourl)
+      //console.log('audiourl',audiourl)
       let audioElem = audioRef.current;
     //@ts-ignore
     audioElem.src = audiourl;
 
+    
     //@ts-ignore
-    audioElem.addEventListener("canplaythrough", (event) => {
-      /* the audio is now playable; play it if permissions allow */
-      //@ts-ignore
+    function handleCanPlayThough(){
+      console.log(`%c audio started ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
       audioElem.play();
-    });
+    }
+
+    
+    audioElem.addEventListener("canplaythrough",handleCanPlayThough);
+    
+
+    
     }
 
     useEffect(()=>{
@@ -325,6 +432,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         setSocket(tempSocket)
     },[])
 
+   
+
     useEffect(()=>{
         if(SESSION_ID==='' || socket===null )
         return;
@@ -345,6 +454,10 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             console.log("disconnected")
         }
 
+        function isAudioPlaying(audioElement) {
+  return !audioElement.paused;
+}
+
         function receiveData(result:any){
           console.log(`%c just after receiveing data ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
           console.log(result.text,result.messageid,result);
@@ -361,11 +474,28 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
               const {arr,audiourl}=handleData(result)
               //console.log('i am audiourl',audiourl)
               //setAudioUrl(audiourl)
-              if(audiourl!==null)
-                playAudio(audiourl)
+              //console.log(audiourl)
+              console.log(`%c audioRef paused ${audioRef.current.paused} ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+             
+              // if()
+              // if(audiourl!==null)
+              //   playAudio(audiourl)
+              
+               //let isPlaying = isAudioPlaying(audioRef.current)
+              //console.log('isAudioPlaying',isPlaying)
+              console.log(`%c audioRef paused ${audioRef.current.paused} ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
               
               setData(prev=>[...prev,...arr])
-           // handleAudio(data.speech_bytes,data.file_name)
+              //setAudioArr(prev=>[...prev,audiourl])
+              
+
+              if(isAudioStillPlaying.current===false){
+              setAudioUrl(audiourl)
+              }else {
+               audioQueueRef.current = [...audioQueueRef.current,audiourl]
+                
+              }
+              
             }
     }
        socket.on("connect",onConnect)
@@ -408,10 +538,10 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
           } 
 
           console.log('navigator')
-          startMediaRecorder(startMediaRecorderArgs)
+          startMediaRecorder2(startMediaRecorderArgs)
           
           intervalId =setInterval(()=>{
-            startMediaRecorder(startMediaRecorderArgs)
+            startMediaRecorder2(startMediaRecorderArgs)
           },4000)
           //timeOutId=setTimeout(()=>requestAnimationFrame(()=>startMediaRecorder(startMediaRecorderArgs)),4000)
         })
@@ -424,21 +554,38 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     },[recordingActive,recordingServerUrl])
 
     
-        
+    useEffect(()=>{
+        // this code is to handle chuking logic which is used for very small files  
+      let intervalId 
+
+      let data = {
+          sessionid:currentUser?.sessionuid,
+          mob:currentUser.userid,
+          userid:currentUser?.userid
+      }
+
+      let baseUrl = 'https://b1c231587c5c.ngrok-free.app'; // Default URL
+      let url = `${ngrokServerUrl}/stream_audio`
+      let recordingTime = 500 //in ms
+
+      if(toggleChunking===true){
+        navigator.mediaDevices.getUserMedia({audio:true}).then(audioStream=>{
+            startMediaRecorder(audioStream,url,recordingTime,data)
+            intervalId = setInterval(()=>{
+              startMediaRecorder(audioStream,url,recordingTime,data)
+            },recordingTime)
+        })
+      }
+
+      return ()=>{
+        intervalId && clearInterval(intervalId)
+      }
+    },[toggleChunking,ngrokServerUrl])
         
 
-    // useEffect( ()=>{
+    
 
-        
-    //     if(SESSION_ID==='' || socket===null )
-    //     return;
-
-        
-        
-    //     return ()=>{
-            
-    //     }
-    // },[SESSION_ID,socket])
+    
 
     let values = {
         data,
@@ -455,8 +602,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         manualVadRecordingOn,setManualVadRecordingOn,
         audioUrl,setAudioUrl,
         recordingActive,setRecordingActive,tabs,activeTab,setActiveTab,
-        ngrokServerUrl,setNgrokServerUrl,oneWayUrl,isFilesLoaded,recordingServerUrl,setRecordingServerUrl
-
+        ngrokServerUrl,setNgrokServerUrl,oneWayUrl,isFilesLoaded,recordingServerUrl,setRecordingServerUrl,
+        toggleChunking,setToggleChunking,toggleContinuousChunking,setToggleContinuousChunking,audioQueueRef,isAudioStillPlaying
     }
   return (
       //@ts-ignore

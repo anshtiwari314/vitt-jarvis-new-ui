@@ -89,7 +89,9 @@ function TokenMsg({e}:{e:any}) {
                 fontWeight:400,
                 color:'#343541',
                 lineHeight:'2.8rem'
-                }}>{Parser(e.content)}</p>
+                }}>
+                    {Parser(e.content)}
+                </p>
         </div>
 
         {e.is_outgoing===false &&
@@ -143,7 +145,7 @@ function TokenMsg({e}:{e:any}) {
                     fontFamily: '"Inter", sans-serif',
                     fontWeight:400,
                     color:'#343541'
-                    }}>12:48 PM, 6 Apr</p>
+                    }}>{e.msg_receiving_timestamp}</p>
             </div>
         </div>
 }

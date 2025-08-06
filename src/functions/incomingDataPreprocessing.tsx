@@ -1,4 +1,5 @@
 import {v4 as uuidv4} from 'uuid'
+import { getCurrentFormattedTime } from './generalFn'
 
 export function handleData(data:any){
     console.log('handleData',data)
@@ -9,9 +10,13 @@ export function handleData(data:any){
 // "sessionid": <str>, "audiofiletimestamp": <str>
     let audiourl = null
 
+    
     if(data?.loading){
         return ;
     }
+
+    data.msg_receiving_timestamp = getCurrentFormattedTime()
+
     if(data?.audio_url!==null){
         //audioUrlRef.current = data.audiourl
        // setAudioUrlFlag(prev=>!prev)
@@ -20,7 +25,7 @@ export function handleData(data:any){
        audiourl = data.audio_url
       }
     if(data?.audiobase64 && data?.audiobase64!==null){
-        audiourl = `data:audio/mpeg;base64,${data.audiobase64}`
+        audiourl = `data:audio/wav;base64,${data.audiobase64}`
         //setAudioUrl(`data:audio/mpeg;base64,${data.audiobase64}`)
     }
     if(data?.imageurl){
@@ -90,6 +95,7 @@ export function handleData(data:any){
             obj["sessionid"] = data.sessionid
             obj["audiofiletimestamp"]=data.audiofiletimestamp
             obj["istranscription"] = data.istranscription
+            obj["msg_receiving_timestamp"] = data.msg_receiving_timestamp
             //arr.push(obj)
             arr = [...arr,obj]
             //@ts-ignore

@@ -6,8 +6,10 @@ import { useData } from './DataWrapper';
 import { useAuth } from './AuthContext';
 import { useMicVAD} from "@ricky0123/vad-react"
 import { PostReq } from '../functions/requests';
-import { processAudioToBase64 } from '../functions/generalFn';
+//import { processAudioToBase64 } from '../functions/generalFn';
 //import useRequest from '../hooks/requests';
+import { addTranscription } from '../reducers/transcriptionReducer';
+import { utils } from "@ricky0123/vad-react"
 
 const VadContext = createContext('vadContext')
 
@@ -18,7 +20,7 @@ export function useVad(){
 export function VadWrapper({children}){
 
 
-    const {ngrokServerUrl,setMsgLoading,oneWayUrl} = useData()
+    const {ngrokServerUrl,setMsgLoading,oneWayUrl,audioQueueRef,audioRef,isAudioStillPlaying} = useData()
     const {currentUser} = useAuth()
     const [vadRecordingOn,setVadRecordingOn] = useState<boolean>(false);
     let recordingStatus = useRef(false);
@@ -40,33 +42,7 @@ export function VadWrapper({children}){
     //   }
 
     
-    useEffect(()=>{
-      //init req 
-
-      let data = {
-        //this change is for jarvis-in-person-usecase
-        //sessionid:currentUser.userid,
-        
-
-        // this change is for vitt-sales-copilot
-        sessionid:currentUser.sessionuid,
-        mob: currentUser.userid,
-        userid:currentUser.userid,
-        audiomessage:'',
-        timeStamp:getTimeStamp(),
-        init:true
-      }
-
-      if(initReqStatusRef.current ===false){
-        initReqStatusRef.current = true
-        PostReq('https://2265-49-204-210-210.ngrok-free.app/',data).then(resp=>{
-          console.log('init req',resp)
-         })
-      }
-       
-      
-
-    },[])
+    
 
 
     function VAD(cb1:CallableFunction,cb2:CallableFunction){
@@ -86,6 +62,43 @@ export function VadWrapper({children}){
       }
     
 
+      async function processAudioToBase64(audio,url,data){
+    console.log("vad stopped")
+    const wavBuffer = utils.encodeWAV(audio)
+      // const base64 = utils.arrayBufferToBase64(wavBuffer)
+      // console.log("hello world",base64)
+
+         // let wavBlob =processingToWav(audio)
+      let wavBlob = new Blob([wavBuffer], { type: 'audio/wav' })
+      let mp3Blob = await WavToMp3(wavBlob)
+      
+      //generate base64 of that blob 
+      let base64data = await generateBase64(mp3Blob)
+
+
+      data = {...data,
+        audiomessage:base64data.split(',')[1],
+        timeStamp:getTimeStamp()
+      }
+
+
+      let resp = await PostReq(url,data)
+      console.log('resp',resp)
+      //console.log('resp2',resp.audiobase64)
+
+      // let tempTranscription = {
+      //     id: 'unique',
+      //     speaker: "saurabh",
+      //     transcription: "How can you utilize JPEG and JPEGJPEG to enhance your interactions on your webpages?",
+      //     timeStamp: "13:59:01",
+      //     isCandidate: false
+      // }
+
+      //addTranscription(tempTranscription)
+      return resp
+}
+
+
       const VAD2 = useMicVAD({
         workletURL: `./vad.worklet.bundle.min.js`,
         //modelURL: "http://localhost:8080/silero_vad.onnx",
@@ -96,6 +109,12 @@ export function VadWrapper({children}){
         },
         onSpeechStart: () => {
           console.log("Speech start")
+
+          audioRef.current.pause()
+          isAudioStillPlaying.current = false
+          
+          audioQueueRef.current = []
+          //console.log(audioQueueRef.current)
         },
         onSpeechEnd:(audio)=>{
             let data = {
@@ -106,15 +125,46 @@ export function VadWrapper({children}){
                 
                sessionid:currentUser?.sessionuid,
                mob:currentUser.userid,
-                userid:currentUser?.userid
+                userid:currentUser?.userid,
+                req_timestamp:getTimeStamp()
             }
-            processAudioToBase64(audio,oneWayUrl,data)
-            setMsgLoading(true)
+            processAudioToBase64(audio,`${ngrokServerUrl}/vad_stream`,data)
+            //setMsgLoading(true)
         }
       })
 
       
+      useEffect(()=>{
+      //init req 
+
+      if(vadInstance ===null || !VAD2 || VAD2.loading)
+        return ;
+
+      let data = {
+        //this change is for jarvis-in-person-usecase
+        //sessionid:currentUser.userid,
+        
+
+        // this change is for vitt-sales-copilot
+        sessionid:currentUser.sessionuid,
+        mob: currentUser.userid,
+        userid:currentUser.userid,
+        audiomessage:'',
+        timeStamp:getTimeStamp(),
+        req_timestamp:getTimeStamp(),
+        init:true
+      }
+
+      if(initReqStatusRef.current ===false){
+        initReqStatusRef.current = true
+        PostReq(`${ngrokServerUrl}/vad_stream`,data).then(resp=>{
+          console.log('init req',resp)
+         })
+      }
+       
       
+
+    },[ngrokServerUrl,vadInstance,VAD2?.loading])
 
     function start(){
       setUserSpeaking(true)
