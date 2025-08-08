@@ -4,9 +4,15 @@ export default function RightPanel(){
     
     const [alert,cues,followUpQn] = useAppSelector(state => [state.salesCopilotReducer.salesData.alert,state.salesCopilotReducer.salesData.cues,state.salesCopilotReducer.salesData.followUpQn])
 
-    //console.log('alert',alert)
-    //console.log('cues',cues)
-    //console.log('followUpQn',followUpQn)
+    // const salesState = useAppSelector(state => state.salesCopilotReducer)
+    // const myAlert = useAppSelector(state => state.salesCopilotReducer.salesData.alert)
+    // const myCues = useAppSelector(state=>state.salesCopilotReducer.salesData.cues)
+    // const myFollowUp = useAppSelector(state=>state.salesCopilotReducer.salesData.followUpQn)
+
+    // console.log('right panel state',salesState)
+    // console.log('alert',alert,myAlert)
+    // console.log('cues',cues,myCues)
+    // console.log('followUpQn',followUpQn,myFollowUp)
 
     return (
         <aside className="w-96 bg-white border-l border-slate-200 flex flex-col p-4 space-y-4 overflow-y-auto">
@@ -19,7 +25,7 @@ export default function RightPanel(){
                             </h4>
                             <ul className="list-disc list-inside space-y-1 text-blue-700 text-sm">
                                 {
-                                    followUpQn.data.map((item,index)=>{
+                                    followUpQn.data?.map((item,index)=>{
                                         return <li key={index}>{item.text}</li>
                                     })
                                 }
@@ -35,7 +41,7 @@ export default function RightPanel(){
                             </h4>
                             <ul className="list-disc list-inside space-y-1 text-green-700 text-sm">
                                 {
-                                    cues.data.map((item,index)=>{
+                                    cues.data?.map((item,index)=>{
                                         return <li key={index}>{item.text}</li>
                                     })
                                 }
@@ -52,7 +58,7 @@ export default function RightPanel(){
                             </h4>
                             <ul className="list-disc list-inside space-y-1 text-amber-700 text-sm">
                                 {
-                                    alert.data.map((item,index)=>{
+                                    alert.data?.map((item,index)=>{
                                         return <li key={index}>{item.text}</li>
                                     })
                                 }

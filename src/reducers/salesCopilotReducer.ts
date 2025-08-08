@@ -88,7 +88,7 @@ interface SalesCopilotState {
   pfrData: PfrData;
 }
 
-const initialCopilotState= {
+const initialCopilotLoadState= {
   navigation: 'Basic Info',
   chat:[
     "hi how are you",
@@ -115,7 +115,8 @@ const initialCopilotState= {
           ['roshan Sharma','Husband','36 yrs','Mumbai'],
           ['Priya Sharma','Daughter','5 yrs']
           
-        ]
+        ],
+        
       } 
     },
     assets: {
@@ -194,39 +195,56 @@ const initialCopilotState= {
       
       
     ],
-    planSummary: [
-      {
-        header:"Immediate Life Cover Analysis",
-        sub_header:"",
-        cols:{
-          'TimeFrame':'13 yrs',
-          'Required Corpus':'₹4,00,000'
-        },
-        calculation:{
-          "Outstanding Liabilities":"₹ 48,50,000 (48.5 Lk)",
-          "Family Living Expenses (10x)":"+₹ 72,000 (72 K)"
-        },
-        text_area_value:'',
-        reason:'<h3 style="font-size:3rem">Total Recommended Cover <p style="color:blue">₹ 1,20,50,000 (1.2 Cr)</p></h3>',
+    // planSummary: [
+    //   {
+    //     header:"Immediate Life Cover Analysis",
+    //     sub_header:"",
+    //     cols:{
+    //       'TimeFrame':'13 yrs',
+    //       'Required Corpus':'₹4,00,000'
+    //     },
+    //     calculation:{
+    //       "Outstanding Liabilities":"₹ 48,50,000 (48.5 Lk)",
+    //       "Family Living Expenses (10x)":"+₹ 72,000 (72 K)"
+    //     },
+    //     text_area_value:'',
+    //     reason:'<h3 style="font-size:3rem">Total Recommended Cover <p style="color:blue">₹ 1,20,50,000 (1.2 Cr)</p></h3>',
 
-      },
-      {
-        header:"Daughter's Education",
-        sub_header:"",
-        cols:{
-          'TimeFrame':'13 yrs',
-          'Target Year':'2038',
-          'Future Corpus':'₹ 40,00,000 (40.0 Lk)'
-        },
-        calculation:{
+    //   },
+    //   {
+    //     header:"Daughter's Education",
+    //     sub_header:"",
+    //     cols:{
+    //       'TimeFrame':'13 yrs',
+    //       'Target Year':'2038',
+    //       'Future Corpus':'₹ 40,00,000 (40.0 Lk)'
+    //     },
+    //     calculation:{
           
-        },
-        text_area_value:'Future Value based on goal details.',
-        reason:'',
+    //     },
+    //     text_area_value:'Future Value based on goal details.',
+    //     reason:'',
 
-      }
+    //   }
       
-    ],
+    // ],
+    
+    // 'planSummary': [
+    //   {'header': 
+    //     'Immediate Life Cover Analysis', 
+    //     'sub_header': '', 
+    //     'cols': {'Required Corpus': '15 lakhs'}, 
+    //     'calculation': {'Outstanding Liabilities': '15 lakhs', 'Annual Expenses': '24 lakhs'}, 
+    //     'text_area_value': '', 
+    //     'reason': '<h3 style="font-size:3rem">Total Recommended Cover <p style="color:blue">255 lakhs</p></h3>'
+    //   }, 
+    //   {'header': None, 
+    //     'sub_header': None, 
+    //     'cols': {'Time Frame': None, 'Target Year': None, 'Required Corpus': None}, 
+    //     'calculation': '', 
+    //     'text_area_value': 'Inflation rate percent: 6%'
+    //   }
+    // ],
     recommendations: [
       {
         header:"Recommendation 1: Term Plan",
@@ -291,7 +309,129 @@ const initialCopilotState= {
   }
 };
 
-
+const initialCopilotState = {
+  "navigation": "",
+  "chat": [],
+  "clientName":"",
+  "salesData": {
+    "basicInfo": {
+      "boxA": {
+        "header": "",
+        "data": {
+          // "name": "",
+          // "age": 0,
+          // "city": "",
+          // "occupation": "",
+          // "dependents": 0,
+          // "address": ""
+        }
+      },
+      "table": {
+        "header": "",
+        "table_header": [],
+        "table_values": []
+      }
+    },
+    "assets": {
+      "boxA": {
+        "header": "",
+        "sub_header": "",
+        "sub_header_data": 0,
+        "text_area_header": "",
+        "text_area_value": ""
+      },
+      "boxB": {
+        "header": "",
+        "text_area_headerA": "",
+        "text_area_valueA": "",
+        "text_area_headerB": "",
+        "text_area_valueB": ""
+      },
+      "table": {
+        "header": "",
+        "table_header": [],
+        "table_values": []
+      }
+    },
+    "liabilities": {
+      "boxA": {
+        "header": "",
+        "data": {
+          // "Monthly Expenses (INR)": 0,
+          // "Total Monthly EMI (INR)": 0,
+          // "Credit Card Dues (if any)": 0
+        }
+      },
+      "boxB": {
+        "header": "",
+        "data": {
+          // "Outstanding Amount (INR)": 0,
+          // "Monthly EMI (INR)": 0,
+          // "Remaining Tenure (Months)": 0
+        }
+      },
+      "table": {
+        "header": "",
+        "table_header": [],
+        "table_values": []
+      }
+    },
+    "financialGoals": [],
+    "planSummary": [],
+    "recommendations": [],
+    // "followUpQn": {
+    //   "header": "",
+    //   "data": []
+    // },
+    // "cues": {
+    //   "header": "",
+    //   "data": []
+    // },
+    // "alert": {
+    //   "header": "",
+    //   "data": []
+    // }
+     "followUpQn": {
+           "header": 'Follow-up Question',
+           "data": [
+               {
+                   "id": 'unique1',
+                   "text": ''
+               },
+               {
+                   "id": 'unique2',
+                   "text": ''
+               }
+           ],
+       },
+       "cues": {
+           "header": 'User Cues',
+           "data": [
+               {
+                   "id": 'unique1',
+                   "text": ''
+               },
+               {
+                   "id": 'unique2',
+                   "text": ''
+               }
+           ],
+       },
+       "alert": {
+           "header": 'Compliance Alert',
+           "data": [
+              //  {
+              //      "id": 'unique1',
+              //      "text": 'Disclose commission structures if asked.'
+              //  },
+              //  {
+              //      "id": 'unique2',
+              //      "text": 'Avoid guaranteeing returns.'
+              //  }
+           ]
+       }
+  }
+}
 
 
 const salesCopilotSlice = createSlice({
@@ -299,6 +439,9 @@ const salesCopilotSlice = createSlice({
   initialState: initialCopilotState,
   reducers: {
     initSalesState:(state,action)=>{
+      console.log('action payload',action.payload)
+      //state = {...state,...action.payload};
+      //state.
       return action.payload;
     },
     updateBasicInfo: (state, action) => {
@@ -319,6 +462,8 @@ const salesCopilotSlice = createSlice({
       }
     },
     updateLiabilities:(state,action)=>{
+      console.log('liabilities',action)
+
       state.salesData.liabilities={
         ...state.salesData.liabilities,
         ...action.payload
@@ -339,20 +484,20 @@ const salesCopilotSlice = createSlice({
       console.log("follow up question that came",action.payload);
       state.salesData.followUpQn={
         ...state.salesData.followUpQn,
-        data:action.payload
+        ...action.payload
       }
       console.log("follow up question that got updated",state.salesData.followUpQn);
     },
     updateCues: (state, action) => {
       state.salesData.cues = {
         ...state.salesData.cues,
-        data: action.payload,
+        ...action.payload,
       };
     },
     updateAlerts: (state, action) => {
       state.salesData.alert = {
         ...state.salesData.alert,
-        data: action.payload,
+        ...action.payload,
       };
     },
 

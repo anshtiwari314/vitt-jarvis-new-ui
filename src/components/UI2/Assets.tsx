@@ -44,8 +44,8 @@ export default function Assets({ data, formatCurrency }: Props) {
                 dangerouslySetInnerHTML={{
                   __html:
                     typeof data.boxA.sub_header_data === 'number'
-                      ? formatCurrency(data.boxA.sub_header_data)
-                      : '',
+                      ? data.boxA.sub_header_data
+                      : data.boxA.sub_header_data,
                 }}
               />
             </div>
@@ -100,7 +100,7 @@ export default function Assets({ data, formatCurrency }: Props) {
                 {row.map((cell, colIndex) => {
                   let cellValue = '';
                   if (typeof cell === 'number' && colIndex > 0) {
-                    cellValue = formatCurrency(cell);
+                    cellValue = cell;
                   } else if (cell !== null && cell !== undefined && cell !== '') {
                     cellValue = String(cell).replace(/<[^>]+>/g, '');
                   }

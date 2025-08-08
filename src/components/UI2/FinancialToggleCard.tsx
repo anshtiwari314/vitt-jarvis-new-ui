@@ -81,11 +81,12 @@ export default function FinancialToggleCard({
               <p className="text-gray-450 text-md mb-0.5">{key}</p>
               <p className="text-slate-800 font-semibold text-sm">
                 {key.toLowerCase().includes("corpus") ? (
-                  <span
-                    dangerouslySetInnerHTML={{
-                      __html: formatCurrency(parseCorpusValue(safeValue(value))),
-                    }}
-                  />
+                  // <span
+                  //   dangerouslySetInnerHTML={{
+                  //     __html: formatCurrency(parseCorpusValue(safeValue(value))),
+                  //   }}
+                  // />
+                  <span>{safeValue(value)}</span>
                 ) : (
                   safeValue(value)
                 )}

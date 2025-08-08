@@ -167,3 +167,11 @@ export  function sendToServer(blob:any,url:string,SESSION_ID,data){
     })
     
   }
+
+export function uuidShort() {
+  const fullUuid = uuidv4(); // e.g., '123e4567-e89b-12d3-a456-426614174000'
+  const hexPart = fullUuid.replace(/-/g, '').substring(0, 10); // Remove hyphens and take first 10 chars
+  const decimalValue = parseInt(hexPart, 16);
+  const sixDigitNumber = decimalValue % 1000000;
+  return String(sixDigitNumber).padStart(6, '0');
+ }

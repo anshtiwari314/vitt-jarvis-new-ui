@@ -59,7 +59,7 @@ export default function Recommendations({ data, formatCurrency }: Recommendation
           key={realId}
           recommendation={rec}
           formatCurrency={formatCurrency}
-          isExpanded={expandedRecs[realId] || false}
+          isExpanded={expandedRecs[realId] || true}
           onToggle={() => toggleCalculation(realId)}
         />
       )

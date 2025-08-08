@@ -40,23 +40,26 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   console.log("DataWrapper mounted")
 
   const [socket, setSocket] = useState<Socket | null>(null)
-  const navigation = useAppSelector((state) => state.salesCopilotReducer.navigation)
-  const [socketConnected, setSocketConnected] = useState(false)
-  const [socketReady, setSocketReady] = useState(false) 
+  const [isSocketConnected,setIsSocketConnected] = useState(false)
 
-  console.log("sales state", navigation)
+  const navigation = useAppSelector((state) => state.salesCopilotReducer.navigation)
+  const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
+
+  //console.log("sales state", navigation)
 
   function updateSalesState(data:any) {
-    console.log("handle incoming data", data, " the data type", data.type)
+    //console.log("handle incoming data", data, " the data type", data.type)
     switch (data.type) {
       case "basic-info":
         console.log(data,"int the basic section info");
         dispatch(updateBasicInfo(data.basicInfo))
         break
       case "assets":
+        console.log('receiving assets data',data)
         dispatch(updateAssets(data.assets))
         break
       case "liabilities":
+        console.log('liabilities',data)
         dispatch(updateLiabilities(data.liabilities))
         break
       case "financial-goals":
@@ -66,6 +69,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
         dispatch(updatePlanSummary(data.planSummary))
         break
       case "recommendations":
+        console.log('recommendation data',data)
         dispatch(updateRecommendations(data.recommendations))
         break
       case "follow-up-qn":
@@ -83,15 +87,18 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   }
 
   function initialisationSalesState(data: any) {
+    console.log('init sales data',data)
     dispatch(initSalesState(data))
   }
 
     useEffect(()=>{
-        const socketUrl = 'http://localhost:3001'
+        //const socketUrl = 'http://localhost:5000'
+        //const socketUrl = 'https://0e8d-2401-4900-882f-a188-7561-8415-780c-dcdf.ngrok-free.app'
+        const socketUrl = 'wss://recruito.vitti.insure'
 
         const tempSocket = io(socketUrl)
 
-        console.log('Socket has been created',tempSocket)
+        //console.log('Socket has been created',tempSocket)
 
 
         function connected() {
@@ -114,8 +121,8 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
         tempSocket.on("connect", connected);
         tempSocket.on("disconnect", disconnect);
 
-        tempSocket.on('init-state',initialisationSalesState)
-        tempSocket.on('update-state',updateSalesState)
+        tempSocket.on('questions_loader_res',initialisationSalesState)
+        tempSocket.on('ai_suggestion_res',updateSalesState)
 
     setSocket(tempSocket)
 
@@ -129,15 +136,15 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   }, [])
 
   useEffect(() => {
-    if (!socket || !socketConnected) {
+    if (!socket) {
       return
     }
 
     const data = {
-      roomid: "12344",
+      roomid: roomId,
       jobid: "abcde",
       agentid: "1234",
-      name: "varun bayya",
+      name: name,
       selected_topic: navigation,
     }
 
@@ -147,8 +154,8 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   const values = {
     socket,
     setSocket,isSocketConnected,
-    socketConnected: socketConnected && socketReady,
-    ngrokServerUrl: "http://localhost:5000",
+    //socketConnected: socketConnected && socketReady,
+    //ngrokServerUrl: "http://localhost:5000",
     setMsgLoading: (loading: boolean) => console.log("Loading:", loading),
     oneWayUrl: "http://localhost:5000", 
   }

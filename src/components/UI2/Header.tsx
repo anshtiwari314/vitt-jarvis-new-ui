@@ -4,11 +4,22 @@ import { useVad } from "../../context/VadWrapper";
 import LoadingIcons, { 
    TailSpin
 } from 'react-loading-icons';
+import { useDispatch } from 'react-redux';
+import { useAuth } from "../../context/AuthContext";
+
 
 export default function Header(){
     const currentNavigation = useAppSelector(state => state.salesCopilotReducer.navigation);
     //@ts-ignore
     const {manualVadStatus,setManualVadStatus,VAD2} = useVad()
+    const clientName = useAppSelector((state) => state.salesCopilotReducer.clientName)
+
+    const {setCurrentUser}= useAuth()
+    
+      function handleLogout(){
+        localStorage.removeItem('insurance-auth')
+        setCurrentUser(null)
+      }
 
     const pageDetails: { [key: string]: string } = {
         "Basic Info": "Basic Information",
@@ -107,11 +118,11 @@ export default function Header(){
         const clientNameHeader = document.getElementById('client-name-header');
         if (clientNameHeader) {
             setTimeout(() => {
-                clientNameHeader.textContent = '| Client: Anjali Sharma';
+                clientNameHeader.textContent = `| Client: ${clientName}`;
                 clientNameHeader.classList.remove('hidden');
             }, 2000);
         }
-    }, []);
+    }, [clientName]);
 
 
     const minutes = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
@@ -122,6 +133,7 @@ export default function Header(){
         console.log('manual vad status',manualVadStatus)
     },[manualVadStatus])
 
+    
     return (
         <header className="bg-white p-4 border-b border-slate-200 flex justify-between items-center sticky top-0 z-10">
             <div>
@@ -209,6 +221,7 @@ export default function Header(){
                     
                 </div>
                 <div id="timer" className="text-lg font-mono font-semibold text-slate-700 bg-slate-100 px-3 py-2 rounded-lg">{minutes}:{seconds}</div>
+                <a onClick={handleLogout} style={{cursor:'pointer'}} className="text-blue-600 hover:underline">Logout</a>
             </div>
         </header>
     )

@@ -58,24 +58,27 @@ export default function RecommendationToggleCard({
       {/* map of the cols */}
       {cols && Object.keys(cols).length > 0 && (
         <div className="grid grid-cols-3 gap-6 mb-3">
-          {Object.entries(cols).map(([key, value]) => (
-            <div key={key}>
+          {Object.entries(cols).map(([key, value]) => {
+            console.log(key,' ',value)
+            return <div key={key}>
               <p className="text-slate-500 text-md mb-1">{key}</p>
               <p className="text-slate-800 font-semibold text-lg">
                 {key.toLowerCase().includes("premium") ||
                 key.toLowerCase().includes("cover") ||
                 key.toLowerCase().includes("corpus") ? (
                   <span
-                    dangerouslySetInnerHTML={{
-                      __html: formatCurrency(parseCorpusValue(safeValue(value))),
-                    }}
-                  />
+                    // dangerouslySetInnerHTML={{
+                    //   __html: formatCurrency(parseCorpusValue(safeValue(value))),
+                    // }}
+                    
+                  >{safeValue(value)}</span>
                 ) : (
                   safeValue(value)
+                 //value
                 )}
               </p>
             </div>
-          ))}
+})}
         </div>
       )}
 

@@ -1,25 +1,55 @@
-import React from 'react'
-import {Route,Routes} from 'react-router-dom';
-import PrivateRoute from './components/PrivateRoute';
-import GlobalRoute from './components/GlobalRoute';
-import Page1 from './pages/Page3'
-import SignIn from './mui-sign-in/SignIn'
-//import SignUp from './components/SignUp';
-import Login from './pages/Login'
-import ErrorPage from './pages/ErrorPage'
-import DataWrapper, { useData } from './context/DataWrapper'
-import { VadWrapper } from './context/VadWrapper';
 
-export default function Routing() {
+import DataWrapper from './context/DataWrapper';
+import VadWrapper  from './context/VadWrapper';
+import { useEffect } from 'react';
+//import App from './App';
+
+import { useDispatch } from 'react-redux';
+import { setQP } from './reducers/queryparamReducer';
+import ErrorPage from './pages/ErrorPage';
+import PrivateRoute from './components/PrivateRoute'
+import GlobalRoute from './components/GlobalRoute'
+import Login from './pages/Login'
+import Login2 from './pages/Login2'
+import MainInsurancePage from './pages/MainInsurancePage';
+import {HashRouter as Router ,Routes,Route} from 'react-router-dom'
+import LeadDashboard from './pages/LeadDashboard';
+import { useAuth } from './context/AuthContext';
+import {v4 as uuidv4} from 'uuid'
+
+//import './css/All.css'
+//import './css/msg.css'
+
+
+export default function RenderChildren(){
+  
+    const dispatch = useDispatch();
+  const {setCurrentUser}= useAuth()
+  
+
+  useEffect(()=>{
+  let insuranceAuthKey = JSON.parse(localStorage.getItem('insurance-auth'))
+  //console.log('routing',insuranceAuthKey.userid)
+  if(insuranceAuthKey && insuranceAuthKey.userid){
+
+    //console.log('routing',insuranceAuthKey.userid)
+    setCurrentUser({userid:insuranceAuthKey.userid,sessionuid:uuidv4()})
+  }
+  },[]) 
+
+
   return (
-    <Routes>
+    <Router>
+      <Routes>
             {/* @ts-ignore */}
-            <Route path='/' element={<PrivateRoute component={<Login/>}/>}/>
+            <Route path='/' element={<PrivateRoute component={<Login2/>}/>}/>
             {/* @ts-ignore */}
-            <Route path='/signup' element={<PrivateRoute component={<SignIn/>}/>}/>
+            <Route path='/lead-management' element={<GlobalRoute component={<LeadDashboard/>}/>}/>
+            {/* <Route path='/signup' element={<PrivateRoute component={<SignIn/>}/>}/> */}
             {/* @ts-ignore */}
-            <Route path='/mainpage' element={<GlobalRoute component={<DataWrapper><VadWrapper><Page1/></VadWrapper></DataWrapper>}/>}/>
+            <Route path='/mainpage' element={<GlobalRoute component={<DataWrapper><VadWrapper><MainInsurancePage/></VadWrapper></DataWrapper>}/>}/>
             <Route path='*' element={<ErrorPage/>}/>
-    </Routes>
+      </Routes>
+    </Router>
   )
 }

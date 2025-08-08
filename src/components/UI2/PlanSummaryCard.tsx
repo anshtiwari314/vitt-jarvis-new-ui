@@ -39,7 +39,7 @@ export default function PlanSummaryCard({
   }
 
   const getCardType = () => {
-    const header = summaryItem.header.toLowerCase()
+    const header = summaryItem.header ? summaryItem.header?.toLowerCase() : '' 
     if (header.includes("life cover") || header.includes("cover analysis")) {
       return "lifeCover"
     }
@@ -53,7 +53,7 @@ export default function PlanSummaryCard({
   const cols = summaryItem?.cols
   const calculation = summaryItem?.calculation
   const summaryId =
-    summaryItem.id || `summary-${summaryItem.header.replace(/\s+/g, "-").toLowerCase()}`
+    summaryItem.id || `summary-${summaryItem.header?.replace(/\s+/g, "-").toLowerCase()}`
 
   const contentRef = useRef<HTMLDivElement>(null)
   const [height, setHeight] = useState("0px")

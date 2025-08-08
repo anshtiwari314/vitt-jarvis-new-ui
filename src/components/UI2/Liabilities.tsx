@@ -20,6 +20,10 @@ interface Props {
 }
 
 export default function Liabilities({ data, formatCurrency }: Props) {
+
+
+  console.log('liabilities component',data)
+
   const renderFormattedValue = (value: string | number | null | undefined) => {
     if (value === null || value === undefined || value === "") return "";
 
@@ -91,12 +95,12 @@ export default function Liabilities({ data, formatCurrency }: Props) {
                 key={rowIndex}
                 className="grid grid-cols-3 gap-3 p-3 rounded-md bg-slate-50"
               >
-                {row.map((cell, colIdx) => {
+                {row?.map((cell, colIdx) => {
                   const cellValue =
                     cell === null || cell === undefined || cell === ""
                       ? ""
                       : typeof cell === "number" && colIdx > 0
-                      ? formatCurrency(cell)
+                      ? cell
                       : String(cell);
 
                   return (

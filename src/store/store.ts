@@ -1,10 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { useDispatch, useSelector, TypedUseSelectorHook } from 'react-redux';
 import salesCopilotReducer from '../reducers/salesCopilotReducer';
+import queryparamReducer from '../reducers/queryparamReducer';
+
 
 export const store = configureStore({
   reducer: {
     salesCopilotReducer: salesCopilotReducer.salesCopilotReducer,
+    qpReducer: queryparamReducer.qpReducer,
     // Add other reducers here if any
   },
 });

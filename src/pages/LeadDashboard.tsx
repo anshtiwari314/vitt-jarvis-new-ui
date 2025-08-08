@@ -1,0 +1,448 @@
+import React, { useEffect, useState, createContext, useContext } from 'react';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCloudUploadAlt, faUser, faChartLine, faUserTie, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { PostReq, uuidShort } from '../functions/requests';
+import { faCopy } from '@fortawesome/free-solid-svg-icons'; // Add this import
+import { useAuth } from '../context/AuthContext';
+import { v4 as uuidV4 } from "uuid";
+// --- Placeholder Components (Replace with your actual components) ---
+
+// Mock Data Context for demonstration
+const DataContext = createContext(null);
+const useData = () => useContext(DataContext);
+
+// const PostReq = async (url, data) => {
+//   console.log('Mock Post Request:', url, data);
+//   return new Promise(resolve => setTimeout(() => resolve({ success: true }), 500));
+// };
+
+
+const Form = ({ state, setState, submitForm, loading, error }) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setState(prevState => ({ ...prevState, [name]: value }));
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-sm flex-1">
+      <h3 className="text-lg font-semibold text-slate-700 mb-4">Add New Lead</h3>
+      <form onSubmit={submitForm} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+        <div>
+          <label htmlFor="fname" className="block text-slate-500 mb-1">First Name</label>
+          <input type="text" id="fname" name="fname" value={state.fname} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded-md bg-slate-50" />
+        </div>
+        <div>
+          <label htmlFor="lname" className="block text-slate-500 mb-1">Last Name</label>
+          <input type="text" id="lname" name="lname" value={state.lname} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded-md bg-slate-50" />
+        </div>
+        <div>
+          <label htmlFor="email" className="block text-slate-500 mb-1">Email</label>
+          <input type="email" id="email" name="email" value={state.email} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded-md bg-slate-50" />
+        </div>
+        <div>
+          <label htmlFor="mob" className="block text-slate-500 mb-1">Mobile Number</label>
+          <input type="text" id="mob" name="mob" value={state.mob} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded-md bg-slate-50" />
+        </div>
+        <div>
+          <label htmlFor="leadSourceFrom" className="block text-slate-500 mb-1">Lead Source</label>
+          <select id="leadSourceFrom" name="leadSourceFrom" value={state.leadSourceFrom} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded-md bg-slate-50">
+            <option value="social-media">Social Media</option>
+            <option value="website">Website</option>
+            <option value="referral">Referral</option>
+          </select>
+        </div>
+        <div>
+          <label htmlFor="priority" className="block text-slate-500 mb-1">Priority</label>
+          <select id="priority" name="priority" value={state.priority} onChange={handleChange} className="w-full p-2 border border-slate-300 rounded-md bg-slate-50">
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+        <div className="md:col-span-2">
+          <button type="submit" className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-200" disabled={loading}>
+            {loading ? 'Submitting...' : 'Add Lead'}
+          </button>
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+        </div>
+      </form>
+    </div>
+  );
+};
+
+const UploadComp = () => {
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-sm flex-1">
+      <h3 className="text-lg font-semibold text-slate-700 mb-4">Upload Leads (CSV/Excel)</h3>
+      <div className="border-2 border-dashed border-slate-300 rounded-md p-6 text-center text-slate-500">
+        <FontAwesomeIcon icon={faCloudUploadAlt} className="text-4xl mb-3 text-slate-400" />
+        <p className="text-sm mb-2">Drag & drop your file here, or</p>
+        <input type="file" id="file-upload" className="hidden" />
+        <label htmlFor="file-upload" className="inline-block bg-blue-100 text-blue-700 px-4 py-2 rounded-md cursor-pointer hover:bg-blue-200 transition-colors duration-200">
+          Browse Files
+        </label>
+      </div>
+      <p className="text-xs text-slate-400 mt-3">Supported formats: .csv, .xlsx</p>
+    </div>
+  );
+};
+
+
+
+// Assuming DataContext and useData are defined elsewhere as in your previous code
+// For demonstration, I'll include a mock useData if not provided in the full context
+// const DataContext = createContext(null);
+// const useData = () => useContext(DataContext);
+
+export function Table({setFormState,initialFormState}) {
+  const { formData } = useData(); // Using mock data from context
+  const leads = formData || []; // Ensure leads is an array
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5); // 10 entries per page as requested
+
+  // State to manage copy feedback message
+  const [copyFeedback, setCopyFeedback] = useState({}); // { leadId: 'Copied!' }
+
+  // Calculate the leads to display on the current page
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentLeads = leads.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(leads.length / itemsPerPage);
+
+  // Function to change page
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const copyToClipboard = (textToCopy, leadId) => {
+    const textarea = document.createElement('textarea');
+    textarea.value = textToCopy;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = 0;
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+
+    try {
+      const successful = document.execCommand('copy');
+      if (successful) {
+        setCopyFeedback(prev => ({ ...prev, [leadId]: 'Copied!' }));
+        setTimeout(() => {
+          setCopyFeedback(prev => ({ ...prev, [leadId]: '' }));
+        }, 2000);
+      } else {
+        setCopyFeedback(prev => ({ ...prev, [leadId]: 'Failed to copy.' }));
+        setTimeout(() => {
+          setCopyFeedback(prev => ({ ...prev, [leadId]: '' }));
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      setCopyFeedback(prev => ({ ...prev, [leadId]: 'Failed to copy.' }));
+      setTimeout(() => {
+        setCopyFeedback(prev => ({ ...prev, [leadId]: '' }));
+      }, 2000);
+    } finally {
+      document.body.removeChild(textarea);
+    }
+  };
+
+  function enableEdit(lead){
+    const {name,mob,email,priority,source,lead_id} = lead 
+    let [fname,...restName] = name.split(' ')
+    
+    console.log('enable edit',lead)
+    setFormState({...initialFormState,lead_id,fname,lname:restName.join(' '),mob,email,priority,leadSourceFrom:source})
+  }
+
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-sm">
+      <h3 className="text-lg font-semibold text-slate-700 mb-4">Recent Uploaded Leads</h3>
+      {leads.length === 0 ? (
+        <p className="text-slate-500 text-center py-4">No leads uploaded yet.</p>
+      ) : (
+        <>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Customer Name</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Mobile</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Priority</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Source</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Link</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Edit</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-slate-200">
+                {currentLeads.map((lead, index) => {
+                  // Ensure lead.link_params exists for the link generation
+                  const linkToCopy = lead.link_params
+                    ? `${window.location.protocol}//${window.location.host}/#/mainpage/?${lead.link_params}`
+                    : '#'; // Fallback link if link_params is missing
+
+                  // Using a combination of lead.id (if available) and index for unique key
+                  const uniqueLeadId = lead.id || `lead-${indexOfFirstItem + index}`;
+                  //console.log(lead,linkToCopy)
+                  return (
+                    <tr key={uniqueLeadId}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{lead.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.mob}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead.priority}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead.source}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 flex items-center space-x-2">
+                        {/* Display the link text (optional, if you want it visible) target="_blank"*/}
+                        <a href={linkToCopy} className="text-blue-600 hover:underline"  rel="noopener noreferrer">Link</a>
+
+                        <button
+                          onClick={() => copyToClipboard(linkToCopy, uniqueLeadId)}
+                          className="text-sky-600 hover:text-sky-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md p-1"
+                          title="Copy Link"
+                        >
+                          <FontAwesomeIcon icon={faCopy} className="w-4 h-4" /> {/* Adjusted icon size slightly */}
+                        </button>
+
+                        {/* Display feedback message */}
+                        {copyFeedback[uniqueLeadId] && (
+                          <span className="text-xs text-green-600 font-semibold">
+                            {copyFeedback[uniqueLeadId]}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                        <button
+                          onClick={() => enableEdit(lead)}
+                          className="text-sky-600 hover:text-sky-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md p-1"
+                          title="Copy Link"
+                        >
+                          <FontAwesomeIcon icon={faEdit} className="w-4 h-4"/>
+                        </button>
+
+                        
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <nav className="flex justify-center mt-6">
+              <ul className="flex items-center -space-x-px">
+                <li>
+                  <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-2 ml-0 leading-tight text-slate-500 bg-white border border-slate-300 rounded-l-lg hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+                </li>
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <li key={i}>
+                    <button
+                      onClick={() => paginate(i + 1)}
+                      className={`px-3 py-2 leading-tight border border-slate-300
+                        ${currentPage === i + 1
+                          ? 'text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700'
+                          : 'text-slate-500 bg-white hover:bg-slate-100 hover:text-slate-700'
+                        }`}
+                    >
+                      {i + 1}
+                    </button>
+                  </li>
+                ))}
+                <li>
+                  <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-2 leading-tight text-slate-500 bg-white border border-slate-300 rounded-r-lg hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+
+
+
+
+// Assuming these icons are already imported where FontAwesomeIcon is used
+// import { faCloudUploadAlt, faChartPie, faUserFriends, faChartLine, faUser, faUserTie } from '@fortawesome/free-solid-svg-icons';
+
+export function Sidebar({ links }) { // Changed to named export
+  return (
+    <div className="hidden md:block fixed h-full bg-white text-slate-800 w-64 p-6 shadow-lg rounded-r-lg border-r border-slate-100">
+      <div className="mb-10 pt-2">
+        {/* Placeholder for a logo or more prominent title */}
+        <h2 className="text-3xl font-extrabold text-slate-900 tracking-wide">
+          Lead Management
+        </h2>
+        <p className="text-sm text-slate-500 mt-1">Panel</p>
+      </div>
+      {/* <nav>
+        <ul>
+          {links.map((link, index) => (
+            <li key={index} className="mb-3">
+              <a
+                href={link.redirectTo}
+                className={`flex items-center p-3 rounded-lg text-base font-medium transition-all duration-250 ease-in-out
+                  ${link.isActive
+                    ? 'bg-blue-100 text-blue-700 shadow-sm border-l-4 border-blue-500' // Faint blue background, darker text, left border
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800' // Faint hover background, slightly darker text
+                  }`}
+              >
+                <FontAwesomeIcon icon={link.icon} className="mr-4 text-xl" />
+                {link.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav> */}
+    </div>
+  );
+}
+
+
+
+
+const Header = ({ title, dashboardLink }) => {
+
+  const {setCurrentUser}= useAuth()
+
+  function handleLogout(){
+    localStorage.removeItem('insurance-auth')
+    setCurrentUser(null)
+  }
+
+  return (
+    <header className="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center">
+      <h1 className="text-2xl font-bold text-slate-800">{title}</h1>
+      <a onClick={handleLogout} style={{cursor:'pointer'}} className="text-blue-600 hover:underline">Logout</a>
+    </header>
+  );
+};
+
+// --- Main LeadDashboard Component ---
+
+function LeadDashboard() {
+  const [formData, setFormData] = useState([]); // Mock for useData's formData
+  //const [base_url] = useState('http://mockapi.com'); // Mock base_url
+  const base_url = 'https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis';
+  //@ts-ignore
+  const {currentUser} = useAuth()
+  const getFormData = async (url) => {
+    console.log('Mock getFormData:', url);
+    // Simulate fetching data
+    let resp = await PostReq(`${base_url}/recent_uploads`,{agent_id:currentUser.userid})
+    console.log('resp',resp)
+
+    const mockLeads = [
+      { customer_name: 'John Doe', mobile_num: '9876543210', email: 'john@example.com', priority: 'high', source: 'website' },
+      { customer_name: 'Jane Smith', mobile_num: '9123456789', email: 'jane@example.com', priority: 'medium', source: 'social-media' },
+    ];
+    setFormData(resp.recent_lead_data);
+  };
+
+  let initialState = {
+    lead_id:null,
+    fname: '',
+    lname: '',
+    email: '',
+    mob: '',
+    fileName: '', // Not used in Form component directly, kept for consistency
+    leadSourceFrom: 'social-media',
+    file: null, // Not used in Form component directly, kept for consistency
+    priority: 'low'
+  };
+
+  const [formState, setFormState] = useState(initialState);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const mylink = [
+    { name: 'Uploads Leads', icon: faCloudUploadAlt, redirectTo: '/#', isActive: true },
+    { name: 'Dashboard', icon: faUser, redirectTo: '/#/sales-advisor', isActive: false },
+    { name: 'Sales Advisor Dashboard', icon: faChartLine, redirectTo: '/#/sales-advisor-dashboard', isActive: false },
+    { name: 'Sales Manager Page', icon: faUserTie, redirectTo: '/#/sales-manager', isActive: false },
+    { name: 'Sales Manager Dashboard', icon: faChartLine, redirectTo: '/#/sales-manager-dashboard', isActive: false },
+  ];
+
+  useEffect(() => {
+    // Initial data fetch simulation
+    getFormData(`${base_url}/recent_uploads`);
+  }, []);
+
+  async function submitForm(e) {
+    setLoading(true);
+    setError('');
+    e.preventDefault();
+
+    if (formState.fname === '' || formState.lname === '' || formState.email === '' ||
+      formState.mob === '' || formState.priority === '' || formState.leadSourceFrom === '') {
+      setError('Please fill all fields of form');
+      setLoading(false);
+      return;
+    }
+
+    let data = {
+      lead_id:formState.lead_id,
+      customer_name: formState.fname + ' ' + formState.lname, // Combined name for mock
+      mobile_num: formState.mob,
+      email: formState.email,
+      priority: formState.priority,
+      source: formState.leadSourceFrom,
+      agent_id:currentUser.userid
+    };
+
+    console.log('before submitting',data)
+    try {
+      await PostReq(`${base_url}/single_lead_upload`, data);
+      setFormState(initialState);
+      getFormData(`${base_url}/recent_uploads`); // Refresh data after submission
+    } catch (e) {
+      console.error(e);
+      setError('Failed to submit lead.');
+    }
+    setLoading(false);
+  }
+
+  return (
+    <DataContext.Provider value={{ base_url, getFormData, formData }}>
+      <div className="min-h-screen bg-slate-100 font-sans" >
+        {/* <Sidebar links={mylink} /> */}
+        
+        {/* Added px-6 for horizontal padding to the main content area */}
+        <div className="" style={{margin:'0 8%'}}>
+          <div className="py-6">
+            <Header title="Lead Management" dashboardLink="/#/" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <Form state={formState} setState={setFormState} submitForm={submitForm} loading={loading} error={error} />
+            <UploadComp />
+          </div>
+
+          <div className="mt-6 pb-8">
+            <Table formState={formState} setFormState={setFormState} />
+          </div>
+        </div>
+      </div>
+    </DataContext.Provider>
+  );
+}
+
+export default LeadDashboard;

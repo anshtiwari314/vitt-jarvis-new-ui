@@ -65,7 +65,7 @@ export default function PlanSummary({ data, formatCurrency }: PlanSummaryProps) 
             <PlanSummaryCard
               summaryItem={{ ...item, id: summaryId }}
               formatCurrency={formatCurrency}
-              isExpanded={expandedSummary[summaryId] || false}
+              isExpanded={expandedSummary[summaryId] || true}
               onToggle={toggleCalculation}
             />
           </div>

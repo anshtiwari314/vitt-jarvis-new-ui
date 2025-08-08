@@ -7,6 +7,7 @@ import { useAuth } from './AuthContext';
 import { useMicVAD, utils} from "@ricky0123/vad-react"
 //import { } from "@ricky0123/vad-react"
 import { PostReq } from '../functions/requests';
+import { useAppSelector } from '../store/store';
 //import { processAudioToBase64 } from '../functions/generalFn';
 //import useRequest from '../hooks/requests';
 
@@ -20,7 +21,9 @@ export default function VadWrapper({children}){
 
     const oneWayUrl = ''
     const ngrokServerUrl = ''
-    const {socket,isSocketConnected} = useData()
+    const {socket,isSocketConnected,setMsgLoading} = useData()
+    const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
+    
     //const {currentUser} = useAuth()
     const [vadRecordingOn,setVadRecordingOn] = useState<boolean>(false);
     let recordingStatus = useRef(false);
@@ -43,7 +46,8 @@ export default function VadWrapper({children}){
     //     "ort-wasm-threaded.wasm": `/ort-wasm-threaded.wasm`,
     //   }
 
-    
+    console.log('vad wrapper',roomId)
+
   async function processAudioToBase64(audio,url,data){
     console.log("vad stopped")
     const wavBuffer = utils.encodeWAV(audio)
@@ -101,14 +105,15 @@ export default function VadWrapper({children}){
 
 
     let questionsApiReqPayload = {
-        roomid: '12344',
+        roomid: roomId,
         jobid: 'abcde',
         agentid: '1234',
         //custemailid: custEmailId,
         //isHost: isHost,
-        name: 'varun bayya', 
-        // roomid: "abc-123-fgh-456",
-        // jobid: "1",
+        name: name, 
+         //roomid: "abc-123-fgh-456",
+        //name:'bayya'
+         // jobid: "1",
         // agentid: "1234",
         
       //isHost:isHost
@@ -122,13 +127,11 @@ export default function VadWrapper({children}){
       // }
 
       //this will trigger only after socket is connected & only once 
-     if(!initReqStatusRef.current){
-      initReqStatusRef.current = true
-      console.log("ama i coming here");
+     
       socket.emit("questions_loader_req_ins_v2", questionsApiReqPayload);
       
 
-    },[])
+    },[socket,isSocketConnected])
 
 
     function VAD(cb1:CallableFunction,cb2:CallableFunction){
@@ -165,12 +168,12 @@ export default function VadWrapper({children}){
 
             let data = {
               
-              roomid: '12344',
+              roomid: roomId,
               jobid: 'abcde',
               agentid: 'bayya-bayya',
               //custemailid: custEmailId,
               //isHost: isHost,
-              name: 'varun bayya', 
+              name: name, 
               //sessionid:usersArrRef.current[0]?.id,
                
               speech_stop_time:`${speechStopDate.toLocaleDateString()} ${speechStopDate.toLocaleTimeString()}:${speechStopDate.getMilliseconds()}`

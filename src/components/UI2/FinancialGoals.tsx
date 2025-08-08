@@ -49,7 +49,7 @@ export default function FinancialGoals({ data, formatCurrency }: FinancialGoalsP
           key={goal.id}
           goal={goal}
           formatCurrency={formatCurrency}
-          isExpanded={expandedGoals[goal.id] || false}
+          isExpanded={expandedGoals[goal.id] || true}
           onToggle={toggleCalculation}
         />
       ))}
