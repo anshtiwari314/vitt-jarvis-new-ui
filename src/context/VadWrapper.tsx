@@ -13,8 +13,9 @@ import { useAppSelector } from '../store/store';
 
 const VadContext = createContext('vadContext')
 
-export function useVad(){
-    return useContext(VadContext)
+export function useVad()
+{
+  return useContext(VadContext)
 }
 
 export default function VadWrapper({children}){
@@ -23,6 +24,9 @@ export default function VadWrapper({children}){
     const ngrokServerUrl = ''
     const {socket,isSocketConnected,setMsgLoading} = useData()
     const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
+    console.log('roomId in vad wrapper',roomId)
+      const navigation = useAppSelector((state) => state.healthManagmentReducer.navigation)
+      console.log('navigation in vad wrapper',navigation)
     
     //const {currentUser} = useAuth()
     const [vadRecordingOn,setVadRecordingOn] = useState<boolean>(false);
@@ -48,7 +52,7 @@ export default function VadWrapper({children}){
 
     console.log('vad wrapper',roomId)
 
-  async function processAudioToBase64(audio,url,data){
+async function processAudioToBase64(audio,url,data){
     console.log("vad stopped")
     const wavBuffer = utils.encodeWAV(audio)
       // const base64 = utils.arrayBufferToBase64(wavBuffer)
@@ -64,6 +68,7 @@ export default function VadWrapper({children}){
 
       data = {
         ...data,
+        selected_topic:navigation,
         audiomessage:base64data.split(',')[1],
         timeStamp:getTimeStamp()
       }
@@ -73,8 +78,7 @@ export default function VadWrapper({children}){
       //console.log('resp',resp)
       //return resp
       console.log("from inside send to server[DEBUGGGG]", data);
-      socket.emit("ai_suggestion_req_ins_v2", data);
-
+      socket.emit("ai_suggestion_req_heal_v2", data);
 }
 
     // useEffect(()=>{
@@ -82,55 +86,27 @@ export default function VadWrapper({children}){
     // },[isSocketConnected])
 
     useEffect(()=>{
-      if(socket===null || isSocketConnected===false || isQuestionLoaderRunsFirstTime.current===false)
-        return ;
+      if (socket === null  || isQuestionLoaderRunsFirstTime.current === false) {
+      console.log("Event not emitted because:", {
+        socket: socket !== null,
+        isSocketConnected,
+        isFirstTime: isQuestionLoaderRunsFirstTime.current,
+      })
+      return
+    }
 
-      isQuestionLoaderRunsFirstTime.current = false
-      //init req 
+    isQuestionLoaderRunsFirstTime.current = false
+    console.log("questions_loader_req_heal_v2 event being emitted")
 
-      // let data = {
-      //   //this change is for jarvis-in-person-usecase
-      //   //sessionid:currentUser.userid,
-        
+    const questionsApiReqPayload = {
+      roomid: "17-aug-2025",
+      jobid: "abcde",
+      agentid: "1234",
+      name: name,
+    }
 
-
-      //   // this change is for vitt-sales-copilot
-      //   sessionid:currentUser.sessionuid,
-      //   mob: currentUser.userid,
-      //   userid:currentUser.userid,
-      //   audiomessage:'',
-      //   timeStamp:getTimeStamp(),
-      //   init:true
-      // }
-
-
-    let questionsApiReqPayload = {
-        roomid: roomId,
-        jobid: 'abcde',
-        agentid: '1234',
-        //custemailid: custEmailId,
-        //isHost: isHost,
-        name: name, 
-         //roomid: "abc-123-fgh-456",
-        //name:'bayya'
-         // jobid: "1",
-        // agentid: "1234",
-        
-      //isHost:isHost
-    };
-
-      // if(initReqStatusRef.current ===false){
-      //   initReqStatusRef.current = true
-      //   PostReq('https://2265-49-204-210-210.ngrok-free.app/',data).then(resp=>{
-      //     console.log('init req',resp)
-      //    })
-      // }
-
-      //this will trigger only after socket is connected & only once 
-     
-      socket.emit("questions_loader_req_ins_v2", questionsApiReqPayload);
-      
-
+    console.log("Emitting questions_loader_req_heal_v2 with payload:", questionsApiReqPayload)
+    socket.emit("questions_loader_req_heal_v2", questionsApiReqPayload)
     },[socket,isSocketConnected])
 
 
@@ -168,7 +144,7 @@ export default function VadWrapper({children}){
 
             let data = {
               
-              roomid: roomId,
+              roomid:"17-aug-2025",
               jobid: 'abcde',
               agentid: 'bayya-bayya',
               //custemailid: custEmailId,

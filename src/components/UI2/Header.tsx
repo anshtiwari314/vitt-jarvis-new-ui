@@ -9,10 +9,11 @@ import { useAuth } from "../../context/AuthContext";
 
 
 export default function Header(){
-    const currentNavigation = useAppSelector(state => state.salesCopilotReducer.navigation);
+    const currentNavigation = useAppSelector(state => state.healthManagmentReducer.navigation);
     //@ts-ignore
     const {manualVadStatus,setManualVadStatus,VAD2} = useVad()
-    const clientName = useAppSelector((state) => state.salesCopilotReducer.clientName)
+    const clientName = useAppSelector((state) => state.healthManagmentReducer.clientName)
+    console.log('client name in header',clientName)
 
     const {setCurrentUser}= useAuth()
     
@@ -138,7 +139,7 @@ export default function Header(){
         <header className="bg-white p-4 border-b border-slate-200 flex justify-between items-center sticky top-0 z-10">
             <div>
                 <h2 id="page-title" className="text-2xl font-bold text-slate-800">{pageDetails[currentNavigation] || "Dashboard"}</h2>
-                <p id="client-name-header" className="mt-1 text-lg text-slate-500 hidden"></p>
+                <p id="client-name-header" className="mt-1 text-lg text-slate-500 hidden">Roshan</p>
             </div>
             <div className="flex-shrink-0 flex items-center gap-4">
                 <button id="skip-pfr-btn" className="bg-white border border-slate-300 text-slate-700 font-bold py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors duration-200">Skip PFR</button>

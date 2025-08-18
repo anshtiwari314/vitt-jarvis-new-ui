@@ -3,11 +3,11 @@ import { useAppSelector } from '../store/store';
 // import '../css/All.css'
 // import '../css/msg.css'
 // Import all content components
-import BasicInfo from '../components/UI2/BasicInfo';
+import BasicInfo from '../components/Health/BasicInfo';
 import Assets from '../components/UI2/Assets'
 import Liabilities from '../components/UI2/Liabilities'
 import FinancialGoals from '../components/UI2/FinancialGoals';
-import PlanSummary from '../components/UI2/PlanSummary'
+// import PlanSummary from '../components/UI2/PlanSummary'
 import Recommendations from '../components/UI2/Recommendations';
 
 import SideNavigation from '../components/UI2/SideNavigation'
@@ -15,13 +15,18 @@ import Header from '../components/UI2/Header'
 import RightPanel from '../components/UI2/RightPanel'
 import { useDispatch } from 'react-redux';
 import { setQP } from '../reducers/queryparamReducer';
+import HealthProfile from '../components/Health/HeatlhProfile';
+import RecommendedHealthPlan from '../components/Health/Recomendation';
+import PlanSummary from '../components/Health/PlanSummary';
+import BasicInfoH from '../components/Health/BasicInfo';
 
 export default function App() {
-   const { navigation: currentNavigation, salesData } = useAppSelector((state) => state.salesCopilotReducer)
+     const {salesData,navigation:currentNavigation} = useAppSelector((state) => state.healthManagmentReducer)
+     console.log('salesData', salesData.Recommendations)
 //   console.log(currentNavigation,"basic sales data is ",salesData.liabilities);
 
-    const qpState = useAppSelector((state) => state.qpReducer);
-    const dispatch = useDispatch();
+     const qpState = useAppSelector((state) => state.qpReducer);
+     const dispatch = useDispatch();
     // Helper function for currency formatting (moved from index2.html)
     const formatCurrency = (num: number) => {
         if (isNaN(num)) return '₹ 0';
@@ -43,30 +48,27 @@ export default function App() {
     const renderContent = () => {
     switch (currentNavigation) {
         case 'Basic Info':
-            return <BasicInfo data={salesData.basicInfo} />;
-        case 'Assets':
-            return <Assets data={salesData.assets} formatCurrency={formatCurrency} />;
-        case 'Liabilities':
-            return <Liabilities data={salesData.liabilities} formatCurrency={formatCurrency} />;
-        case 'Financial Goals':
-            return <FinancialGoals data={salesData.financialGoals} formatCurrency={formatCurrency} />;
-        case 'Plan Summary':
-            return <PlanSummary data={salesData.planSummary} formatCurrency={formatCurrency} />;
+            return <BasicInfoH data={salesData.basicInfo} />;
+        case 'Health Profile':
+            return <HealthProfile data={salesData.HealthProfile} />;
         case 'Recommendations':
-            return <Recommendations data={salesData.recommendations} formatCurrency={formatCurrency} />;
+            return <RecommendedHealthPlan planName={salesData.Recommendations.planName} sumInsured={salesData.Recommendations.sumInsured} riders={salesData.Recommendations.riders} premium={salesData.Recommendations.premium} />;
+        case 'Plan Summary':
+            return <PlanSummary items={salesData.PlanSummary.summary}/>;
+      
         default:
-            return <BasicInfo data={salesData.basicInfo} />; // Default to Basic Info
+            return <BasicInfoH data={salesData.basicInfo} />; 
     }
 };
 
 
     useEffect(()=>{
               function getMeetingInfo(){
-              const query = window.location.href.split('?')[1];
-              const parts = query.split("&");
-              const roomParam = parts[0] || "";
+              const query = window.location.href?.split('?')[1];
+              const parts = query?.split("&");
+              const roomParam = parts?.[0] || "";
               //const candidParam = parts[1] || "";
-              const name = parts[1] || "";
+              const name = parts?.[1] || "";
       
       
               //http://localhost:5173/?anuj-anuj-anuj&cid_7761
