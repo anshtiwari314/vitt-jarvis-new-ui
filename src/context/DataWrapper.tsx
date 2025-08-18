@@ -57,7 +57,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
         break
       case "recommendations":
         console.log('---recommendation---- ----data---',data)
-        dispatch(updateRecommendation(data.recommendations))
+        dispatch(updateRecommendation(data.Recommendations))
         break
       case "follow-up-qn":
         dispatch(updateFollowUpQn(data.followUpQn))

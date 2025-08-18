@@ -270,7 +270,7 @@ const initialCopilotState = {
         "table_values": []
       }
     },
-    "Recommendation": {
+    "Recommendations": {
       "planName": "",
       "sumInsured": 0,
       "premium": 0,
