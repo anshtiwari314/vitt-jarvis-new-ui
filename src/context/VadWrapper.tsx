@@ -78,7 +78,7 @@ async function processAudioToBase64(audio,url,data){
       //console.log('resp',resp)
       //return resp
       console.log("from inside send to server[DEBUGGGG]", data);
-      socket.emit("ai_suggestion_req_heal_v2", data);
+      socket.emit("ai_suggestion_req_health_ins", data);
 }
 
     // useEffect(()=>{
@@ -99,14 +99,14 @@ async function processAudioToBase64(audio,url,data){
     console.log("questions_loader_req_heal_v2 event being emitted")
 
     const questionsApiReqPayload = {
-      roomid: "17-aug-2025",
+      roomid: "hid_9095",
       jobid: "abcde",
       agentid: "1234",
       name: name,
     }
 
     console.log("Emitting questions_loader_req_heal_v2 with payload:", questionsApiReqPayload)
-    socket.emit("questions_loader_req_heal_v2", questionsApiReqPayload)
+    socket.emit("questions_loader_req_health_ins", questionsApiReqPayload)
     },[socket,isSocketConnected])
 
 
@@ -144,7 +144,7 @@ async function processAudioToBase64(audio,url,data){
 
             let data = {
               
-              roomid:"17-aug-2025",
+              roomid:"hid_9095",
               jobid: 'abcde',
               agentid: 'bayya-bayya',
               //custemailid: custEmailId,

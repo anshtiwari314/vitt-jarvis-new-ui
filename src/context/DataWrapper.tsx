@@ -59,11 +59,26 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
         console.log('---recommendation---- ----data---',data)
         dispatch(updateRecommendation(data.Recommendations))
         break
-      case "follow-up-qn":
-        dispatch(updateFollowUpQn(data.followUpQn))
-        break
-      case "cues":
-        dispatch(updateCues(data.cues))
+      // case "follow-up-qn":
+      //   dispatch(updateFollowUpQn(data.followUpQn))
+      //   break
+      case "add-cues":
+        console.log("it cameee.....", data?.cues);
+        const obj = {
+          header: data.header,   
+          data: data.data.map((item, index) => ({
+            id: `unique${index + 1}`,
+            text: `${item.text}`   
+          }))
+        };
+        if(data.header!=='Follow-up Question')
+        {
+        console.log(obj);
+        dispatch(updateCues(obj))
+        }
+        else{
+        dispatch(updateFollowUpQn(obj))
+        }
         break
       case "alert":
         dispatch(updateAlerts(data.alert))
@@ -80,7 +95,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
 
 
  useEffect(() => {
-  const socketUrl = 'http://localhost:8000'
+  const socketUrl = 'http://localhost:5000'
 
   // 500ms delay before connecting
   const timer = setTimeout(() => {
@@ -125,15 +140,15 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
     }
 
     const data = {
-      roomid: "17-aug-2025",
+      roomid: "hid_9095",
       jobid: "abcde",
       agentid: "1234",
       name: name,
       selected_topic: navigation,
     }
-
-    socket.emit("selected_topic_req_v2", data)
-  }, [navigation,socket])
+    console.log("it happened",navigation);
+    socket.emit("selected_topic_req_health_ins", data)
+  }, [socket,navigation])
 
   const values = {
     socket,
@@ -141,7 +156,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
     //socketConnected: socketConnected && socketReady,
     //ngrokServerUrl: "http://localhost:5000",
     setMsgLoading: (loading: boolean) => console.log("Loading:", loading),
-    oneWayUrl: "http://localhost:8000", 
+    oneWayUrl: "http://localhost:5000", 
   }
   return <Context.Provider value={values}>{children}</Context.Provider>
 }

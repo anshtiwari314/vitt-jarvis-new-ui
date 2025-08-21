@@ -40,7 +40,7 @@ export default function RecommendedHealthPlan({
         <div className="bg-slate-50 rounded-lg p-5 grid grid-cols-1 md:grid-cols-3 gap-4 border border-slate-200">
           <div>
             <p className="text-sm text-slate-500">Plan Name</p>
-            <p className="font-semibold text-slate-700">{planName}</p>
+            <p className="font-semibold text-slate-700">{planName.toUpperCase()}</p>
           </div>
           <div>
             <p className="text-sm text-slate-500">Sum Insured</p>
