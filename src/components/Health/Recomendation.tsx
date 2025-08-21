@@ -50,7 +50,7 @@ export default function RecommendedHealthPlan({
           Select Add-ons (Riders)
         </h3>
         <div className="space-y-3">
-          {riders.length > 0 ? (
+          {riders?.length > 0 ? (
             riders.map((rider, idx) => (
               <div
                 key={idx}

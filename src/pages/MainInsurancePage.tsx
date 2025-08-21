@@ -52,7 +52,7 @@ export default function App() {
         case 'Health Profile':
             return <HealthProfile data={salesData.HealthProfile} />;
         case 'Recommendations':
-            return <RecommendedHealthPlan planName={salesData.Recommendations.planName} sumInsured={salesData.Recommendations.sumInsured} riders={salesData.Recommendations.riders} premium={salesData.Recommendations.premium} />;
+            return <RecommendedHealthPlan planName={salesData.Recommendations?.planName} sumInsured={salesData.Recommendations?.sumInsured} riders={salesData.Recommendations?.riders} premium={salesData.Recommendations?.premium} />;
         case 'Plan Summary':
             return <PlanSummary items={salesData.PlanSummary.summary}/>;
       
