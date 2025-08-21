@@ -43,7 +43,7 @@ const initialCopilotLoadState= {
     "hi how are you",
     "hello"
   ],
-  
+  clientName:"",
   salesData: {
     basicInfo: {
       boxA: { 
@@ -187,22 +187,75 @@ const initialCopilotLoadState= {
         }
       ],
     },
-    cues:{
-      header:'Answer to "Why Term Plan?',
-      data:[
+    // cues:{
+    //   header:'Answer to "Why Term Plan?',
+    //   data:[
+    //     {
+    //       id:'unique',
+    //       text:'Financial safety net.'
+    //     },
+    //     {
+    //       id:'unique',
+    //       text:"Covers loans, secures family's future."
+    //     },
+    //     {
+    //       id:'unique',
+    //       text:"Most affordable, high-cover option."
+    //     }
+    //   ],
+    // },
+    cues:{ 
+      header:'ai cues',
+      cards :[
+        
         {
-          id:'unique',
-          text:'Financial safety net.'
+          header:'Follow-up Question',
+          color:'blue',
+          type:'regular-card',
+           data:[
+            {
+              id:'unique',
+              text:'Primary financial goals?'
+            },
+            {
+              id:'unique',
+              text:'Typical month financially?'
+            }
+          ],
         },
         {
-          id:'unique',
-          text:"Covers loans, secures family's future."
+          header:'Answer to "Why Term Plan?',
+          color:'green',
+          data:[
+            {
+              id:'unique',
+              text:'Financial safety net.'
+            },
+            {
+              id:'unique',
+              text:"Covers loans, secures family's future."
+            },
+            {
+              id:'unique',
+              text:"Most affordable, high-cover option."
+            }
+          ],
         },
         {
-          id:'unique',
-          text:"Most affordable, high-cover option."
+          header:'Compliance Alert',
+          color:'orange',
+          data:[
+            {
+              id:'unique',
+              text:'Disclose commission structures if asked.'
+            },
+            {
+              id:'unique',
+              text:'Avoid guaranteeing returns.'
+            }
+          ]
         }
-      ],
+      ] 
     },
     alert:{
       header:'Compliance Alert',
@@ -283,7 +336,10 @@ const initialCopilotState = {
     "PlanSummary":{
         "summary":[]
     },
-
+    cues:{ 
+      header:'ai cues',
+      cards :[] 
+    },
    
    
     // "followUpQn": {
@@ -346,11 +402,18 @@ const healthReducerSlice = createSlice({
   initialState: initialCopilotState,
   reducers: {
     initSalesState:(state,action)=>{
-      console.log('action payload',action.payload)
-      //state = {...state,...action.payload};
+      console.log('init sales payload',action.payload,current(state))
+      state = {...state,...action.payload};
+      console.log('init sales after modification',state)
       //state.
-      return action.payload;
+      return state;
     },
+    // initSalesState:(state,action)=>{
+    //   console.log('action payload',action.payload)
+    //   //state = {...state,...action.payload};
+    //   //state.
+    //   return action.payload;
+    // },
     updateBasicInfo: (state, action) => {
       console.log('add chat triggers', action.payload, current(state));
       // Correct way to add to an array within a Redux Toolkit slice
@@ -394,6 +457,14 @@ const healthReducerSlice = createSlice({
       }
       console.log("follow up question that got updated",state.salesData.followUpQn);
     },
+    addCues:(state,action)=>{
+      console.log('add cues trigger',action.payload)
+      state.salesData.cues.cards=[
+        {...action.payload},
+        ...state.salesData.cues.cards
+        
+      ]
+    },
     updateCues: (state, action) => {
       console.log(action.payload)
       state.salesData.cues = {
@@ -426,7 +497,9 @@ const healthReducerSlice = createSlice({
 });
 export const { initSalesState,
   updateBasicInfo,
-  updateFollowUpQn,updateCues,updateAlerts,updateHeathProfile,updatePlanSummary,updateRecommendation,
+  updateFollowUpQn,
+  addCues,updateCues,updateAlerts,updateHeathProfile,
+  updatePlanSummary,updateRecommendation,
   setNavigation } = healthReducerSlice.actions;
 
 export default {

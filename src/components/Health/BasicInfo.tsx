@@ -36,7 +36,9 @@ export default function BasicInfoH({ data }: Props) {
     boxData?: { data?: { [key: string]: string | number | null | undefined }; header?: string },
     defaultHeader?: string
   ) => {
+    console.log('boxData',boxData);
     if (!boxData?.data) return null;
+
 
     return (
       <div className="bg-white p-4 rounded-xl shadow-sm">

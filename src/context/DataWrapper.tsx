@@ -5,8 +5,9 @@ import { useDispatch } from "react-redux"
 import { useAppSelector } from "../store/store"
 import { 
     updateAlerts,updateBasicInfo,
+    addCues,
     updateCues,updateFollowUpQn,initSalesState,
-    updatePlanSummary,updateRecommendation, updateHeathProfile
+    updatePlanSummary,updateRecommendation, updateHeathProfile,
     }from 
     "../reducers/healthManagmentReducer"
 
@@ -38,7 +39,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
 
   const navigation = useAppSelector((state) => state.healthManagmentReducer.navigation)
   const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
-
+  const healthManageMentState = useAppSelector((state) => state.healthManagmentReducer);
   //console.log("sales state", navigation)
 
   function updateSalesState(data:any) {
@@ -63,7 +64,8 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
       //   dispatch(updateFollowUpQn(data.followUpQn))
       //   break
       case "add-cues":
-        console.log("it cameee.....", data?.cues);
+        console.log("add cues", data);
+        dispatch(addCues(data))
         const obj = {
           header: data.header,   
           data: data.data.map((item, index) => ({
@@ -71,6 +73,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
             text: `${item.text}`   
           }))
         };
+        
         if(data.header!=='Follow-up Question')
         {
         console.log(obj);
@@ -94,8 +97,13 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   }
 
 
+  useEffect(()=>{
+    console.log("health state",healthManageMentState)
+  },[])
+
  useEffect(() => {
   const socketUrl = 'http://localhost:5000'
+  //const socketUrl = 'https://b18e4904236b.ngrok-free.app'
 
   // 500ms delay before connecting
   const timer = setTimeout(() => {
@@ -119,13 +127,13 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
 
     setSocket(tempSocket)
     return () => {
-      clearTimeout(timer)
-      if (socket) {
-        socket.off("connect1", connected)
-        socket.off("disconnect1", disconnect)
-        socket.off("questions_loader_res", initialisationSalesState)
-        socket.off("ai_suggestion_res", updateSalesState)
-        socket.disconnect()
+      timer && clearTimeout(timer)
+      if (tempSocket) {
+        tempSocket.off("connect1", connected)
+        tempSocket.off("disconnect1", disconnect)
+        tempSocket.off("questions_loader_res", initialisationSalesState)
+        tempSocket.off("ai_suggestion_res", updateSalesState)
+        tempSocket.disconnect()
       }
     }
   }, 500) 

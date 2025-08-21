@@ -1,6 +1,72 @@
 import React from "react"
 import { useAppSelector } from "../../store/store"
+
+
 export default function RightPanel(){
+    
+    const [cues] = useAppSelector(state => [state.healthManagmentReducer.salesData.cues])
+
+    // const salesState = useAppSelector(state => state.salesCopilotReducer)
+    // const myAlert = useAppSelector(state => state.salesCopilotReducer.salesData.alert)
+    // const myCues = useAppSelector(state=>state.salesCopilotReducer.salesData.cues)
+    // const myFollowUp = useAppSelector(state=>state.salesCopilotReducer.salesData.followUpQn)
+
+    // console.log('right panel state',salesState)
+    // console.log('alert',alert,myAlert)
+     console.log('cues',cues)
+    // console.log('followUpQn',followUpQn,myFollowUp)
+
+    return (
+        <aside className="w-96 bg-white border-l border-slate-200 flex flex-col p-4 space-y-4 overflow-y-auto">
+      {/* <h3 className="text-lg font-bold text-slate-800 text-right">
+        AI Cues
+      </h3> */}
+
+      
+      
+      
+
+
+      {/* New UI element container for value changes, styled to match the existing cue cards */}
+      
+      
+      
+      <div style={{height:'100%',overflowY:'scroll'}}>
+      {cues?.cards?.map((card, index) => {
+        const colorClass = card.color || "blue"; // Fallback color
+        return (
+          <div key={index} className={`bg-${colorClass}-50 border border-${colorClass}-200 p-4 rounded-lg my-2`}>
+            <h4 className={`font-semibold text-${colorClass}-800 flex items-center mb-2`}>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+              </svg>
+              {card?.header}
+            </h4>
+            <ul className={`list-disc list-inside space-y-1 text-${colorClass}-700 text-sm`}>
+              {card.data?.map((item, subIndex) => (
+                <li key={subIndex}>{item.text}</li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+      </div>
+
+
+      {/* {
+        toggleNotificationModal.visibility && 
+        <DraggableWindow title="Suggested Change" isOpen={true}>
+          <NotificationsModal />
+        </DraggableWindow>
+        
+      } */}
+    </aside>
+    )
+}
+
+
+
+export function RightPanelOld(){
     
     const [alert,cues,followUpQn] = useAppSelector(state => [state.healthManagmentReducer.salesData.alert,state.healthManagmentReducer.salesData.cues,state.healthManagmentReducer.salesData.followUpQn])
 

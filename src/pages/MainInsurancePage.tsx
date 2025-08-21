@@ -19,6 +19,7 @@ import HealthProfile from '../components/Health/HeatlhProfile';
 import RecommendedHealthPlan from '../components/Health/Recomendation';
 import PlanSummary from '../components/Health/PlanSummary';
 import BasicInfoH from '../components/Health/BasicInfo';
+//import BasicInfoH from '../components/UI2/BasicInfo';
 
 export default function App() {
      const {salesData,navigation:currentNavigation} = useAppSelector((state) => state.healthManagmentReducer)
