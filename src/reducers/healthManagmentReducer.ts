@@ -270,7 +270,7 @@ const initialCopilotState = {
         "table_values": []
       }
     },
-    "Recommendation": {
+    "Recommendations": {
       "planName": "",
       "sumInsured": 0,
       "premium": 0,
@@ -384,7 +384,7 @@ const healthReducerSlice = createSlice({
         ...state.salesData.Recommendations,
         ...action.payload
       };
-      console.log("recommendation data that got updated",state.salesData.Recommendation);
+      console.log("recommendation data that got updated",state.salesData.Recommendations);
     },
     updateFollowUpQn:(state,action)=>{
       console.log("follow up question that came",action.payload);
@@ -395,10 +395,12 @@ const healthReducerSlice = createSlice({
       console.log("follow up question that got updated",state.salesData.followUpQn);
     },
     updateCues: (state, action) => {
+      console.log(action.payload)
       state.salesData.cues = {
         ...state.salesData.cues,
         ...action.payload,
       };
+      console.log(state.salesData.cues,"cues after adding")
     },
     updateAlerts: (state, action) => {
       state.salesData.alert = {
