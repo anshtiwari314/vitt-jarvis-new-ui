@@ -263,49 +263,112 @@ const initialCopilotLoadState= {
       }
     
     ],
-    followUpQn:{
-      header:'Follow-up Question',
-      data:[
+    cues:{ 
+      header:'ai cues',
+      cards :[
+        // {
+        //   // visibility:false,
+        //   header:"",
+        //   color:'orange',
+        //   type:'notification-card',
+        //   options:[],
+        //   old_json:{},
+        //   new_json:{},
+        //   old_json_raw:{},
+        //   new_json_raw:{}
+        // },
         {
-          id:'unique',
-          text:'Primary financial goals?'
+          header:'Follow-up Question',
+          color:'blue',
+          type:'regular-card',
+           data:[
+            {
+              id:'unique',
+              text:'Primary financial goals?'
+            },
+            {
+              id:'unique',
+              text:'Typical month financially?'
+            }
+          ],
         },
         {
-          id:'unique',
-          text:'Typical month financially?'
+          header:'Answer to "Why Term Plan?',
+          color:'green',
+          data:[
+            {
+              id:'unique',
+              text:'Financial safety net.'
+            },
+            {
+              id:'unique',
+              text:"Covers loans, secures family's future."
+            },
+            {
+              id:'unique',
+              text:"Most affordable, high-cover option."
+            }
+          ],
+        },
+        {
+          header:'Compliance Alert',
+          color:'orange',
+          data:[
+            {
+              id:'unique',
+              text:'Disclose commission structures if asked.'
+            },
+            {
+              id:'unique',
+              text:'Avoid guaranteeing returns.'
+            }
+          ]
         }
-      ],
-    },
-    cues:{
-      header:'Answer to "Why Term Plan?',
-      data:[
-        {
-          id:'unique',
-          text:'Financial safety net.'
-        },
-        {
-          id:'unique',
-          text:"Covers loans, secures family's future."
-        },
-        {
-          id:'unique',
-          text:"Most affordable, high-cover option."
-        }
-      ],
-    },
-    alert:{
-      header:'Compliance Alert',
-      data:[
-        {
-          id:'unique',
-          text:'Disclose commission structures if asked.'
-        },
-        {
-          id:'unique',
-          text:'Avoid guaranteeing returns.'
-        }
-      ]
+      ] 
     }
+    // followUpQn:{
+    //   header:'Follow-up Question',
+    //   data:[
+    //     {
+    //       id:'unique',
+    //       text:'Primary financial goals?'
+    //     },
+    //     {
+    //       id:'unique',
+    //       text:'Typical month financially?'
+    //     }
+    //   ],
+    // },
+    // cues:{
+    //   header:'Answer to "Why Term Plan?',
+    //   data:[
+    //     {
+    //       id:'unique',
+    //       text:'Financial safety net.'
+    //     },
+    //     {
+    //       id:'unique',
+    //       text:"Covers loans, secures family's future."
+    //     },
+    //     {
+    //       id:'unique',
+    //       text:"Most affordable, high-cover option."
+    //     }
+    //   ],
+    // },
+    // alert:{
+    //   header:'Compliance Alert',
+    //   data:[
+    //     {
+    //       id:'unique',
+    //       text:'Disclose commission structures if asked.'
+    //     },
+    //     {
+    //       id:'unique',
+    //       text:'Avoid guaranteeing returns.'
+    //     }
+    //   ]
+    // }
   }
 };
 
@@ -436,13 +499,20 @@ const initialCopilotState = {
 
 const salesCopilotSlice = createSlice({
   name: "salesCopilotReducer", // Changed from "usersReducer" for consistency
-  initialState: initialCopilotState,
+  initialState: initialCopilotLoadState,
   reducers: {
     initSalesState:(state,action)=>{
       console.log('action payload',action.payload)
       //state = {...state,...action.payload};
       //state.
       return action.payload;
+    },
+    updateSalesCopilotState:(state,action)=>{
+      console.log('update sales copilot state',action.payload)
+      state.salesData={
+        ...state.salesData,
+        ...action.payload
+      }
     },
     updateBasicInfo: (state, action) => {
       console.log('add chat triggers', action.payload, current(state));
@@ -488,11 +558,21 @@ const salesCopilotSlice = createSlice({
       }
       console.log("follow up question that got updated",state.salesData.followUpQn);
     },
+    addCues:(state,action)=>{
+      console.log('add cues trigger',action.payload)
+      state.salesData.cues.cards=[
+        {...action.payload},
+        ...state.salesData.cues.cards
+        
+      ]
+
+    },
     updateCues: (state, action) => {
       state.salesData.cues = {
         ...state.salesData.cues,
         ...action.payload,
-      };
+      }
+      
     },
     updateAlerts: (state, action) => {
       state.salesData.alert = {
@@ -520,10 +600,11 @@ const salesCopilotSlice = createSlice({
 });
 
 export const { initSalesState,
+  updateSalesCopilotState,
   updateBasicInfo,updateAssets, 
   updateLiabilities,updateFinancialGoals,
   updatePlanSummary,updateRecommendations,
-  updateFollowUpQn,updateCues,updateAlerts,
+  updateFollowUpQn,addCues,updateCues,updateAlerts,
   setNavigation } = salesCopilotSlice.actions;
 
 export default {

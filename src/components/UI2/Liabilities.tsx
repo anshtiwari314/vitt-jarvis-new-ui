@@ -1,4 +1,5 @@
 import React from "react";
+import { useData } from "../../context/DataWrapper";
 
 interface Props {
   data: {
@@ -21,6 +22,7 @@ interface Props {
 
 export default function Liabilities({ data, formatCurrency }: Props) {
 
+  const {updateField} = useData()
 
   console.log('liabilities component',data)
 
@@ -38,7 +40,7 @@ export default function Liabilities({ data, formatCurrency }: Props) {
     <div>
       <div className="space-y-6">
         {/* Monthly Outflow */}
-        <div className="bg-white p-6 rounded-xl shadow-sm">
+        <div className="bg-white p-6 rounded-xl shadow-sm border-b border-t border-l border-r border-sky-500">
           <h3 className="text-lg font-semibold text-slate-700 mb-4">
             {data.boxA.header}
           </h3>
@@ -50,7 +52,8 @@ export default function Liabilities({ data, formatCurrency }: Props) {
                   type="text"
                   defaultValue={renderFormattedValue(value)}
                   className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-                  readOnly
+                  onChange={(e)=>updateField(key,e.target.value)}
+                  //readOnly
                 />
               </div>
             ))}
@@ -58,7 +61,7 @@ export default function Liabilities({ data, formatCurrency }: Props) {
         </div>
 
         {/* Home Loan Details */}
-        <div className="bg-white p-6 rounded-xl shadow-sm">
+        <div className="bg-white p-6 rounded-xl shadow-sm border-b border-t border-l border-r border-sky-500">
           <h3 className="text-lg font-semibold text-slate-700 mb-4">
             {data.boxB.header}
           </h3>
@@ -70,7 +73,8 @@ export default function Liabilities({ data, formatCurrency }: Props) {
                   type="text"
                   defaultValue={renderFormattedValue(value)}
                   className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-                  readOnly
+                  onChange={(e)=>updateField(`${data.boxB.header} ${key}`,e.target.value)}
+                  //readOnly
                 />
               </div>
             ))}
@@ -78,7 +82,7 @@ export default function Liabilities({ data, formatCurrency }: Props) {
         </div>
 
         {/* Other Loans Table */}
-        <div className="bg-white p-6 rounded-xl shadow-sm">
+        <div className="bg-white p-6 rounded-xl shadow-sm border-b border-t border-l border-r border-sky-500">
           <h3 className="text-lg font-semibold text-slate-700 mb-4">
             {data.table.header}
           </h3>

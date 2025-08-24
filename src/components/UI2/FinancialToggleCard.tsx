@@ -55,7 +55,7 @@ export default function FinancialToggleCard({
   const cols = goal?.cols
 
   return (
-    <div className="bg-white rounded-2xl border border-blue-500 p-4 shadow-sm ring-1 ring-sky-200">
+    <div className="bg-white rounded-2xl border-b border-t border-l border-r border-sky-500 p-4 shadow-sm ring-1 ring-sky-200">
       {/* Header with title and priority */}
       <div className="flex justify-between items-start mb-3">
         <h3 className="text-xl font-semibold text-slate-800">

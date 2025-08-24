@@ -75,7 +75,7 @@ export default function PlanSummaryCard({
 
   if (cardType === "lifeCover") {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm ring-1 ring-sky-300">
+      <div className="bg-white rounded-xl border-b border-t border-l border-r border-sky-500 p-4 shadow-sm ring-1 ring-sky-300">
         <h3 className="text-lg font-semibold text-slate-800 mb-3">{summaryItem.header}</h3>
 
         {calculation && Object.keys(calculation).length > 0 && (
@@ -140,7 +140,7 @@ export default function PlanSummaryCard({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm ring-1 ring-sky-300">
+    <div className="bg-white rounded-2xl border-b border-t border-l border-r border-sky-500 p-4 shadow-sm ring-1 ring-sky-300">
       <h4 className="text-lg font-semibold text-slate-800 mb-3">{summaryItem.header}</h4>
 
       {cols && Object.keys(cols).length > 0 && (

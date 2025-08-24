@@ -1,4 +1,5 @@
 import React from 'react';
+import { useData } from '../../context/DataWrapper';
 
 interface Props {
   data: {
@@ -15,6 +16,9 @@ interface Props {
 }
 
 export default function BasicInfo({ data }: Props) {
+
+  const {updateField} = useData()
+
   const formatLabel = (key: string) =>
     key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
 
@@ -22,11 +26,16 @@ export default function BasicInfo({ data }: Props) {
     return <div className="p-4 text-slate-500">Loading client data...</div>;
   }
 
+  function updateBasicInfoFields(fieldname,fieldvalue){
+    console.log('update basic info fields',fieldname,fieldvalue)
+    updateField(fieldname,fieldvalue)
+  }
+
   return (
     <div>
       <div className="space-y-6">
         {/* Client Info */}
-        <div className="bg-white p-4 rounded-xl shadow-sm">
+        <div className="bg-white p-4 rounded-xl shadow-sm border-b border-t border-l border-r border-sky-500">
           <h3 className="text-lg font-semibold text-slate-700 mb-3">
             {data.boxA.header || 'Client Details'}
           </h3>
@@ -36,9 +45,10 @@ export default function BasicInfo({ data }: Props) {
                 <label className="block text-slate-500 mb-1">{formatLabel(key)}</label>
                 <input
                   type="text"
+                  onChange={(e)=>updateBasicInfoFields(key,e.target.value)}
                   defaultValue={value ?? ''} // Show blank if null or undefined
                   className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-                  readOnly
+                  //readOnly
                 />
               </div>
             ))}
@@ -46,7 +56,7 @@ export default function BasicInfo({ data }: Props) {
         </div>
 
         {/* Family Table */}
-        <div className="bg-white p-6 rounded-xl shadow-sm">
+        <div className="bg-white p-6 rounded-xl shadow-sm border-b border-t border-l border-r border-sky-500">
           <h3 className="text-lg font-semibold text-slate-700 mb-4">
             {data.table.header || 'Family Structure'}
           </h3>

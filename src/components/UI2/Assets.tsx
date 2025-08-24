@@ -1,4 +1,5 @@
 import React from 'react';
+import { useData } from '../../context/DataWrapper';
 
 interface Props {
   data: {
@@ -26,6 +27,9 @@ interface Props {
 }
 
 export default function Assets({ data, formatCurrency }: Props) {
+
+  const {updateField} = useData()
+
   const safeText = (value: string | number | null | undefined) => {
     if (value === null || value === undefined || value === '') return '';
     return String(value).replace(/<[^>]+>/g, '');
@@ -34,7 +38,7 @@ export default function Assets({ data, formatCurrency }: Props) {
   return (
     <div>
       <div className="space-y-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm">
+        <div className="bg-white p-6 rounded-xl shadow-sm border-b border-t border-l border-r border-sky-500">
           <h3 className="text-lg font-semibold text-slate-700 mb-4">{data.boxA.header}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
             <div>
@@ -55,13 +59,14 @@ export default function Assets({ data, formatCurrency }: Props) {
                 className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
                 rows={3}
                 defaultValue={safeText(data.boxA.text_area_value)}
-                readOnly
+                onChange={(e)=>updateField(data.boxA.text_area_header,e.target.value)}
+                // readOnly
               />
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm">
+        <div className="bg-white p-6 rounded-xl shadow-sm border-b border-t border-l border-r border-sky-500">
           <h3 className="text-lg font-semibold text-slate-700 mb-4">{data.boxB.header}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
             <div>
@@ -70,7 +75,8 @@ export default function Assets({ data, formatCurrency }: Props) {
                 className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
                 rows={3}
                 defaultValue={safeText(data.boxB.text_area_valueA)}
-                readOnly
+                onChange={(e)=>updateField(data.boxB.text_area_headerA,e.target.value)}
+                //readOnly
               />
             </div>
             <div>
@@ -79,13 +85,14 @@ export default function Assets({ data, formatCurrency }: Props) {
                 className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
                 rows={3}
                 defaultValue={safeText(data.boxB.text_area_valueB)}
-                readOnly
+                onChange={(e)=>updateField(data.boxB.text_area_headerB,e.target.value)}
+                //readOnly
               />
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm">
+        <div className="bg-white p-6 rounded-xl shadow-sm border-b border-t border-l border-r border-sky-500">
           <h3 className="text-lg font-semibold text-slate-700 mb-4">{data.table.header}</h3>
           <div className="space-y-3 text-sm">
             <div className="grid grid-cols-3 gap-3 font-medium text-slate-600 px-2">

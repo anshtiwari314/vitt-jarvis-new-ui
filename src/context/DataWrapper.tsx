@@ -12,6 +12,7 @@ import {
   updateFollowUpQn,
   updateCues,
   updateAlerts,
+  addCues
 } from "../reducers/salesCopilotReducer"
 import { useDispatch } from "react-redux"
 import { useAppSelector } from "../store/store"
@@ -45,11 +46,33 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   const navigation = useAppSelector((state) => state.salesCopilotReducer.navigation)
   const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
 
+  const [recommendationsGenerated,setRecommendationsGenerated] = useState(false)
+  const [toggleNotificationModal,setToggleNotificationModal] = useState({
+           visibility:false,
+           text:"",
+          options:[],
+          old_json:{},
+          new_json:{},
+          old_json_raw:{},
+          new_json_raw:{}
+        })
+
   //console.log("sales state", navigation)
 
   function updateSalesState(data:any) {
     //console.log("handle incoming data", data, " the data type", data.type)
+    //return null;
     switch (data.type) {
+      case "value-modified":
+        let ob = {
+          visibility:true,
+          // text:"username changed from varun to anuj ? correct",
+          // options:["yes","no"],
+          ...data 
+        }
+        console.log("value modified triggers",data)
+        setToggleNotificationModal(ob)
+        break
       case "basic-info":
         console.log(data,"int the basic section info");
         dispatch(updateBasicInfo(data.basicInfo))
@@ -75,8 +98,8 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
       case "follow-up-qn":
         dispatch(updateFollowUpQn(data.followUpQn))
         break
-      case "cues":
-        dispatch(updateCues(data.cues))
+      case "add-cues":
+        dispatch(addCues(data))
         break
       case "alert":
         dispatch(updateAlerts(data.alert))
@@ -86,14 +109,27 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
     }
   }
 
+  function updateNotifications(data){
+   // {"status": "completed", "msg": "Product Recommendation ready"}
+      console.log('update notifications',data)
+      if(data.status ==='completed')
+        setRecommendationsGenerated(true)
+      else
+        setRecommendationsGenerated(false)
+  }
+
   function initialisationSalesState(data: any) {
     console.log('init sales data',data)
+    //return null;
+    
     dispatch(initSalesState(data))
   }
 
+  
+
     useEffect(()=>{
         //const socketUrl = 'http://localhost:5000'
-        //const socketUrl = 'https://0e8d-2401-4900-882f-a188-7561-8415-780c-dcdf.ngrok-free.app'
+        //const socketUrl = 'https://0be7987cc39f.ngrok-free.app'
         const socketUrl = 'wss://recruito.vitti.insure'
 
         const tempSocket = io(socketUrl)
@@ -123,7 +159,8 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
 
         tempSocket.on('questions_loader_res',initialisationSalesState)
         tempSocket.on('ai_suggestion_res',updateSalesState)
-
+        tempSocket.on('notifications',updateNotifications)
+        
     setSocket(tempSocket)
 
     return () => {
@@ -151,6 +188,20 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
     socket.emit("selected_topic_req_v2", data)
   }, [navigation,socket])
 
+
+  function updateField(fieldname,fieldvalue){
+    console.log('update field',fieldname,fieldvalue)
+    let ob = {
+      roomid: roomId,
+        jobid: 'abcde',
+        agentid: '1234',
+       
+        name: name, 
+      manual_transcript : `actually ${fieldname} is ${fieldvalue}`
+    }
+    socket?.emit('ai_suggestion_req_ins_v2',ob)
+  }
+
   const values = {
     socket,
     setSocket,isSocketConnected,
@@ -158,6 +209,8 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
     //ngrokServerUrl: "http://localhost:5000",
     setMsgLoading: (loading: boolean) => console.log("Loading:", loading),
     oneWayUrl: "http://localhost:5000", 
+    toggleNotificationModal,setToggleNotificationModal,updateField,
+    recommendationsGenerated,setRecommendationsGenerated
   }
   return <Context.Provider value={values}>{children}</Context.Provider>
 }

@@ -116,12 +116,12 @@ export default function Header(){
 
     React.useEffect(() => {
         const clientNameHeader = document.getElementById('client-name-header');
-        if (clientNameHeader) {
-            setTimeout(() => {
-                clientNameHeader.textContent = `| Client: ${clientName}`;
-                clientNameHeader.classList.remove('hidden');
-            }, 2000);
-        }
+        // if (clientNameHeader) {
+        //     setTimeout(() => {
+        //         clientNameHeader.textContent = `| Client: ${clientName}`;
+        //         clientNameHeader.classList.remove('hidden');
+        //     }, 2000);
+        // }
     }, [clientName]);
 
 
@@ -221,7 +221,12 @@ export default function Header(){
                     
                 </div>
                 <div id="timer" className="text-lg font-mono font-semibold text-slate-700 bg-slate-100 px-3 py-2 rounded-lg">{minutes}:{seconds}</div>
-                <a onClick={handleLogout} style={{cursor:'pointer'}} className="text-blue-600 hover:underline">Logout</a>
+                <button
+                        id="start-btn"
+                        className={`p-2 rounded-md bg-slate-200 text-slate-600 `}>
+            
+                <a onClick={handleLogout} style={{cursor:'pointer',color:'black'}} className="text-black-800 hover:underline">Logout</a>
+                </button>
             </div>
         </header>
     )
