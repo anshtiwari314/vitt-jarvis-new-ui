@@ -55,8 +55,10 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     const dataArrRef = useRef<any>([])
     let audioServerUrl =`https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-clientaudio`
     //let url1 = 'http://localhost:3008/'
-    let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
-    //let socketUrl = 'http://localhost:5000'
+    //let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
+    //let socketUrl = 'http://34.100.145.102'
+    
+   const socketUrl = 'wss://recruito.vitti.insure'
     const globalStreamRef = useRef<any>(null)
     const [recordingActive,setRecordingActive] = useState(false)
     const recordingActiveStatus = useRef(false)
@@ -94,8 +96,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     const sessionUid = uuidv4()
     //const [ngrokServerUrl,setNgrokServerUrl] = useState('')
     const vittSalesCopilot = 'https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/sales-copilot-gcp'
-    const ngrokUrl = 'https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis'
-    //const ngrokUrl = 'https://b1c231587c5c.ngrok-free.app'
+    //const ngrokUrl = 'https://rr7yg8ikr5.execute-api.ap-south-1.amazonaws.com/test/docretrieval_clientaudio'
+    const ngrokUrl = 'https://f663fdbe4ba6.ngrok-free.app/1way'
     //https://rr7yg8ikr5.execute-api.ap-south-1.amazonaws.com/test/docretrieval_clientaudio
     //const oneWayUrl = 'http://35.200.139.251/tezz_nbfc'
     //const oneWayUrl = 'https://cd824b8dabc9.ngrok-free.app/tezz_nbfc'
@@ -108,7 +110,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     const audioRef = useRef(null);
     const [activeTab,setActiveTab ] = useState(0)
 
-    const[msgLoading,setMsgLoading]= useAutoResetState(false,10000)
+    const[msgLoading,setMsgLoading]= useState(false)
+    const messagesRef = useRef([])
 
     const wasmUrls = [
       'ort-wasm-simd-threaded.jsep.wasm',
@@ -160,11 +163,11 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     }
    
 
-    function handleQuery(data:any){
+    function handleQuery(queryData:any){
         setMsgLoading(true)
-        console.log(data)
+        console.log(queryData)
         let tempObj = {
-            query:data,
+            query:queryData,
             
             //this one is for jarvis-in-person
             //sessionid : SESSION_ID,
@@ -178,7 +181,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             userid:SESSION_ID
         }
         //socket.emit("messagefromclient",tempObj)
-        //
+        socket.emit('iifl_chat_req',tempObj)
         
         let url = 'https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-2way-clientaudio'
         let url2 = 'https://34.100.145.102/'
@@ -186,20 +189,31 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         let url4 = 'https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/sales-copilot-gcp'
 
 
-        let {arr,audiourl} = handleData({sessionid:currentUser?.sessionuid,similarity_query:data,isOutgoing:true})
+        let {arr,audiourl} = handleData({sessionid:currentUser?.sessionuid,similarity_query:queryData,isOutgoing:true})
         console.log('arr from handleQuery',arr)
+
+        setTimeout(()=>{
+          console.log('msg',messagesRef.current[messagesRef.current.length-1],messagesRef.current.length-1,messagesRef.current)
+                messagesRef.current[messagesRef.current.length-1]?.scrollIntoView({ behavior: "smooth", block: "start" })
+        },500)
+
         setData(prev=>[...prev,...arr])
         
-        fetch(`${ngrokServerUrl}/query`,{
-          method:'POST',
-          headers:{
-            'Accept':'application.json',
-            'Content-Type':'application/json'
-          },
-          body:JSON.stringify(tempObj),
-          cache:'default',}).then(res=>{
-            console.log("res from audio server",res)
-          })
+        // fetch(`${ngrokServerUrl}`,{
+        //   signal: AbortSignal.timeout(1000 * 60 *10),
+        //   method:'POST',
+        //   headers:{
+        //     'Accept':'application.json',
+        //     'Content-Type':'application/json'
+        //   },
+        //   body:JSON.stringify(tempObj),
+        //   cache:'default',}).then(res=>{
+            
+        //     return res.json()
+        //   }).then(result=>{
+        //     console.log("res from audio server",result)
+        //     receiveData(result)
+        //   })
     }
     function handleTokens(data:any){
         
@@ -229,7 +243,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         }
         //console.log("tempMsg",tempArr)
        
-        setData([...dataArrRef.current])
+       // setData([...dataArrRef.current])
     }
 
     function handleRecordings(stream:MediaStream){
@@ -426,38 +440,25 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     },[SESSION_ID])
 
     useEffect(()=>{
+      if(!currentUser?.sessionuid)
+        return ;
+
         const tempSocket = io(socketUrl)
+
+        // tempSocket.on('connect',()=>{
+        //   console.log('ws connect',' ',tempSocket.id)
+        //   tempSocket.emit('connected',currentUser.sessionuid)
+        // })
+        tempSocket.on("iifl_chat_res",receiveData)
         console.log(tempSocket)
         setSocket(tempSocket)
-    },[])
 
-   
-
-    useEffect(()=>{
-        if(SESSION_ID==='' || socket===null )
-        return;
-        //handleData(Data)
-        //handleData(Data)
-
-        // if(socket.id===undefined)
-        // return ;
-        //console.log(socket,socket.connected,socket.id)
-
-        function onConnect(){
-                console.log("connection established");
-                console.log("socket.id",socket.id)
-             //socket.emit('join-room',SESSION_ID,socket.id)
+        return ()=>{
+          tempSocket.off("iifl_chat_res",receiveData)
         }
+    },[currentUser])
 
-        function onDisconnect(){
-            console.log("disconnected")
-        }
-
-        function isAudioPlaying(audioElement) {
-  return !audioElement.paused;
-}
-
-        function receiveData(result:any){
+    function receiveData(result:any){
           console.log(`%c just after receiveing data ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
           console.log(result.text,result.messageid,result);
             // if(tempRef.current ===data){
@@ -484,6 +485,10 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
               //console.log('isAudioPlaying',isPlaying)
               console.log(`%c audioRef paused ${audioRef.current.paused} ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
               
+              setTimeout(()=>{
+                console.log('msg',messagesRef.current[messagesRef.current.length-arr.length],messagesRef.current.length-arr.length,messagesRef.current)
+                messagesRef.current[messagesRef.current.length-arr.length]?.scrollIntoView({ behavior: "smooth", block: "start" })
+              },500)
               setData(prev=>[...prev,...arr])
               //setAudioArr(prev=>[...prev,audiourl])
               
@@ -497,6 +502,32 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
               
             }
     }
+
+    useEffect(()=>{
+        if(SESSION_ID==='' || socket===null )
+        return;
+        //handleData(Data)
+        //handleData(Data)
+
+        // if(socket.id===undefined)
+        // return ;
+        //console.log(socket,socket.connected,socket.id)
+
+        function onConnect(){
+                console.log("connection established");
+                console.log("socket.id",socket.id)
+             //socket.emit('join-room',SESSION_ID,socket.id)
+        }
+
+        function onDisconnect(){
+            console.log("disconnected")
+        }
+
+        function isAudioPlaying(audioElement) {
+  return !audioElement.paused;
+}
+
+       
        socket.on("connect",onConnect)
        socket.on("disconnect",onDisconnect)
        socket.on("receive-data",receiveData)
@@ -597,6 +628,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         handleQuery,
         sessionUid,
         audioRef,
+        messagesRef,
        // vadRecordingOn,setVadRecordingOn,
         manualVadRecordingOn,setManualVadRecordingOn,
         audioUrl,setAudioUrl,

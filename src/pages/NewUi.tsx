@@ -54,19 +54,21 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
     msgLoading,
     handleQuery,
     
-    manualVadRecordingOn,
-    setManualVadRecordingOn,
+    // manualVadRecordingOn,
+    // setManualVadRecordingOn,
     audioUrl,
-    setAudioUrl,
-    recordingActive,
-    setRecordingActive,
-    sessionUid ,ngrokServerUrl,setNgrokServerUrl,audioRef,isFilesLoaded,
-    recordingServerUrl,setRecordingServerUrl,toggleChunking,setToggleChunking,
-    toggleContinuousChunking,setToggleContinuousChunking
+    audioRef,
+    // setAudioUrl,
+    // recordingActive,
+    // setRecordingActive,
+    // sessionUid ,ngrokServerUrl,setNgrokServerUrl,isFilesLoaded,
+    // recordingServerUrl,setRecordingServerUrl,toggleChunking,setToggleChunking,
+    // toggleContinuousChunking,setToggleContinuousChunking
+    messagesRef
   }:void = useData();
   
-  const {manualVadStatus,setManualVadStatus,vadRecordingOn,
-    setVadRecordingOn,vadStatus,setVadStatus,vadInstance,VAD2,userSpeaking} = useVad()
+  // const {manualVadStatus,setManualVadStatus,vadRecordingOn,
+  //   setVadRecordingOn,vadStatus,setVadStatus,vadInstance,VAD2,userSpeaking} = useVad()
 
   const [query, setQuery] = useState<string>("");
   const [state, setState] = useState({ date: "", time: "" });
@@ -121,9 +123,11 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
   }, [audioUrl]);
 
   useEffect(()=>{
-    if (cuesContainerRef.current) {
-      cuesContainerRef.current.scrollTop = cuesContainerRef.current.scrollHeight;
-    }
+    // if (cuesContainerRef.current) {
+    //   cuesContainerRef.current.scrollTop = cuesContainerRef.current.scrollHeight;
+      
+    // }
+    console.log('data',messagesRef.current)
   },[data])
 
   //console.log('i am transcriptuon',transcriptionState)
@@ -196,12 +200,15 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
     }
 
     
-
+    //console.log('new ui component')
 
     //console.log('vad2 in newUi',VAD2)
+
+    
+
   return (
     <div 
-        className="new-ui-container"
+        //className="new-ui-container"
       style={{
         //border:'0.1rem solid black',
         
@@ -217,7 +224,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
       {/* <LoadingIconsComp/> */}
       <audio style={{ display: "none" }} ref={audioRef}></audio>
 
-      <div>
+      {/* <div>
         <input
           type="text"
           value={ngrokServerUrl}
@@ -237,7 +244,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
             //...(inputValue && inputFocusStyle),
           }}
         />
-        </div>
+        </div> */}
         
       <div>
       {/* <input
@@ -269,7 +276,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
       >
         
         {/* <h2 style={{fontSize:'2.5rem',fontFamily: '"DM Sans", sans-serif',fontWeight:700}}>Meeting title</h2> */}
-        <div 
+        {/* <div 
             className="hamburger-container"
         style={{
             //border:'0.1rem solid red' ,
@@ -280,19 +287,22 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
             ref={btnRef}
             onClick={onClickOfHamburger}
             />
-        </div>
+        </div> */}
         
-        <div className="on-going">
+        <div 
+        className="on-going"
+        >
             <h3
             style={{
                 fontSize: "2rem",
                 fontFamily: '"DM Sans", sans-serif',
                 fontWeight: 700,
-                margin: "0.5rem 0",
+                margin: "0.5rem 0rem",
+                marginRight:'1rem',
                 color: "#1B1B1B",
                 
             }}
-            className="ongoing-call-text"
+           // className="ongoing-call-text"
             >
             Ongoing call
             </h3>
@@ -342,24 +352,28 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
         </div>
       </div>
       {/* <FileLoadChecker/> */}
-      {vadInstance !==null && !VAD2.loading ? (
-        <h3 style={{ color: "green",margin:'0.5rem 0',fontWeight:700,textTransform:'capitalize'}}>All files are loaded ✅</h3>
-      ) : (
-        <h3 style={{ color: "red",margin:'0.5rem 0',fontWeight:700,textTransform:'capitalize' }}>Loading files Wait...
-          <img
-              src={rectLoading}
-              style={{height:'4rem',width:'4rem'}}
-            />
-        </h3>
-      )}
+          {/* <div>
+                {vadInstance !==null && !VAD2.loading ? (
+                <h3 style={{ color: "green",margin:'0.5rem 0',fontWeight:700,textTransform:'capitalize'}}>All files are loaded ✅</h3>
+              ) : (
+                <h3 style={{ color: "red",margin:'0.5rem 0',fontWeight:700,textTransform:'capitalize' }}>Loading files Wait...
+                  <img
+                      src={rectLoading}
+                      style={{height:'4rem',width:'4rem'}}
+                    />
+                </h3>
+              )}
+        </div> */}
+      
       <div
 
         className="cues-container"
         style={{
-          width: "100%",
-          height:'70vh',
+          width: "90%",
+          height:'82vh',
           backgroundColor: "#F7F7FB",
           overflowY: "scroll",
+          marginTop:'2rem',
           //border:'0.1rem solid blue'
 
         }}
@@ -371,10 +385,11 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
                 })} */}
         {data &&
           data.map((e: any, i: number) => {
+            //console.log('e',e)
             if (e.is_outgoing===true) {
               return (
-                <div style={{width:'100%',display:'flex',justifyContent:'flex-end'}}>
-                  <TokenMsg e={e} key={e.id} />
+                <div style={{width:'fit-content',width:'100%',display:'flex',justifyContent:'flex-end'}} ref={(el)=>messagesRef.current[i]=el}>
+                  <div style={{width:'fit-content',maxWidth:'60%'}}><TokenMsg e={e} key={e.id} /></div>
                   {/*<button className="btn btn-primary" style={{
                     
                     // backgroundColor:'#adacac',
@@ -391,7 +406,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
                 </div>
               );
             } else {
-              return <TokenMsg e={e} key={e.id} />;
+              return <div style={{minWidth:'60%',width:'fit-content',maxWidth:'90%'}} ref={(el)=>messagesRef.current[i]=el}><TokenMsg e={e} key={e.id} /></div>;
             }
           })}
            {msgLoading == true ? (
@@ -434,12 +449,12 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
       
       <div
         style={{
-          width: "100%",
+          width: "90%",
           padding: "0.5rem 0",
           backgroundColor: "#F7F7FB",
           display: "flex",
           alignItems: "center",
-          marginTop: "0.5rem",
+          marginTop: "1rem",
           borderRadius: "0.5rem",
           //border:'0.1rem solid tomato',
           //new changes
@@ -668,4 +683,4 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
   );
 }
 
-export default NewUi;
+export default React.memo(NewUi);

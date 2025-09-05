@@ -14,12 +14,12 @@ import MediaRecorderWrapper from './context/MediaRecorderWrapper';
 export function MainComponent(){
   return (
     <DataWrapper>
-      <VadWrapper>
-        <MediaRecorderWrapper>
+      {/*<VadWrapper>
+        <MediaRecorderWrapper>*/}
             <Page3/>
-        </MediaRecorderWrapper>
+       {/* </MediaRecorderWrapper>
         
-      </VadWrapper>
+      </VadWrapper>*/}
     </DataWrapper>
   )
 }
@@ -30,7 +30,7 @@ export default function Routing() {
             {/* @ts-ignore */}
             <Route path='/' element={<PrivateRoute component={<Login/>}/>}/>
             {/* @ts-ignore */}
-            <Route path='/signup' element={<PrivateRoute component={<SignIn/>}/>}/>
+            {/*<Route path='/signup' element={<PrivateRoute component={<SignIn/>}/>}/>*/}
             {/* @ts-ignore */}
             <Route path='/mainpage' element={<GlobalRoute component={<MainComponent/>}/>}/>
             <Route path='*' element={<ErrorPage/>}/>
