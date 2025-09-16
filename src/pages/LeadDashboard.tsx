@@ -9,6 +9,7 @@ import { useAuth } from "../context/AuthContext"
 // --- Placeholder Components (Replace with your actual components) ---
 
 // Mock Data Context for demonstration
+
 const DataContext = createContext(null)
 const useData = () => useContext(DataContext)
 
@@ -238,9 +239,12 @@ export function Table({ setFormState, initialFormState }) {
     setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "" }))
 
     try {
-      const response = await PostReq("/main_router", {
+        const linkParams = lead.link_params || ""
+      const cidMatch = linkParams.match(/cid_\w+/)
+      const idOf = cidMatch ? cidMatch[0] : "cid_8459" 
+      const response = await PostReq("https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router", {
         trigger_func: "trigger_metrics_LI",
-        params: { session_id: "cid_8459" },
+        params: { session_id: idOf },
       })
 
       if (response && response.url) {
