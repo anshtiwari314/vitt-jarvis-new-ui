@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCloudUploadAlt, faUser, faChartLine, faUserTie, faEdit, faCopy } from "@fortawesome/free-solid-svg-icons"
 import { PostReq } from "../functions/requests"
 import { useAuth } from "../context/AuthContext"
+import { Toast } from "../components/Toast"
 
 // --- Placeholder Components (Replace with your actual components) ---
 
@@ -145,7 +146,7 @@ const UploadComp = () => {
 export function Table({ setFormState, initialFormState }) {
   const { formData } = useData() // Using mock data from context
   const leads = formData || [] // Ensure leads is an array
-
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(5) // 10 entries per page as requested
@@ -223,7 +224,7 @@ export function Table({ setFormState, initialFormState }) {
     if (lead.postfacto_status === "done") {
       const linkParams = lead.link_params || ""
       const cidMatch = linkParams.match(/cid_\w+/)
-      const idOf = cidMatch ? cidMatch[0] : "cid_8459" // fallback to default cid
+      const idOf = cidMatch ? cidMatch[0] : "cid_8459" 
 
       window.open(`https://postfacto.netlify.app/#/${idOf}`, "_blank", "noopener,noreferrer")
       return
@@ -247,9 +248,10 @@ export function Table({ setFormState, initialFormState }) {
         params: { session_id: idOf },
       })
 
-      if (response && response.url) {
+      if (response && response.msg) {
         // Open the insight URL in a new tab
-        window.open(response.url, "_blank", "noopener,noreferrer")
+         setToast({ message: response.msg || "Insight generated successfully!", type: "success" })
+        // window.open(response.url, "_blank", "noopener,noreferrer")
       } else {
         throw new Error("No insight URL received from backend")
       }
@@ -423,6 +425,13 @@ export function Table({ setFormState, initialFormState }) {
                           {insightError[uniqueLeadId] && (
                             <span className="text-xs text-red-600 font-medium">{insightError[uniqueLeadId]}</span>
                           )}
+                          {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
                         </div>
                       </td>
                     </tr>
