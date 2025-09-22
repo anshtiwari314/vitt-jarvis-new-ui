@@ -79,7 +79,8 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
         console.log(obj);
         dispatch(updateCues(obj))
         }
-        else{
+        else
+        {
         dispatch(updateFollowUpQn(obj))
         }
         break
@@ -101,10 +102,10 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
     console.log("health state",healthManageMentState)
   },[])
 
- useEffect(() => {
-  const socketUrl = 'http://localhost:5000'
-  //const socketUrl = 'https://b18e4904236b.ngrok-free.app'
 
+ useEffect(() => {
+  const socketUrl ='http://localhost:5000'
+  //const socketUrl = 'https://b18e4904236b.ngrok-free.app'
   // 500ms delay before connecting
   const timer = setTimeout(() => {
     const tempSocket = io(socketUrl)
@@ -142,13 +143,13 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
 
  
 
-  useEffect(() => {
+useEffect(() => {
     if (!socket) {
       return
     }
 
     const data = {
-      roomid: "hid_9095",
+      roomid: roomId,
       jobid: "abcde",
       agentid: "1234",
       name: name,
@@ -156,7 +157,8 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
     }
     console.log("it happened",navigation);
     socket.emit("selected_topic_req_health_ins", data)
-  }, [socket,navigation])
+}, [socket,navigation])
+
 
   const values = {
     socket,

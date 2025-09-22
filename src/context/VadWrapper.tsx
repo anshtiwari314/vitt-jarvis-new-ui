@@ -26,7 +26,7 @@ export default function VadWrapper({children}){
     const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
     console.log('roomId in vad wrapper',roomId)
       const navigation = useAppSelector((state) => state.healthManagmentReducer.navigation)
-      console.log('navigation in vad wrapper',navigation)
+      console.log('navigation in vad wrapper',roomId,navigation)
     
     //const {currentUser} = useAuth()
     const [vadRecordingOn,setVadRecordingOn] = useState<boolean>(false);
@@ -99,7 +99,7 @@ async function processAudioToBase64(audio,url,data){
     console.log("questions_loader_req_heal_v2 event being emitted")
 
     const questionsApiReqPayload = {
-      roomid: "hid_9095",
+      roomid: roomId,
       jobid: "abcde",
       agentid: "1234",
       name: name,
@@ -144,7 +144,7 @@ async function processAudioToBase64(audio,url,data){
 
             let data = {
               
-              roomid:"hid_9095",
+              roomid:roomId,
               jobid: 'abcde',
               agentid: 'bayya-bayya',
               //custemailid: custEmailId,

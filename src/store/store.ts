@@ -7,7 +7,7 @@ import healthManagmentReducer from '../reducers/healthManagmentReducer';
 
 export const store = configureStore({
   reducer: {
-    // salesCopilotReducer: salesCopilotReducer.salesCopilotReducer,
+    //salesCopilotReducer: salesCopilotReducer.salesCopilotReducer,
     qpReducer: queryparamReducer.qpReducer,
     healthManagmentReducer: healthManagmentReducer.healthReducerSlice,
     // Add other reducers here if any

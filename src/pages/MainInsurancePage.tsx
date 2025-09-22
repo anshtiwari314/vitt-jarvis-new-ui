@@ -19,9 +19,11 @@ import HealthProfile from '../components/Health/HeatlhProfile';
 import RecommendedHealthPlan from '../components/Health/Recomendation';
 import PlanSummary from '../components/Health/PlanSummary';
 import BasicInfoH from '../components/Health/BasicInfo';
+import { useData } from '../context/DataWrapper';
 //import BasicInfoH from '../components/UI2/BasicInfo';
 
 export default function App() {
+    const {socket}=useData()
      const {salesData,navigation:currentNavigation} = useAppSelector((state) => state.healthManagmentReducer)
      console.log('salesData', salesData.Recommendations)
 //   console.log(currentNavigation,"basic sales data is ",salesData.liabilities);
@@ -51,11 +53,11 @@ export default function App() {
         case 'Basic Info':
             return <BasicInfoH data={salesData.basicInfo} />;
         case 'Health Profile':
-            return <HealthProfile data={salesData.HealthProfile} />;
+            return <HealthProfile data={salesData.HealthProfile} socketC={socket}/>;
         case 'Recommendations':
-            return <RecommendedHealthPlan planName={salesData.Recommendations?.planName} sumInsured={salesData.Recommendations?.sumInsured} riders={salesData.Recommendations?.riders} premium={salesData.Recommendations?.premium} />;
+            return <RecommendedHealthPlan planName={salesData.Recommendations?.planName} sumInsured={salesData.Recommendations?.sumInsured} riders={salesData.Recommendations?.riders} premium={salesData.Recommendations?.premium} reason={salesData.Recommendations.reason} />;
         case 'Plan Summary':
-            return <PlanSummary items={salesData.PlanSummary.summary}/>;
+            return <BasicInfoH data={salesData.basicInfo} />;
       
         default:
             return <BasicInfoH data={salesData.basicInfo} />; 

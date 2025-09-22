@@ -94,7 +94,7 @@ const initialCopilotLoadState= {
       },
       table:{
         header:'Insurance &Claim History',
-        table_header:['Company Name','Sum Assured','State',"Previous Claims"],
+        table_header:['Company Name','Sum Assured',"Previous Claims"],
         table_values:[
           ['ABC',5000000,"Active","None"],
           ['XYZ',500000,"Closed","None"],
@@ -105,6 +105,7 @@ const initialCopilotLoadState= {
     planName:"",
     sumInsured:0,
     premium:0,
+    reason:"",
     riders:[
         {name:"Critical Illness Cover",price:5000},
         {name:"Maternity Cover",price:3000},
@@ -327,6 +328,7 @@ const initialCopilotState = {
       "planName": "",
       "sumInsured": 0,
       "premium": 0,
+      "reason":"",
       "riders": [
         // { "name": "", "price": 0 },
         // { "name": "", "price": 0 },
