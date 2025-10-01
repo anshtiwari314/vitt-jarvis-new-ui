@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCloudUploadAlt, faUser, faChartLine, faUserTie, faEdit, faCopy } from "@fortawesome/free-solid-svg-icons"
 import { PostReq } from "../functions/requests"
 import { useAuth } from "../context/AuthContext"
-import { Toast } from "../components/Toast"
 // --- Placeholder Components (Replace with your actual components) ---
 
 // Mock Data Context for demonstration
@@ -148,7 +147,7 @@ export function Table({ setFormState, initialFormState }) {
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(5) // 10 entries per page as requested
+  const [itemsPerPage, setItemsPerPage] = useState(10) // 10 entries per page as requested
 
   // State to manage copy feedback message
   const [copyFeedback, setCopyFeedback] = useState({}) // { leadId: 'Copied!' }
@@ -166,6 +165,11 @@ export function Table({ setFormState, initialFormState }) {
 
   // Function to change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber)
+
+  // Clamp currentPage when totalPages changes
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages || 1)
+  }, [totalPages])
 
   const copyToClipboard = (textToCopy, leadId) => {
     const textarea = document.createElement("textarea")
@@ -223,7 +227,7 @@ export function Table({ setFormState, initialFormState }) {
     if (lead.postfacto_status === "done") {
       const linkParams = lead.link_params || ""
       const cidMatch = linkParams.match(/cid_\w+/)
-      const idOf = cidMatch ? cidMatch[0] : "cid_8459" 
+      const idOf = cidMatch ? cidMatch[0] : "cid_8459"
 
       window.open(`https://postfacto-health.netlify.app/#/${idOf}`, "_blank", "noopener,noreferrer")
       return
@@ -239,18 +243,21 @@ export function Table({ setFormState, initialFormState }) {
     setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "" }))
 
     try {
-       const linkParams = lead.link_params || ""
+      const linkParams = lead.link_params || ""
       const cidMatch = linkParams.match(/cid_\w+/)
-      const idOf = cidMatch ? cidMatch[0] : "cid_8459" 
-      const response = await PostReq("https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router", {
-        trigger_func: "trigger_metrics_HI",
-        params: { session_id: idOf },
-      })
+      const idOf = cidMatch ? cidMatch[0] : "cid_8459"
+      const response = await PostReq(
+        "https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router",
+        {
+          trigger_func: "trigger_metrics_HI",
+          params: { session_id: idOf },
+        },
+      )
       console.log("Insight response:", response)
 
       if (response && response.msg) {
         // Open the insight URL in a new tab
-          setToast({ message: response?.msg || "Insight generated successfully!", type: "success" })
+        setToast({ message: response?.msg || "Insight generated successfully!", type: "success" })
         // window.open(response.url, "_blank", "noopener,noreferrer")
       } else {
         setToast({ message: "Failed to generate insight", type: "error" })
@@ -300,6 +307,33 @@ export function Table({ setFormState, initialFormState }) {
     // Default for "pending" and other statuses
     return `${baseClasses} bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white focus:ring-green-500`
   }
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = []
+    const maxButtons = 5 // current centered + neighbors
+    if (totalPages <= maxButtons + 2) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+      return pages
+    }
+
+    const showLeftEllipsis = currentPage > 3
+    const showRightEllipsis = currentPage < totalPages - 2
+
+    pages.push(1)
+    if (showLeftEllipsis) pages.push("...")
+
+    const start = Math.max(2, currentPage - 1)
+    const end = Math.min(totalPages - 1, currentPage + 1)
+    for (let i = start; i <= end; i++) pages.push(i)
+
+    if (showRightEllipsis) pages.push("...")
+    pages.push(totalPages)
+    return pages
+  }
+
+  const totalItems = leads.length
+  const startItem = totalItems === 0 ? 0 : indexOfFirstItem + 1
+  const endItem = Math.min(indexOfLastItem, totalItems)
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm">
@@ -426,13 +460,6 @@ export function Table({ setFormState, initialFormState }) {
                           {insightError[uniqueLeadId] && (
                             <span className="text-xs text-red-600 font-medium">{insightError[uniqueLeadId]}</span>
                           )}
-                           {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
                         </div>
                       </td>
                     </tr>
@@ -443,45 +470,112 @@ export function Table({ setFormState, initialFormState }) {
           </div>
 
           {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <nav className="flex justify-center mt-6">
-              <ul className="flex items-center -space-x-px">
-                <li>
-                  <button
-                    onClick={() => paginate(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="px-3 py-2 ml-0 leading-tight text-slate-500 bg-white border border-slate-300 rounded-l-lg hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                </li>
-                {Array.from({ length: totalPages }, (_, i) => (
-                  <li key={i}>
+          <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            {/* Range info */}
+            <div className="text-sm text-slate-600">
+              {totalItems > 0 ? (
+                <>
+                  Showing <span className="font-medium text-slate-800">{startItem}</span>–
+                  <span className="font-medium text-slate-800">{endItem}</span> of{" "}
+                  <span className="font-medium text-slate-800">{totalItems}</span>
+                </>
+              ) : (
+                <>No results</>
+              )}
+            </div>
+
+            {/* Pagination controls */}
+            {totalPages > 1 && (
+              <nav
+                className="inline-flex items-center gap-1"
+                role="navigation"
+                aria-label="Pagination"
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowLeft" && currentPage > 1) paginate(currentPage - 1)
+                  if (e.key === "ArrowRight" && currentPage < totalPages) paginate(currentPage + 1)
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => paginate(1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  First
+                </button>
+                <button
+                  type="button"
+                  onClick={() => paginate(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Previous
+                </button>
+
+                {getPageNumbers().map((p, idx) =>
+                  typeof p === "number" ? (
                     <button
-                      onClick={() => paginate(i + 1)}
-                      className={`px-3 py-2 leading-tight border border-slate-300
+                      key={`${p}-${idx}`}
+                      type="button"
+                      onClick={() => paginate(p)}
+                      aria-current={currentPage === p ? "page" : undefined}
+                      className={`px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500
                         ${
-                          currentPage === i + 1
-                            ? "text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700"
-                            : "text-slate-500 bg-white hover:bg-slate-100 hover:text-slate-700"
+                          currentPage === p
+                            ? "border-blue-600 bg-blue-50 text-blue-700"
+                            : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800"
                         }`}
                     >
-                      {i + 1}
+                      {p}
                     </button>
-                  </li>
-                ))}
-                <li>
-                  <button
-                    onClick={() => paginate(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-2 leading-tight text-slate-500 bg-white border border-slate-300 rounded-r-lg hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </li>
-              </ul>
-            </nav>
-          )}
+                  ) : (
+                    <span key={`ellipsis-${idx}`} aria-hidden="true" className="px-2 text-slate-400 select-none">
+                      …
+                    </span>
+                  ),
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Next
+                </button>
+                <button
+                  type="button"
+                  onClick={() => paginate(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Last
+                </button>
+              </nav>
+            )}
+
+            {/* Rows per page */}
+            <div className="flex items-center gap-2">
+              <label htmlFor="rows-per-page" className="text-sm text-slate-600">
+                Rows per page
+              </label>
+              <select
+                id="rows-per-page"
+                className="px-2 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={itemsPerPage}
+                onChange={(e) => {
+                  const next = Number(e.target.value)
+                  setItemsPerPage(next)
+                  setCurrentPage(1)
+                }}
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
         </>
       )}
     </div>

@@ -104,7 +104,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
 
 
  useEffect(() => {
-  const socketUrl ='http://localhost:5000'
+  const socketUrl ='wss://recruito.vitti.insure'
   //const socketUrl = 'https://b18e4904236b.ngrok-free.app'
   // 500ms delay before connecting
   const timer = setTimeout(() => {
@@ -166,7 +166,7 @@ useEffect(() => {
     //socketConnected: socketConnected && socketReady,
     //ngrokServerUrl: "http://localhost:5000",
     setMsgLoading: (loading: boolean) => console.log("Loading:", loading),
-    oneWayUrl: "http://localhost:5000", 
+    oneWayUrl: "wss://recruito.vitti.insure", 
   }
   return <Context.Provider value={values}>{children}</Context.Provider>
 }
