@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, createContext, useContext } from "react"
+import React,{ useEffect, useState, createContext, useContext } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCloudUploadAlt, faUser, faChartLine, faUserTie, faEdit, faCopy } from "@fortawesome/free-solid-svg-icons"
 import { PostReq } from "../functions/requests"
@@ -300,6 +300,52 @@ export function Table({ setFormState, initialFormState }) {
     return `${baseClasses} bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white focus:ring-green-500`
   }
 
+  const getVisiblePageNumbers = (currentPage, totalPages) => {
+  const maxPagesToShow = 5; // Total page buttons to show (excluding first, last, and ellipses)
+  const range = Math.floor(maxPagesToShow / 2);
+  const visiblePages = new Set();
+  
+  if (totalPages <= maxPagesToShow + 2) {
+    // If few pages, show all of them
+    for (let i = 1; i <= totalPages; i++) {
+      visiblePages.add(i);
+    }
+    return Array.from(visiblePages);
+  }
+
+  // 1. Add first and last page
+  visiblePages.add(1);
+  visiblePages.add(totalPages);
+
+  // 2. Add pages around the current page
+  for (let i = currentPage - range; i <= currentPage + range; i++) {
+    if (i > 1 && i < totalPages) {
+      visiblePages.add(i);
+    }
+  }
+
+  // 3. Sort and convert to an array
+  let result = Array.from(visiblePages).sort((a, b) => a - b);
+  
+  // 4. Insert ellipses
+  const finalPages = [];
+  for (let i = 0; i < result.length; i++) {
+    const page = result[i];
+    finalPages.push(page);
+    
+    const nextPageIndex = i + 1;
+    if (nextPageIndex < result.length) {
+      const nextPage = result[nextPageIndex];
+      // If the next page is not sequential, insert '...'
+      if (nextPage !== page + 1) {
+        finalPages.push('...');
+      }
+    }
+  }
+
+  return finalPages;
+};
+
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm">
       <h3 className="text-lg font-semibold text-slate-700 mb-4">Recent Uploaded Leads</h3>
@@ -443,44 +489,53 @@ export function Table({ setFormState, initialFormState }) {
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <nav className="flex justify-center mt-6">
-              <ul className="flex items-center -space-x-px">
-                <li>
-                  <button
-                    onClick={() => paginate(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="px-3 py-2 ml-0 leading-tight text-slate-500 bg-white border border-slate-300 rounded-l-lg hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                </li>
-                {Array.from({ length: totalPages }, (_, i) => (
-                  <li key={i}>
-                    <button
-                      onClick={() => paginate(i + 1)}
-                      className={`px-3 py-2 leading-tight border border-slate-300
-                        ${
-                          currentPage === i + 1
-                            ? "text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700"
-                            : "text-slate-500 bg-white hover:bg-slate-100 hover:text-slate-700"
-                        }`}
-                    >
-                      {i + 1}
-                    </button>
-                  </li>
-                ))}
-                <li>
-                  <button
-                    onClick={() => paginate(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-2 leading-tight text-slate-500 bg-white border border-slate-300 rounded-r-lg hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </li>
-              </ul>
-            </nav>
+  <nav className="flex justify-center mt-6">
+    <ul className="flex items-center -space-x-px">
+      <li>
+        <button
+          onClick={() => paginate(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-3 py-2 ml-0 leading-tight text-slate-500 bg-white border border-slate-300 rounded-l-lg hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Previous
+        </button>
+      </li>
+      {/* Logic to determine and render visible pages */}
+      {getVisiblePageNumbers(currentPage, totalPages).map((pageNumber, index) => (
+        <React.Fragment key={index}>
+          {pageNumber === '...' ? (
+            <li key={`ellipsis-${index}`}>
+              <span className="px-3 py-2 leading-tight text-slate-500 bg-white border border-slate-300">...</span>
+            </li>
+          ) : (
+            <li key={pageNumber}>
+              <button
+                onClick={() => paginate(pageNumber)}
+                className={`px-3 py-2 leading-tight border border-slate-300
+                  ${
+                    currentPage === pageNumber
+                      ? "text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700"
+                      : "text-slate-500 bg-white hover:bg-slate-100 hover:text-slate-700"
+                  }`}
+              >
+                {pageNumber}
+              </button>
+            </li>
           )}
+        </React.Fragment>
+      ))}
+      <li>
+        <button
+          onClick={() => paginate(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-3 py-2 leading-tight text-slate-500 bg-white border border-slate-300 rounded-r-lg hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Next
+        </button>
+      </li>
+    </ul>
+  </nav>
+)}
         </>
       )}
     </div>
