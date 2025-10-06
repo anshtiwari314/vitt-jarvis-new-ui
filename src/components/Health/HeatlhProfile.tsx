@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface Props {
   data: {
@@ -19,12 +19,9 @@ interface Props {
   socketC: any;
 }
 
+
 export default function HealthProfile({ data, socketC }: Props) {
-  const [successMsg, setSuccessMsg] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState<string[]>(() => {
-    const saved = localStorage.getItem("uploadedFiles");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [complianceMsg, setComplianceMsg] = useState("");
 
   const formatLabel = (key: string) =>
     key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
@@ -48,8 +45,32 @@ export default function HealthProfile({ data, socketC }: Props) {
       : row
   );
 
+  const medicalTest = data.boxB?.data?.AnyMedicalTests || "";
+  const hasMedicalTest =
+    medicalTest.trim() !== "" &&
+    medicalTest.trim().toLowerCase() !== "no medical test";
+
+  
+  useEffect(() => {
+    if (hasMedicalTest) {
+      socketC.emit("compliance_alert", {
+        alertType: "MedicalTestDetected",
+        message:
+          "Client has undergone medical tests, please review for compliance.",
+        clientData: data.boxB?.data || {},
+      });
+
+      setComplianceMsg(
+        "⚠️ Compliance Alert: Medical tests detected. Please review documents."
+      );
+    }
+  }, [hasMedicalTest, socketC]);
+
   const renderBox = (
-    boxData?: { data?: { [key: string]: string | number | null | undefined }; header?: string },
+    boxData?: {
+      data?: { [key: string]: string | number | null | undefined };
+      header?: string;
+    },
     defaultHeader?: string
   ) => {
     if (!boxData?.data) return null;
@@ -78,75 +99,17 @@ export default function HealthProfile({ data, socketC }: Props) {
     );
   };
 
-  const medicalTest = data.boxB?.data?.AnyMedicalTests || "";
-  const shouldShowUpload =
-    medicalTest.trim() !== "" &&
-    medicalTest.trim().toLowerCase() !== "no medical test";
-
-  const handleFileUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64Data = (reader.result as string).split(",")[1];
-
-      socketC.emit("document_collection_health", {
-        filename: file.name,
-        filedata: base64Data,
-      });
-
-      const newFiles = [...uploadedFiles, file.name];
-      setUploadedFiles(newFiles);
-      localStorage.setItem("uploadedFiles", JSON.stringify(newFiles));
-
-      setSuccessMsg("Document submitted successfully...!");
-      setTimeout(() => setSuccessMsg(""), 3000);
-    };
-    reader.readAsDataURL(file);
-  };
-
   return (
     <div className="space-y-6">
-      {/* Success Popup */}
-      {successMsg && (
-        <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
-          {successMsg}
+      {complianceMsg && (
+        <div className="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+          {complianceMsg}
         </div>
       )}
 
       {renderBox(data.boxA, "Lifestyle & Habits")}
       {renderBox(data.boxB, "Medical History")}
 
-      {/* Upload Section */}
-      {shouldShowUpload && (
-        <div className="bg-white p-4 rounded-xl shadow-md">
-          <p className="text-slate-700 mb-2">
-            Please upload the required test documents for verification:
-          </p>
-          <input
-            type="file"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleFileUpload(file);
-            }}
-            className="block w-full text-sm text-slate-600
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-md file:border-0
-              file:text-sm file:font-semibold
-              file:bg-slate-100 file:text-slate-700
-              hover:file:bg-slate-200"
-          />
-
-          {/* Show already uploaded files */}
-          {uploadedFiles.length > 0 && (
-            <ul className="mt-3 text-sm text-slate-600 list-disc list-inside">
-              {uploadedFiles.map((file, idx) => (
-                <li key={idx}>{file}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
-      {/* Insurance & Claim History Table */}
       <div className="bg-white p-6 rounded-xl shadow-sm">
         <h3 className="text-lg font-semibold text-slate-700 mb-4">
           {data.table.header || "Insurance & Claim History"}

@@ -2,12 +2,18 @@ import React, { useState } from "react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
+interface Rider {
+  name: string;
+  desc: string;
+  include: boolean;
+}
+
 interface PlanProps {
   planName: string;
   sumInsured: string | number;
   premium: string | number;
   reason: string;
-  riders: { name: string; desc: string; include: boolean }[];
+  riders: Rider[];
 }
 
 const riderDescMap: Record<string, string> = {
@@ -44,9 +50,34 @@ export default function RecommendedHealthPlan({
   sumInsured,
   premium,
   reason,
-  riders,
+  riders: initialRiders,
 }: PlanProps) {
   const [reasonOpen, setReasonOpen] = useState(false);
+  const [riders, setRiders] = useState<Rider[]>(initialRiders);
+
+const handleToggle = (index: number) => {
+  const updatedRiders = riders.map((r, i) =>
+    i === index ? { ...r, include: !r.include } : r
+  );
+
+  setRiders(updatedRiders);
+
+  const toggledRider = { ...riders[index], include: !riders[index].include };
+
+  fetch("/api/update-rider", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(toggledRider),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      console.log("Backend updated:", data);
+    })
+    .catch((err) => console.error("API update failed", err));
+};
+
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
@@ -73,7 +104,7 @@ export default function RecommendedHealthPlan({
         </div>
       </div>
 
-      {/* Reason Section with Expand/Collapse */}
+      {/* Reason Section */}
       {reason && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl shadow-sm">
           <button
@@ -101,7 +132,6 @@ export default function RecommendedHealthPlan({
         </div>
       )}
 
-      {/* Riders Section */}
       <div>
         <h3 className="text-lg font-semibold text-slate-700 mb-4">
           Select Add-ons (Riders)
@@ -118,12 +148,13 @@ export default function RecommendedHealthPlan({
                 } shadow-sm hover:shadow-md transition-shadow duration-200`}
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <input
-                    type="checkbox"
-                    className="w-5 h-5"
-                    checked={rider.include}
-                    readOnly
-                  />
+                 <input
+                  type="checkbox"
+                  className="w-5 h-5"
+                  checked={rider.include}
+                  onChange={() => handleToggle(idx)}
+                />
+
                   <span className="font-medium text-slate-800">
                     {rider.name}
                   </span>

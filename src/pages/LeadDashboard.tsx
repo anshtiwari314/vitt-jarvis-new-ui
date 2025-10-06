@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState, createContext, useContext } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCloudUploadAlt, faUser, faChartLine, faUserTie, faEdit, faCopy } from "@fortawesome/free-solid-svg-icons"
@@ -143,6 +141,8 @@ const UploadComp = () => {
 export function Table({ setFormState, initialFormState }) {
   const { formData } = useData() // Using mock data from context
   const leads = formData || [] // Ensure leads is an array
+  const hiLeads = Array.isArray(leads) ? leads.filter((l) => String(l?.lead_type || "").toUpperCase() === "HI") : []
+
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
 
   // Pagination states
@@ -155,13 +155,13 @@ export function Table({ setFormState, initialFormState }) {
   const [insightLoading, setInsightLoading] = useState({}) // { leadId: boolean }
   const [insightError, setInsightError] = useState({}) // { leadId: string }
 
-  // Calculate the leads to display on the current page
+  // Paginate and compute totals using only HI leads
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentLeads = leads.slice(indexOfFirstItem, indexOfLastItem)
+  const currentLeads = hiLeads.slice(indexOfFirstItem, indexOfLastItem)
 
   // Calculate total pages
-  const totalPages = Math.ceil(leads.length / itemsPerPage)
+  const totalPages = Math.ceil(hiLeads.length / itemsPerPage)
 
   // Function to change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber)
@@ -331,15 +331,15 @@ export function Table({ setFormState, initialFormState }) {
     return pages
   }
 
-  const totalItems = leads.length
+  const totalItems = hiLeads.length
   const startItem = totalItems === 0 ? 0 : indexOfFirstItem + 1
   const endItem = Math.min(indexOfLastItem, totalItems)
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm">
       <h3 className="text-lg font-semibold text-slate-700 mb-4">Recent Uploaded Leads</h3>
-      {leads.length === 0 ? (
-        <p className="text-slate-500 text-center py-4">No leads uploaded yet.</p>
+      {hiLeads.length === 0 ? (
+        <p className="text-slate-500 text-center py-4">No HI leads found.</p>
       ) : (
         <>
           <div className="overflow-x-auto">
@@ -652,6 +652,7 @@ function LeadDashboard() {
         email: "john@example.com",
         priority: "high",
         source: "website",
+        lead_type: "HI",
       },
       {
         customer_name: "Jane Smith",
@@ -659,6 +660,7 @@ function LeadDashboard() {
         email: "jane@example.com",
         priority: "medium",
         source: "social-media",
+        lead_type: "NHI",
       },
     ]
     setFormData(resp.recent_lead_data)
