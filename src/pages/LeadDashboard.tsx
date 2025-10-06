@@ -1,16 +1,13 @@
 "use client"
 
-import React,{ useEffect, useState, createContext, useContext } from "react"
+import { useEffect, useState, createContext, useContext } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCloudUploadAlt, faUser, faChartLine, faUserTie, faEdit, faCopy } from "@fortawesome/free-solid-svg-icons"
 import { PostReq } from "../functions/requests"
 import { useAuth } from "../context/AuthContext"
-import { Toast } from "../components/Toast"
-
 // --- Placeholder Components (Replace with your actual components) ---
 
 // Mock Data Context for demonstration
-
 const DataContext = createContext(null)
 const useData = () => useContext(DataContext)
 
@@ -146,10 +143,22 @@ const UploadComp = () => {
 export function Table({ setFormState, initialFormState }) {
   const { formData } = useData() // Using mock data from context
   const leads = formData || [] // Ensure leads is an array
+
+  const hiLeads = Array.isArray(leads)
+    ? leads.filter((l) => {
+        const t = String(l?.lead_type ?? "")
+          .trim()
+          .toUpperCase()
+          .replace(/\\/g, "/") // normalize N\A -> N/A
+        return t === "LI" || t === "N/A" || t === "" // treat empty as N/A
+      })
+    : []
+
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(5) // 10 entries per page as requested
+  const [itemsPerPage, setItemsPerPage] = useState(10) // 10 entries per page as requested
 
   // State to manage copy feedback message
   const [copyFeedback, setCopyFeedback] = useState({}) // { leadId: 'Copied!' }
@@ -157,16 +166,21 @@ export function Table({ setFormState, initialFormState }) {
   const [insightLoading, setInsightLoading] = useState({}) // { leadId: boolean }
   const [insightError, setInsightError] = useState({}) // { leadId: string }
 
-  // Calculate the leads to display on the current page
+  // Paginate and compute totals using only HI leads
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentLeads = leads.slice(indexOfFirstItem, indexOfLastItem)
+  const currentLeads = hiLeads.slice(indexOfFirstItem, indexOfLastItem)
 
   // Calculate total pages
-  const totalPages = Math.ceil(leads.length / itemsPerPage)
+  const totalPages = Math.ceil(hiLeads.length / itemsPerPage)
 
   // Function to change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber)
+
+  // Clamp currentPage when totalPages changes
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages || 1)
+  }, [totalPages])
 
   const copyToClipboard = (textToCopy, leadId) => {
     const textarea = document.createElement("textarea")
@@ -224,7 +238,7 @@ export function Table({ setFormState, initialFormState }) {
     if (lead.postfacto_status === "done") {
       const linkParams = lead.link_params || ""
       const cidMatch = linkParams.match(/cid_\w+/)
-      const idOf = cidMatch ? cidMatch[0] : "cid_8459" 
+      const idOf = cidMatch ? cidMatch[0] : "cid_8459"
 
       window.open(`https://postfacto.netlify.app/#/${idOf}`, "_blank", "noopener,noreferrer")
       return
@@ -240,19 +254,24 @@ export function Table({ setFormState, initialFormState }) {
     setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "" }))
 
     try {
-        const linkParams = lead.link_params || ""
+      const linkParams = lead.link_params || ""
       const cidMatch = linkParams.match(/cid_\w+/)
-      const idOf = cidMatch ? cidMatch[0] : "cid_8459" 
-      const response = await PostReq("https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router", {
-        trigger_func: "trigger_metrics_LI",
-        params: { session_id: idOf },
-      })
+      const idOf = cidMatch ? cidMatch[0] : "cid_8459"
+      const response = await PostReq(
+        "https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router",
+        {
+          trigger_func: "trigger_metrics_HI",
+          params: { session_id: idOf },
+        },
+      )
+      console.log("Insight response:", response)
 
       if (response && response.msg) {
         // Open the insight URL in a new tab
-         setToast({ message: response.msg || "Insight generated successfully!", type: "success" })
+        setToast({ message: response?.msg || "Insight generated successfully!", type: "success" })
         // window.open(response.url, "_blank", "noopener,noreferrer")
       } else {
+        setToast({ message: "Failed to generate insight", type: "error" })
         throw new Error("No insight URL received from backend")
       }
     } catch (error) {
@@ -300,57 +319,38 @@ export function Table({ setFormState, initialFormState }) {
     return `${baseClasses} bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white focus:ring-green-500`
   }
 
-  const getVisiblePageNumbers = (currentPage, totalPages) => {
-  const maxPagesToShow = 5; // Total page buttons to show (excluding first, last, and ellipses)
-  const range = Math.floor(maxPagesToShow / 2);
-  const visiblePages = new Set();
-  
-  if (totalPages <= maxPagesToShow + 2) {
-    // If few pages, show all of them
-    for (let i = 1; i <= totalPages; i++) {
-      visiblePages.add(i);
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = []
+    const maxButtons = 5 // current centered + neighbors
+    if (totalPages <= maxButtons + 2) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+      return pages
     }
-    return Array.from(visiblePages);
+
+    const showLeftEllipsis = currentPage > 3
+    const showRightEllipsis = currentPage < totalPages - 2
+
+    pages.push(1)
+    if (showLeftEllipsis) pages.push("...")
+
+    const start = Math.max(2, currentPage - 1)
+    const end = Math.min(totalPages - 1, currentPage + 1)
+    for (let i = start; i <= end; i++) pages.push(i)
+
+    if (showRightEllipsis) pages.push("...")
+    pages.push(totalPages)
+    return pages
   }
 
-  // 1. Add first and last page
-  visiblePages.add(1);
-  visiblePages.add(totalPages);
-
-  // 2. Add pages around the current page
-  for (let i = currentPage - range; i <= currentPage + range; i++) {
-    if (i > 1 && i < totalPages) {
-      visiblePages.add(i);
-    }
-  }
-
-  // 3. Sort and convert to an array
-  let result = Array.from(visiblePages).sort((a, b) => a - b);
-  
-  // 4. Insert ellipses
-  const finalPages = [];
-  for (let i = 0; i < result.length; i++) {
-    const page = result[i];
-    finalPages.push(page);
-    
-    const nextPageIndex = i + 1;
-    if (nextPageIndex < result.length) {
-      const nextPage = result[nextPageIndex];
-      // If the next page is not sequential, insert '...'
-      if (nextPage !== page + 1) {
-        finalPages.push('...');
-      }
-    }
-  }
-
-  return finalPages;
-};
+  const totalItems = hiLeads.length
+  const startItem = totalItems === 0 ? 0 : indexOfFirstItem + 1
+  const endItem = Math.min(indexOfLastItem, totalItems)
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm">
       <h3 className="text-lg font-semibold text-slate-700 mb-4">Recent Uploaded Leads</h3>
-      {leads.length === 0 ? (
-        <p className="text-slate-500 text-center py-4">No leads uploaded yet.</p>
+      {hiLeads.length === 0 ? (
+        <p className="text-slate-500 text-center py-4">No LI or N/A leads found.</p>
       ) : (
         <>
           <div className="overflow-x-auto">
@@ -391,6 +391,12 @@ export function Table({ setFormState, initialFormState }) {
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
                   >
+                    Lead Types
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  >
                     Link
                   </th>
                   <th
@@ -399,6 +405,7 @@ export function Table({ setFormState, initialFormState }) {
                   >
                     Edit
                   </th>
+
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -424,6 +431,7 @@ export function Table({ setFormState, initialFormState }) {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.email}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead.priority}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead.source}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.lead_type || "N/A"}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 flex items-center space-x-2">
                         {/* Display the link text (optional, if you want it visible) target="_blank"*/}
                         <a href={linkToCopy} className="text-blue-600 hover:underline" rel="noopener noreferrer">
@@ -471,13 +479,6 @@ export function Table({ setFormState, initialFormState }) {
                           {insightError[uniqueLeadId] && (
                             <span className="text-xs text-red-600 font-medium">{insightError[uniqueLeadId]}</span>
                           )}
-                          {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
                         </div>
                       </td>
                     </tr>
@@ -488,54 +489,112 @@ export function Table({ setFormState, initialFormState }) {
           </div>
 
           {/* Pagination Controls */}
-          {totalPages > 1 && (
-  <nav className="flex justify-center mt-6">
-    <ul className="flex items-center -space-x-px">
-      <li>
-        <button
-          onClick={() => paginate(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="px-3 py-2 ml-0 leading-tight text-slate-500 bg-white border border-slate-300 rounded-l-lg hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Previous
-        </button>
-      </li>
-      {/* Logic to determine and render visible pages */}
-      {getVisiblePageNumbers(currentPage, totalPages).map((pageNumber, index) => (
-        <React.Fragment key={index}>
-          {pageNumber === '...' ? (
-            <li key={`ellipsis-${index}`}>
-              <span className="px-3 py-2 leading-tight text-slate-500 bg-white border border-slate-300">...</span>
-            </li>
-          ) : (
-            <li key={pageNumber}>
-              <button
-                onClick={() => paginate(pageNumber)}
-                className={`px-3 py-2 leading-tight border border-slate-300
-                  ${
-                    currentPage === pageNumber
-                      ? "text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700"
-                      : "text-slate-500 bg-white hover:bg-slate-100 hover:text-slate-700"
-                  }`}
+          <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            {/* Range info */}
+            <div className="text-sm text-slate-600">
+              {totalItems > 0 ? (
+                <>
+                  Showing <span className="font-medium text-slate-800">{startItem}</span>–
+                  <span className="font-medium text-slate-800">{endItem}</span> of{" "}
+                  <span className="font-medium text-slate-800">{totalItems}</span>
+                </>
+              ) : (
+                <>No results</>
+              )}
+            </div>
+
+            {/* Pagination controls */}
+            {totalPages > 1 && (
+              <nav
+                className="inline-flex items-center gap-1"
+                role="navigation"
+                aria-label="Pagination"
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowLeft" && currentPage > 1) paginate(currentPage - 1)
+                  if (e.key === "ArrowRight" && currentPage < totalPages) paginate(currentPage + 1)
+                }}
               >
-                {pageNumber}
-              </button>
-            </li>
-          )}
-        </React.Fragment>
-      ))}
-      <li>
-        <button
-          onClick={() => paginate(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="px-3 py-2 leading-tight text-slate-500 bg-white border border-slate-300 rounded-r-lg hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Next
-        </button>
-      </li>
-    </ul>
-  </nav>
-)}
+                <button
+                  type="button"
+                  onClick={() => paginate(1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  First
+                </button>
+                <button
+                  type="button"
+                  onClick={() => paginate(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Previous
+                </button>
+
+                {getPageNumbers().map((p, idx) =>
+                  typeof p === "number" ? (
+                    <button
+                      key={`${p}-${idx}`}
+                      type="button"
+                      onClick={() => paginate(p)}
+                      aria-current={currentPage === p ? "page" : undefined}
+                      className={`px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500
+                        ${
+                          currentPage === p
+                            ? "border-blue-600 bg-blue-50 text-blue-700"
+                            : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800"
+                        }`}
+                    >
+                      {p}
+                    </button>
+                  ) : (
+                    <span key={`ellipsis-${idx}`} aria-hidden="true" className="px-2 text-slate-400 select-none">
+                      …
+                    </span>
+                  ),
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Next
+                </button>
+                <button
+                  type="button"
+                  onClick={() => paginate(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Last
+                </button>
+              </nav>
+            )}
+
+            {/* Rows per page */}
+            <div className="flex items-center gap-2">
+              <label htmlFor="rows-per-page" className="text-sm text-slate-600">
+                Rows per page
+              </label>
+              <select
+                id="rows-per-page"
+                className="px-2 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={itemsPerPage}
+                onChange={(e) => {
+                  const next = Number(e.target.value)
+                  setItemsPerPage(next)
+                  setCurrentPage(1)
+                }}
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
         </>
       )}
     </div>
@@ -612,6 +671,7 @@ function LeadDashboard() {
         email: "john@example.com",
         priority: "high",
         source: "website",
+        lead_type: "HI",
       },
       {
         customer_name: "Jane Smith",
@@ -619,6 +679,7 @@ function LeadDashboard() {
         email: "jane@example.com",
         priority: "medium",
         source: "social-media",
+        lead_type: "NHI",
       },
     ]
     setFormData(resp.recent_lead_data)
@@ -679,6 +740,7 @@ function LeadDashboard() {
       priority: formState.priority,
       source: formState.leadSourceFrom,
       agent_id: currentUser.userid,
+      lead_type: "LI",
     }
 
     console.log("before submitting", data)
