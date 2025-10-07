@@ -368,6 +368,12 @@ export function Table({ setFormState, initialFormState }) {
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
                   >
+                    Lead Type
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  >
                     Priority
                   </th>
                   <th
@@ -411,6 +417,7 @@ export function Table({ setFormState, initialFormState }) {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{lead.name}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.mob}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.lead_type}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead.priority}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead.source}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 flex items-center space-x-2">
@@ -721,6 +728,7 @@ function LeadDashboard() {
       priority: formState.priority,
       source: formState.leadSourceFrom,
       agent_id: currentUser.userid,
+      lead_type: "HI", 
     }
 
     console.log("before submitting", data)
