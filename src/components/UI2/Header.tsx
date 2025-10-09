@@ -1,5 +1,3 @@
-"use client"
-
 import React, { useEffect } from "react"
 import { useAppSelector } from "../../store/store"
 import { useVad } from "../../context/VadWrapper"

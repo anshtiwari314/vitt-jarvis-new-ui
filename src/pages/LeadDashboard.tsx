@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState, createContext, useContext } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCloudUploadAlt, faUser, faChartLine, faUserTie, faEdit, faCopy } from "@fortawesome/free-solid-svg-icons"
@@ -260,7 +258,7 @@ export function Table({ setFormState, initialFormState }) {
       const response = await PostReq(
         "https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router",
         {
-          trigger_func: "trigger_metrics_HI",
+          trigger_func: "trigger_metrics_LI",
           params: { session_id: idOf },
         },
       )
