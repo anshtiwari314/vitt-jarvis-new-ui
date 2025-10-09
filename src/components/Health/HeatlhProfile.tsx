@@ -19,10 +19,7 @@ interface Props {
   socketC: any;
 }
 
-
 export default function HealthProfile({ data, socketC }: Props) {
-  const [complianceMsg, setComplianceMsg] = useState("");
-
   const formatLabel = (key: string) =>
     key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase());
 
@@ -50,7 +47,6 @@ export default function HealthProfile({ data, socketC }: Props) {
     medicalTest.trim() !== "" &&
     medicalTest.trim().toLowerCase() !== "no medical test";
 
-  
   useEffect(() => {
     if (hasMedicalTest) {
       socketC.emit("compliance_alert", {
@@ -59,10 +55,6 @@ export default function HealthProfile({ data, socketC }: Props) {
           "Client has undergone medical tests, please review for compliance.",
         clientData: data.boxB?.data || {},
       });
-
-      setComplianceMsg(
-        "⚠️ Compliance Alert: Medical tests detected. Please review documents."
-      );
     }
   }, [hasMedicalTest, socketC]);
 
@@ -101,12 +93,6 @@ export default function HealthProfile({ data, socketC }: Props) {
 
   return (
     <div className="space-y-6">
-      {complianceMsg && (
-        <div className="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50">
-          {complianceMsg}
-        </div>
-      )}
-
       {renderBox(data.boxA, "Lifestyle & Habits")}
       {renderBox(data.boxB, "Medical History")}
 
