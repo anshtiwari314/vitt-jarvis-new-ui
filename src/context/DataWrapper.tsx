@@ -16,7 +16,7 @@ import {
 } from "../reducers/salesCopilotReducer"
 import { useDispatch } from "react-redux"
 import { useAppSelector } from "../store/store"
-
+import {config as AppConfig} from '../configuration.js'
 // interface DataContextType {
 //   socket: Socket | null
 //   setSocket: (socket: Socket | null) => void
@@ -126,11 +126,13 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   }
 
   
-
+  //console.log('config',config)
+  //console.log("hello world")
     useEffect(()=>{
         //const socketUrl = 'http://localhost:5000'
         //const socketUrl = 'https://0be7987cc39f.ngrok-free.app'
-        const socketUrl = 'wss://recruito.vitti.insure'
+        
+        const socketUrl = AppConfig.wsUrl
 
         const tempSocket = io(socketUrl)
 
