@@ -1,10 +1,14 @@
 import React from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { setNavigation } from '../../reducers/salesCopilotReducer';
+import { useData } from '../../context/DataWrapper';
 
 export default function SideNavigation() {
     const dispatch = useAppDispatch();
     const currentNavigation = useAppSelector(state => state.healthManagmentReducer.navigation);
+
+    const {recommendationsGenerated,setRecommendationsGenerated} = useData()
+
 
     const handleNavigationClick = (page: string) => {
         dispatch(setNavigation(page));
@@ -93,6 +97,14 @@ export default function SideNavigation() {
                 ))}
             </nav>
 
+                {
+                        recommendationsGenerated && 
+                        <div className="p-4 border-r border-slate-200">
+                            <div id="status-audio" className="flex items-center text-slate-500" style={{fontSize:'0.85rem'}}>
+                                    <div className="status-indicator w-2.5 h-2.5 mr-2 rounded-full bg-green-300 transition-colors"></div> Recommendations Generated
+                            </div>
+                        </div>
+                    }
             {/* System Status */}
             <div className="p-4 border-t border-slate-200">
                 <h3 className="text-sm font-semibold text-slate-600 mb-3">System Status</h3>

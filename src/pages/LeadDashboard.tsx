@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCloudUploadAlt, faUser, faChartLine, faUserTie, faEdit, faCopy } from "@fortawesome/free-solid-svg-icons"
 import { PostReq } from "../functions/requests"
 import { useAuth } from "../context/AuthContext"
+import {config as AppConfig} from '../configuration.js'
 // --- Placeholder Components (Replace with your actual components) ---
 
 // Mock Data Context for demonstration
@@ -109,7 +110,7 @@ const Form = ({ state, setState, submitForm, loading, error }) => {
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-200"
             disabled={loading}
           >
-            {loading ? "Submitting..." : "Add Lead"}
+            {loading ? "Submitting..." : state?.lead_id ? "Upload Lead" : "Add Lead"}
           </button>
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         </div>
@@ -205,13 +206,14 @@ export function Table({ setFormState, initialFormState }) {
   }
 
   function enableEdit(lead) {
-    const { name, mob, email, priority, source, lead_id } = lead
+    const { name, mob, email, priority, source, lead_id,link_params } = lead
     const [fname, ...restName] = name.split(" ")
 
     console.log("enable edit", lead)
     setFormState({
       ...initialFormState,
-      lead_id,
+      lead_id:link_params.split('&')[0],
+      link_params,
       fname,
       lname: restName.join(" "),
       mob,
@@ -643,7 +645,7 @@ const Header = ({ title, dashboardLink }) => {
 
 function LeadDashboard() {
   const [formData, setFormData] = useState([]) // Mock for useData's formData
-  const base_url = "https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis"
+  const base_url = AppConfig.serverBaseUrl
   const { currentUser } = useAuth()
 
   const getFormData = async (url) => {
