@@ -151,12 +151,12 @@ export default function Header() {
         </p>
       </div>
       <div className="flex-shrink-0 flex items-center gap-4">
-        <button
+        {/* <button
           id="skip-pfr-btn"
           className="bg-white border border-slate-300 text-slate-700 font-bold py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors duration-200"
         >
           Skip PFR
-        </button>
+        </button> */}
         <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
           {VAD2 !== undefined && !VAD2.loading ? (
             <div>

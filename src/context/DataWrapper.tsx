@@ -10,7 +10,7 @@ import {
     updatePlanSummary,updateRecommendation, updateHeathProfile,
     }from 
     "../reducers/healthManagmentReducer"
-
+import {config as AppConfig} from '../configuration.js'
 // interface DataContextType {
 //   socket: Socket | null
 //   setSocket: (socket: Socket | null) => void
@@ -40,6 +40,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   const navigation = useAppSelector((state) => state.healthManagmentReducer.navigation)
   const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
   const healthManageMentState = useAppSelector((state) => state.healthManagmentReducer);
+  const [recommendationsGenerated,setRecommendationsGenerated] = useState(false)
   //console.log("sales state", navigation)
 
   function updateSalesState(data:any) {
@@ -104,8 +105,19 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   },[])
 
 
+  function updateNotifications(data){
+   // {"status": "completed", "msg": "Product Recommendation ready"}
+      console.log('update notifications',data)
+      if(data.status ==='completed')
+        setRecommendationsGenerated(true)
+      else
+        setRecommendationsGenerated(false)
+  }
+
  useEffect(() => {
+
   const socketUrl ='http://localhost:5000'
+
   //const socketUrl = 'https://b18e4904236b.ngrok-free.app'
   // 500ms delay before connecting
   const timer = setTimeout(() => {
@@ -126,7 +138,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
 
     tempSocket.on('questions_loader_res', initialisationSalesState)
     tempSocket.on('ai_suggestion_res', updateSalesState)
-
+    tempSocket.on('notifications',updateNotifications)
     setSocket(tempSocket)
     return () => {
       timer && clearTimeout(timer)
@@ -161,13 +173,21 @@ useEffect(() => {
 }, [socket,navigation])
 
 
+  
+
   const values = {
     socket,
     setSocket,isSocketConnected,
     //socketConnected: socketConnected && socketReady,
     //ngrokServerUrl: "http://localhost:5000",
     setMsgLoading: (loading: boolean) => console.log("Loading:", loading),
+
     oneWayUrl: "http://localhost:5000", 
+
+  
+    updateNotifications,
+    recommendationsGenerated,setRecommendationsGenerated
+
   }
   return <Context.Provider value={values}>{children}</Context.Provider>
 }
