@@ -1,46 +1,54 @@
-interface PlanItem {
-  name: string;
-  price: number;
+import React from "react"
+
+interface StatusDisplayProps {
+  type: string
+  data: string
 }
 
-interface PlanSummaryProps {
-  title?: string;
-  items: PlanItem[];
-}
+const StatusDisplay: React.FC<StatusDisplayProps> = ({ type, data }) => {
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(data)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
 
-export default function PlanSummary({
-  title = "Final Plan Summary",
-  items,
-}: PlanSummaryProps) {
-  const total = items.reduce((sum, item) => sum + item.price, 0);
+      const link = document.createElement("a")
+      link.href = url
+      link.download = "document.pdf" 
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error("Download failed:", error)
+      alert("Failed to download PDF. Please try again.")
+    }
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-xl border border-slate-200">
-        <h3 className="text-lg font-semibold mb-4">{title}</h3>
-        <div className="space-y-4">
-          {items.map((item, idx) => (
-            <div
-              key={idx}
-              className="flex justify-between items-center"
-            >
-              <span className="text-slate-600">{item.name}</span>
-              <span className="font-semibold">₹ {item.price.toLocaleString()}</span>
-            </div>
-          ))}
-
-          <div className="border-t border-slate-200 my-2"></div>
-
-          <div className="flex justify-between items-center text-lg">
-            <span className="font-bold text-slate-800">
-              Total Annual Premium
-            </span>
-            <span className="font-bold text-indigo-600">
-              ₹ {total.toLocaleString()}
-            </span>
-          </div>
-        </div>
-      </div>
+    <div className="w-full max-w-md mx-auto mt-10 p-6 border rounded-2xl shadow-md bg-white text-center space-y-5">
+      {type === "ready" ? (
+        <>
+          <div className="text-5xl text-green-600 mb-2">📄</div>
+          <p className="text-lg font-medium text-gray-800">
+            Your PDF is ready to download!
+          </p>
+          <button
+            onClick={handleDownload}
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-xl transition-colors duration-200"
+          >
+            Download PDF
+          </button>
+        </>
+      ) : (
+        <>
+          <div className="text-4xl animate-spin inline-block">⏳</div>
+          <p className="text-gray-600 text-base">{data}</p>
+        </>
+      )}
     </div>
-  );
+  )
 }
+
+export default StatusDisplay

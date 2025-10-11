@@ -57,7 +57,7 @@ export default function App() {
         case 'Recommendations':
             return <RecommendedHealthPlan planName={salesData.Recommendations?.planName} sumInsured={salesData.Recommendations?.sumInsured} riders={salesData.Recommendations?.riders} premium={salesData.Recommendations?.premium} reason={salesData.Recommendations.reason} />;
         case 'Plan Summary':
-            return <BasicInfoH data={salesData.basicInfo} />;
+            return  <PlanSummary type={salesData.PlanSummary.type} data={salesData.PlanSummary.data}/>;
       
         default:
             return <BasicInfoH data={salesData.basicInfo} />; 

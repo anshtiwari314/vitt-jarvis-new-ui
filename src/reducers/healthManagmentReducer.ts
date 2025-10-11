@@ -336,7 +336,8 @@ const initialCopilotState = {
       ]
     },
     "PlanSummary":{
-        "summary":[]
+        "type":"",
+        "data":""
     },
     cues:{ 
       header:'ai cues',

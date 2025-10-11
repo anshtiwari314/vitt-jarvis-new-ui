@@ -50,7 +50,8 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
         dispatch(updateBasicInfo(data.basicInfo))
         break
       case "plan-summary":
-        dispatch(updatePlanSummary(data.planSummary))
+        console.log('plan summary data aaya',data)
+        dispatch(updatePlanSummary(data.data))
         break
       case "health-profile":
         console.log('health profile data aaya',data.HealthProfile)
@@ -104,7 +105,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
 
 
  useEffect(() => {
-  const socketUrl ='wss://recruito.vitti.insure'
+  const socketUrl ='http://localhost:5000'
   //const socketUrl = 'https://b18e4904236b.ngrok-free.app'
   // 500ms delay before connecting
   const timer = setTimeout(() => {
@@ -147,7 +148,7 @@ useEffect(() => {
     if (!socket) {
       return
     }
-
+    if(navigation==='Plan Summary')return;
     const data = {
       roomid: roomId,
       jobid: "abcde",
@@ -166,7 +167,7 @@ useEffect(() => {
     //socketConnected: socketConnected && socketReady,
     //ngrokServerUrl: "http://localhost:5000",
     setMsgLoading: (loading: boolean) => console.log("Loading:", loading),
-    oneWayUrl: "wss://recruito.vitti.insure", 
+    oneWayUrl: "http://localhost:5000", 
   }
   return <Context.Provider value={values}>{children}</Context.Provider>
 }
