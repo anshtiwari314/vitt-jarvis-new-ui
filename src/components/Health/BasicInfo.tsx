@@ -36,12 +36,11 @@ export default function BasicInfoH({ data }: Props) {
     boxData?: { data?: { [key: string]: string | number | null | undefined }; header?: string },
     defaultHeader?: string
   ) => {
-    console.log('boxData',boxData);
+    console.log('boxData', boxData);
     if (!boxData?.data) return null;
 
-
     return (
-      <div className="bg-white p-4 rounded-xl shadow-sm">
+      <div className="bg-white p-4 rounded-xl shadow-sm border-2 border-sky-200 hover:border-sky-500 transition-colors duration-300">
         <h3 className="text-lg font-semibold text-slate-700 mb-3">
           {boxData.header || defaultHeader}
         </h3>
@@ -65,7 +64,7 @@ export default function BasicInfoH({ data }: Props) {
   return (
     <div className="space-y-6">
       {renderBox(data.boxA, 'Personal Information')}
-      <div className="bg-white p-6 rounded-xl shadow-sm">
+      <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-sky-200 hover:border-sky-500 transition-colors duration-300">
         <h3 className="text-lg font-semibold text-slate-700 mb-4">
           {data?.table?.header || 'Family Structure'}
         </h3>

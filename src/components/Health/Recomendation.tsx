@@ -55,38 +55,32 @@ export default function RecommendedHealthPlan({
   const [reasonOpen, setReasonOpen] = useState(false);
   const [riders, setRiders] = useState<Rider[]>(initialRiders);
 
-const handleToggle = (index: number) => {
-  const updatedRiders = riders.map((r, i) =>
-    i === index ? { ...r, include: !r.include } : r
-  );
+  const handleToggle = (index: number) => {
+    const updatedRiders = riders.map((r, i) =>
+      i === index ? { ...r, include: !r.include } : r
+    );
+    setRiders(updatedRiders);
 
-  setRiders(updatedRiders);
+    const toggledRider = { ...riders[index], include: !riders[index].include };
 
-  const toggledRider = { ...riders[index], include: !riders[index].include };
-
-  fetch("/api/update-rider", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(toggledRider),
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      console.log("Backend updated:", data);
+    fetch("/api/update-rider", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(toggledRider),
     })
-    .catch((err) => console.error("API update failed", err));
-};
-
+      .then((res) => res.json())
+      .then((data) => console.log("Backend updated:", data))
+      .catch((err) => console.error("API update failed", err));
+  };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
+    <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6 border-2 border-sky-200 hover:border-sky-500 transition-colors duration-300">
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-slate-800 mb-3">
           Recommended Health Plan
         </h2>
-        <div className="bg-slate-50 rounded-lg p-5 grid grid-cols-1 md:grid-cols-3 gap-4 border border-slate-200">
+        <div className="bg-slate-50 rounded-lg p-5 grid grid-cols-1 md:grid-cols-3 gap-4 border border-sky-200 hover:border-sky-500 transition-colors duration-300">
           <div>
             <p className="text-sm text-slate-500">Plan Name</p>
             <p className="font-semibold text-slate-700">
@@ -123,15 +117,16 @@ const handleToggle = (index: number) => {
             <ul className="list-disc pl-10 pr-5 pb-4 space-y-2 text-slate-600 leading-relaxed">
               {reason
                 .split("- ")
-                .map(
-                  (point, idx) =>
-                    point.trim() && <li key={idx}>{point.trim()}</li>
-                )}
+                .filter((point) => point.trim())
+                .map((point, idx) => (
+                  <li key={idx} dangerouslySetInnerHTML={{ __html: point.trim() }} />
+                ))}
             </ul>
           )}
         </div>
       )}
 
+      {/* Riders Section */}
       <div>
         <h3 className="text-lg font-semibold text-slate-700 mb-4">
           Select Add-ons (Riders)
@@ -141,23 +136,20 @@ const handleToggle = (index: number) => {
             riders.map((rider, idx) => (
               <div
                 key={idx}
-                className={`p-4 rounded-xl border ${
+                className={`p-4 rounded-xl border-2 ${
                   rider.include
                     ? "border-green-300 bg-green-50"
                     : "border-red-300 bg-red-50"
-                } shadow-sm hover:shadow-md transition-shadow duration-200`}
+                } shadow-sm hover:shadow-md hover:border-sky-500 transition-all duration-200`}
               >
                 <div className="flex items-center gap-3 mb-2">
-                 <input
-                  type="checkbox"
-                  className="w-5 h-5"
-                  checked={rider.include}
-                  onChange={() => handleToggle(idx)}
-                />
-
-                  <span className="font-medium text-slate-800">
-                    {rider.name}
-                  </span>
+                  <input
+                    type="checkbox"
+                    className="w-5 h-5"
+                    checked={rider.include}
+                    onChange={() => handleToggle(idx)}
+                  />
+                  <span className="font-medium text-slate-800">{rider.name}</span>
                 </div>
                 <p className="text-slate-500 text-sm mt-1">
                   {riderDescMap[rider.name] || "Description not available"}
@@ -165,9 +157,7 @@ const handleToggle = (index: number) => {
               </div>
             ))
           ) : (
-            <p className="text-slate-500 text-sm">
-              No add-ons available for this plan.
-            </p>
+            <p className="text-slate-500 text-sm">No add-ons available for this plan.</p>
           )}
         </div>
       </div>

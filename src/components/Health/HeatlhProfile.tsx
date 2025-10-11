@@ -32,7 +32,7 @@ export default function HealthProfile({ data, socketC }: Props) {
   const rawHeader = data.table.table_header || [];
   const tableHeader =
     rawHeader.length > DROP_COL_INDEX
-      ? rawHeader.filter((_, i) => i !== 5)
+      ? rawHeader.filter((_, i) => i !== DROP_COL_INDEX)
       : rawHeader;
 
   const rawRows = data.table.table_data || [];
@@ -68,7 +68,7 @@ export default function HealthProfile({ data, socketC }: Props) {
     if (!boxData?.data) return null;
 
     return (
-      <div className="bg-white p-4 rounded-xl shadow-sm">
+      <div className="bg-white p-4 rounded-xl shadow-sm border-2 border-sky-200 hover:border-sky-500 transition-colors duration-300">
         <h3 className="text-lg font-semibold text-slate-700 mb-3">
           {boxData.header || defaultHeader}
         </h3>
@@ -96,7 +96,7 @@ export default function HealthProfile({ data, socketC }: Props) {
       {renderBox(data.boxA, "Lifestyle & Habits")}
       {renderBox(data.boxB, "Medical History")}
 
-      <div className="bg-white p-6 rounded-xl shadow-sm">
+      <div className="bg-white p-6 rounded-xl shadow-sm border-2 border-sky-200 hover:border-sky-500 transition-colors duration-300">
         <h3 className="text-lg font-semibold text-slate-700 mb-4">
           {data.table.header || "Insurance & Claim History"}
         </h3>
