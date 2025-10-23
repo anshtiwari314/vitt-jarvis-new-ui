@@ -1,9 +1,13 @@
-import { useEffect, useState, createContext, useContext } from "react"
+"use client"
+
+import { useEffect, useState, createContext, useContext, useRef } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCloudUploadAlt, faUser, faChartLine, faUserTie, faEdit, faCopy } from "@fortawesome/free-solid-svg-icons"
 import { PostReq } from "../functions/requests"
 import { useAuth } from "../context/AuthContext"
-import {config as AppConfig} from '../configuration.js'
+import { config as AppConfig } from "../configuration.js"
+const MAIN_ROUTER_URL ='https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router'
+
 // --- Placeholder Components (Replace with your actual components) ---
 
 // Mock Data Context for demonstration
@@ -11,6 +15,7 @@ const DataContext = createContext(null)
 const useData = () => useContext(DataContext)
 
 const Form = ({ state, setState, submitForm, loading, error }) => {
+  console.log("Form state:", state)
   const handleChange = (e) => {
     const { name, value } = e.target
     setState((prevState) => ({ ...prevState, [name]: value }))
@@ -104,6 +109,23 @@ const Form = ({ state, setState, submitForm, loading, error }) => {
             <option value="high">High</option>
           </select>
         </div>
+        <div>
+          <label htmlFor="priority" className="block text-slate-500 mb-1">
+            Language
+          </label>
+          <select
+            id="Language"
+            name="Language"
+            value={state.Langauge}
+            onChange={handleChange}
+            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
+          >
+            <option value="Hindi">Hindi</option>
+            <option value="Marathi">Marathi</option>
+            <option value="English">English</option>
+            <option value="Telgu">Telgu</option>
+          </select>
+        </div>
         <div className="md:col-span-2">
           <button
             type="submit"
@@ -140,7 +162,7 @@ const UploadComp = () => {
 }
 
 export function Table({ setFormState, initialFormState }) {
-  const { formData } = useData() // Using mock data from context
+  const { formData, base_url, getFormData } = useData() // Using mock data from context
   const leads = formData || [] // Ensure leads is an array
   const hiLeads = Array.isArray(leads) ? leads.filter((l) => String(l?.lead_type || "").toUpperCase() === "HI") : []
 
@@ -155,19 +177,229 @@ export function Table({ setFormState, initialFormState }) {
 
   const [insightLoading, setInsightLoading] = useState({}) // { leadId: boolean }
   const [insightError, setInsightError] = useState({}) // { leadId: string }
+  const [insightMsg, setInsightMsg] = useState({}) // { leadId: string }
 
-  // Paginate and compute totals using only HI leads
+  const pollingTimers = useRef<Record<string, number>>({})
+
+  useEffect(() => {
+    return () => {
+      Object.values(pollingTimers.current).forEach((id) => {
+        if (id) window.clearInterval(id)
+      })
+      pollingTimers.current = {}
+    }
+  }, [])
+
+  const stopPolling = (uniqueLeadId: string) => {
+    const id = pollingTimers.current[uniqueLeadId]
+    if (id) {
+      window.clearInterval(id)
+      delete pollingTimers.current[uniqueLeadId]
+    }
+  }
+
+  const startPolling = (sessionId: string, uniqueLeadId: string) => {
+    if (pollingTimers.current[uniqueLeadId]) return // already polling
+
+    // keep the current row in loading state while polling
+    setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: true }))
+    setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "" }))
+    setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "Checking dashboard status..." }))
+
+    const timerId = window.setInterval(async () => {
+      try {
+        const pollResp = await PostReq(MAIN_ROUTER_URL, {
+          trigger_func: "ins_postfacto_status_check",
+          params: { session_id: sessionId },
+        })
+        const status = pollResp?.status // expects "done" | "pending"
+
+        if (status === "done") {
+          stopPolling(uniqueLeadId)
+          setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "Dashboard is ready" }))
+          setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: false }))
+
+          // open the Postfacto dashboard
+          window.open(`https://postfacto.netlify.app/#/${sessionId}`, "_blank", "noopener,noreferrer")
+
+          // refresh the list so postfacto_status updates to 'done'
+          if (typeof getFormData === "function" && base_url) {
+            getFormData(`${base_url}/recent_uploads`)
+          }
+        } else if (status === "pending") {
+          // continue polling; optional micro-feedback
+          setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "Preparing dashboard…" }))
+        }
+      } catch (_e) {
+        // transient errors; keep polling
+        setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "Status check failed, retrying..." }))
+        setTimeout(() => {
+          setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "" }))
+        }, 1500)
+      }
+    }, 3000)
+
+    pollingTimers.current[uniqueLeadId] = timerId
+  }
+
+  function enableEdit(lead) {
+    const { name, mob, email, priority, source, lead_id, link_params,pref_language } = lead
+    const [fname, ...restName] = name.split(" ")
+
+    console.log("enable edit", lead)
+    setFormState({
+      ...initialFormState,
+      lead_id: link_params.split("&")[0],
+      link_params,
+      fname,
+      lname: restName.join(" "),
+      mob,
+      email,
+      priority,
+      leadSourceFrom: source,
+      pref_language
+    })
+  }
+
+  const generateInsight = async (lead) => {
+    const uniqueLeadId = lead.id || lead.lead_id || `lead-${lead.name}-${lead.mob}`
+
+    if (lead.postfacto_status === "done") {
+      const linkParams = lead.link_params || ""
+      const cidMatch = linkParams.match(/cid_\w+/)
+      const idOf = cidMatch ? cidMatch[0] : "cid_8459"
+      window.open(`https://postfacto.netlify.app/#/${idOf}`, "_blank", "noopener,noreferrer")
+      return
+    }
+
+    if (lead.postfacto_status === "N/A") {
+      return
+    }
+
+    setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: true }))
+    setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "" }))
+    setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "" }))
+
+    try {
+      const linkParams = lead.link_params || ""
+      const cidMatch = linkParams.match(/cid_\w+/)
+      const sessionId = cidMatch ? cidMatch[0] : "cid_8459"
+
+      // Initial trigger
+      const response = await PostReq(MAIN_ROUTER_URL, {
+        trigger_func: "trigger_metrics_LI",
+        params: { session_id: sessionId },
+      })
+
+      const rawMsg = response?.msg || ""
+      const msg = rawMsg.toLowerCase()
+
+      if (rawMsg) {
+        setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: rawMsg }))
+        setToast({ message: rawMsg, type: "success" })
+      } else {
+        setToast({ message: "Failed to generate insight", type: "error" })
+      }
+
+      if (msg === "process started") {
+        startPolling(sessionId, uniqueLeadId)
+        return
+      }
+      if (msg === "session not done") {
+        // stop loading; user can try again later
+        setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: false }))
+        return
+      }
+
+      // If backend ever returns immediate done (rare)
+      if (response?.status === "done") {
+        setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "Dashboard is ready" }))
+        setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: false }))
+        window.open(`https://postfacto.netlify.app/#/${sessionId}`, "_blank", "noopener,noreferrer")
+        if (typeof getFormData === "function" && base_url) {
+          getFormData(`${base_url}/recent_uploads`)
+        }
+      }
+    } catch (error) {
+      setInsightError((prev) => ({
+        ...prev,
+        [uniqueLeadId]: "Failed to generate insight",
+      }))
+      setTimeout(() => {
+        setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "" }))
+      }, 3000)
+    } finally {
+      if (!pollingTimers.current[uniqueLeadId]) {
+        await new Promise((r) => setTimeout(r, 1500))
+        setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: false }))
+      }
+    }
+  }
+
+  const getInsightButtonText = (lead, isLoading) => {
+    if (isLoading) return "Generating..."
+
+    switch (lead.postfacto_status) {
+      case "done":
+        return "Insight Link"
+      case "pending":
+        return "Generate Insights"
+      case "N/A":
+        return "N/A"
+      default:
+        return "Generate Insights"
+    }
+  }
+
+  const getInsightButtonStyle = (lead, isLoading) => {
+    const baseClasses =
+      "px-3 py-1 rounded-md text-xs font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
+
+    if (lead.postfacto_status === "N/A") {
+      return `${baseClasses} bg-gray-400 text-white cursor-not-allowed`
+    }
+
+    if (lead.postfacto_status === "done") {
+      return `${baseClasses} bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white focus:ring-blue-500`
+    }
+
+    return `${baseClasses} bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white focus:ring-green-500`
+  }
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = []
+    const maxButtons = 5
+    if (totalPages <= maxButtons + 2) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+      return pages
+    }
+
+    const showLeftEllipsis = currentPage > 3
+    const showRightEllipsis = currentPage < totalPages - 2
+
+    pages.push(1)
+    if (showLeftEllipsis) pages.push("...")
+
+    const start = Math.max(2, currentPage - 1)
+    const end = Math.min(totalPages - 1, currentPage + 1)
+    for (let i = start; i <= end; i++) pages.push(i)
+
+    if (showRightEllipsis) pages.push("...")
+    pages.push(totalPages)
+    return pages
+  }
+
+  const totalItems = hiLeads.length
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const startItem = totalItems === 0 ? 0 : indexOfFirstItem + 1
+  const endItem = Math.min(indexOfLastItem, totalItems)
   const currentLeads = hiLeads.slice(indexOfFirstItem, indexOfLastItem)
 
-  // Calculate total pages
   const totalPages = Math.ceil(hiLeads.length / itemsPerPage)
 
-  // Function to change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber)
 
-  // Clamp currentPage when totalPages changes
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages || 1)
   }, [totalPages])
@@ -205,138 +437,6 @@ export function Table({ setFormState, initialFormState }) {
     }
   }
 
-  function enableEdit(lead) {
-    const { name, mob, email, priority, source, lead_id,link_params } = lead
-    const [fname, ...restName] = name.split(" ")
-
-    console.log("enable edit", lead)
-    setFormState({
-      ...initialFormState,
-      lead_id:link_params.split('&')[0],
-      link_params,
-      fname,
-      lname: restName.join(" "),
-      mob,
-      email,
-      priority,
-      leadSourceFrom: source,
-    })
-  }
-
-  const generateInsight = async (lead) => {
-    const uniqueLeadId = lead.id || lead.lead_id || `lead-${lead.name}-${lead.mob}`
-
-    if (lead.postfacto_status === "done") {
-      const linkParams = lead.link_params || ""
-      const cidMatch = linkParams.match(/cid_\w+/)
-      const idOf = cidMatch ? cidMatch[0] : "cid_8459"
-
-      window.open(`https://postfacto-health.netlify.app/#/${idOf}`, "_blank", "noopener,noreferrer")
-      return
-    }
-
-    // If status is "N/A", do nothing
-    if (lead.postfacto_status === "N/A") {
-      return
-    }
-
-    // For "pending" status, generate new insight
-    setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: true }))
-    setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "" }))
-
-    try {
-      const linkParams = lead.link_params || ""
-      const cidMatch = linkParams.match(/cid_\w+/)
-      const idOf = cidMatch ? cidMatch[0] : "cid_8459"
-      const response = await PostReq(
-        "https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router",
-        {
-          trigger_func: "trigger_metrics_HI",
-          params: { session_id: idOf },
-        },
-      )
-      console.log("Insight response:", response)
-
-      if (response && response.msg) {
-        // Open the insight URL in a new tab
-        setToast({ message: response?.msg || "Insight generated successfully!", type: "success" })
-        // window.open(response.url, "_blank", "noopener,noreferrer")
-      } else {
-        setToast({ message: "Failed to generate insight", type: "error" })
-        throw new Error("No insight URL received from backend")
-      }
-    } catch (error) {
-      console.error("Failed to generate insight:", error)
-      setInsightError((prev) => ({
-        ...prev,
-        [uniqueLeadId]: "Failed to generate insight",
-      }))
-      setTimeout(() => {
-        setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "" }))
-      }, 3000)
-    } finally {
-      setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: false }))
-    }
-  }
-
-  const getInsightButtonText = (lead, isLoading) => {
-    if (isLoading) return "Generating..."
-
-    switch (lead.postfacto_status) {
-      case "done":
-        return "Insight Link"
-      case "pending":
-        return "Generate Insights"
-      case "N/A":
-        return "N/A"
-      default:
-        return "Generate Insights"
-    }
-  }
-
-  const getInsightButtonStyle = (lead, isLoading) => {
-    const baseClasses =
-      "px-3 py-1 rounded-md text-xs font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2"
-
-    if (lead.postfacto_status === "N/A") {
-      return `${baseClasses} bg-gray-400 text-white cursor-not-allowed`
-    }
-
-    if (lead.postfacto_status === "done") {
-      return `${baseClasses} bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white focus:ring-blue-500`
-    }
-
-    // Default for "pending" and other statuses
-    return `${baseClasses} bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white focus:ring-green-500`
-  }
-
-  const getPageNumbers = () => {
-    const pages: (number | string)[] = []
-    const maxButtons = 5 // current centered + neighbors
-    if (totalPages <= maxButtons + 2) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i)
-      return pages
-    }
-
-    const showLeftEllipsis = currentPage > 3
-    const showRightEllipsis = currentPage < totalPages - 2
-
-    pages.push(1)
-    if (showLeftEllipsis) pages.push("...")
-
-    const start = Math.max(2, currentPage - 1)
-    const end = Math.min(totalPages - 1, currentPage + 1)
-    for (let i = start; i <= end; i++) pages.push(i)
-
-    if (showRightEllipsis) pages.push("...")
-    pages.push(totalPages)
-    return pages
-  }
-
-  const totalItems = hiLeads.length
-  const startItem = totalItems === 0 ? 0 : indexOfFirstItem + 1
-  const endItem = Math.min(indexOfLastItem, totalItems)
-
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm">
       <h3 className="text-lg font-semibold text-slate-700 mb-4">Recent Uploaded Leads</h3>
@@ -370,8 +470,15 @@ export function Table({ setFormState, initialFormState }) {
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
                   >
-                    Lead Type
+                    Preffered Language
                   </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  >
+                    Created At
+                  </th>
+                  
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -384,6 +491,7 @@ export function Table({ setFormState, initialFormState }) {
                   >
                     Source
                   </th>
+
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -402,41 +510,41 @@ export function Table({ setFormState, initialFormState }) {
                   >
                     Insights
                   </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  >
+                    Plan Summary
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
                 {currentLeads.map((lead, index) => {
-                  // Ensure lead.link_params exists for the link generation
                   const linkToCopy = lead.link_params
                     ? `${window.location.protocol}//${window.location.host}/#/mainpage/?${lead.link_params}`
-                    : "#" // Fallback link if link_params is missing
+                    : "#"
 
-                  // Using a combination of lead.id (if available) and index for unique key
-                  const uniqueLeadId = lead.id || `lead-${indexOfFirstItem + index}`
-                  //console.log(lead,linkToCopy)
+                  const uniqueLeadId = lead.id || lead.lead_id || `lead-${lead.name}-${lead.mob}`
                   return (
                     <tr key={uniqueLeadId}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{lead.name}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.mob}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.email}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.lead_type}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.pref_language}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.timestamp}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead.priority}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead.source}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 flex items-center space-x-2">
-                        {/* Display the link text (optional, if you want it visible) target="_blank"*/}
                         <a href={linkToCopy} className="text-blue-600 hover:underline" rel="noopener noreferrer">
                           Link
                         </a>
-
                         <button
                           onClick={() => copyToClipboard(linkToCopy, uniqueLeadId)}
                           className="text-sky-600 hover:text-sky-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md p-1"
                           title="Copy Link"
                         >
-                          <FontAwesomeIcon icon={faCopy} className="w-4 h-4" /> {/* Adjusted icon size slightly */}
+                          <FontAwesomeIcon icon={faCopy} className="w-4 h-4" />
                         </button>
-
-                        {/* Display feedback message */}
                         {copyFeedback[uniqueLeadId] && (
                           <span className="text-xs text-green-600 font-semibold">{copyFeedback[uniqueLeadId]}</span>
                         )}
@@ -463,13 +571,53 @@ export function Table({ setFormState, initialFormState }) {
                                   ? "No insights available"
                                   : "Generate Insight"
                             }
+                            aria-busy={!!insightLoading[uniqueLeadId]}
                           >
-                            {getInsightButtonText(lead, insightLoading[uniqueLeadId])}
+                            <span className="inline-flex items-center gap-2">
+                              {insightLoading[uniqueLeadId] && (
+                                <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" aria-hidden="true">
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                    fill="none"
+                                  />
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                                  />
+                                </svg>
+                              )}
+                              {getInsightButtonText(lead, insightLoading[uniqueLeadId])}
+                            </span>
                           </button>
+                          {insightMsg[uniqueLeadId] && (
+                            <span className="text-xs text-slate-600" aria-live="polite">
+                              {insightMsg[uniqueLeadId]}
+                            </span>
+                          )}
                           {insightError[uniqueLeadId] && (
                             <span className="text-xs text-red-600 font-medium">{insightError[uniqueLeadId]}</span>
                           )}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                        {lead.plan_summary !== "N/A" ? (
+                          <a
+                            href={lead.plan_summary}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            View Summary
+                          </a>
+                        ) : (
+                          "N/A"
+                        )}
                       </td>
                     </tr>
                   )
@@ -478,9 +626,7 @@ export function Table({ setFormState, initialFormState }) {
             </table>
           </div>
 
-          {/* Pagination Controls */}
           <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            {/* Range info */}
             <div className="text-sm text-slate-600">
               {totalItems > 0 ? (
                 <>
@@ -493,7 +639,6 @@ export function Table({ setFormState, initialFormState }) {
               )}
             </div>
 
-            {/* Pagination controls */}
             {totalPages > 1 && (
               <nav
                 className="inline-flex items-center gap-1"
@@ -563,7 +708,6 @@ export function Table({ setFormState, initialFormState }) {
               </nav>
             )}
 
-            {/* Rows per page */}
             <div className="flex items-center gap-2">
               <label htmlFor="rows-per-page" className="text-sm text-slate-600">
                 Rows per page
@@ -592,33 +736,12 @@ export function Table({ setFormState, initialFormState }) {
 }
 
 export function Sidebar({ links }) {
-  // Changed to named export
   return (
     <div className="hidden md:block fixed h-full bg-white text-slate-800 w-64 p-6 shadow-lg rounded-r-lg border-r border-slate-100">
       <div className="mb-10 pt-2">
-        {/* Placeholder for a logo or more prominent title */}
         <h2 className="text-3xl font-extrabold text-slate-900 tracking-wide">Lead Management</h2>
         <p className="text-sm text-slate-500 mt-1">Panel</p>
       </div>
-      {/* <nav>
-        <ul>
-          {links.map((link, index) => (
-            <li key={index} className="mb-3">
-              <a
-                href={link.redirectTo}
-                className={`flex items-center p-3 rounded-lg text-base font-medium transition-all duration-250 ease-in-out
-                  ${link.isActive
-                    ? 'bg-blue-100 text-blue-700 shadow-sm border-l-4 border-blue-500' // Faint blue background, darker text, left border
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800' // Faint hover background, slightly darker text
-                  }`}
-              >
-                <FontAwesomeIcon icon={link.icon} className="mr-4 text-xl" />
-                {link.name}
-              </a>
-            </li>
-          ))}
-        </ul>
-      </nav> */}
     </div>
   )
 }
@@ -641,16 +764,15 @@ const Header = ({ title, dashboardLink }) => {
   )
 }
 
-// --- Main LeadDashboard Component ---
-
 function LeadDashboard() {
-  const [formData, setFormData] = useState([]) // Mock for useData's formData
+  const [formData, setFormData] = useState([])
   const base_url = AppConfig.serverBaseUrl
   const { currentUser } = useAuth()
+  const pollingRef = useRef(null)
+  const pollingRefs = useRef({})
 
   const getFormData = async (url) => {
     console.log("Mock getFormData:", url)
-    // Simulate fetching data
     const resp = await PostReq(`${base_url}/recent_uploads`, { agent_id: currentUser.userid })
     console.log("resp", resp)
 
@@ -681,10 +803,11 @@ function LeadDashboard() {
     lname: "",
     email: "",
     mob: "",
-    fileName: "", // Not used in Form component directly, kept for consistency
+    fileName: "",
     leadSourceFrom: "social-media",
-    file: null, // Not used in Form component directly, kept for consistency
+    file: null,
     priority: "low",
+    language:"English",
   }
 
   const [formState, setFormState] = useState(initialState)
@@ -700,8 +823,18 @@ function LeadDashboard() {
   ]
 
   useEffect(() => {
-    // Initial data fetch simulation
     getFormData(`${base_url}/recent_uploads`)
+
+    // Polling setup
+    const interval = setInterval(() => {
+      if (!pollingRef.current) return
+      getFormData(`${base_url}/recent_uploads`)
+    }, 5000)
+
+    return () => {
+      clearInterval(interval)
+      pollingRef.current = null
+    }
   }, [])
 
   async function submitForm(e) {
@@ -724,20 +857,21 @@ function LeadDashboard() {
 
     const data = {
       lead_id: formState.lead_id,
-      customer_name: formState.fname + " " + formState.lname, // Combined name for mock
+      customer_name: formState.fname + " " + formState.lname,
       mobile_num: formState.mob,
       email: formState.email,
       priority: formState.priority,
       source: formState.leadSourceFrom,
       agent_id: currentUser.userid,
-      lead_type: "HI", 
+      pref_language: formState.Language,
+      lead_type: "HI",
     }
 
     console.log("before submitting", data)
     try {
       await PostReq(`${base_url}/single_lead_upload`, data)
       setFormState(initialState)
-      getFormData(`${base_url}/recent_uploads`) // Refresh data after submission
+      getFormData(`${base_url}/recent_uploads`)
     } catch (e) {
       console.error(e)
       setError("Failed to submit lead.")
