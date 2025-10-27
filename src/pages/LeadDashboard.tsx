@@ -15,7 +15,7 @@ const DataContext = createContext(null)
 const useData = () => useContext(DataContext)
 
 const Form = ({ state, setState, submitForm, loading, error }) => {
-  console.log("Form state:", state)
+  //console.log("Form state:", state)
   const handleChange = (e) => {
     const { name, value } = e.target
     setState((prevState) => ({ ...prevState, [name]: value }))
@@ -438,12 +438,13 @@ export function Table({ setFormState, initialFormState }) {
   }
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm">
-      <h3 className="text-lg font-semibold text-slate-700 mb-4">Recent Uploaded Leads</h3>
+    <div className="bg-white p-2 md:p-6 rounded-xl shadow-sm">
+      <h3 className="text-lg font-semibold text-slate-700 mb-4 px-2 md:px-0">Recent Uploaded Leads</h3>
       {hiLeads.length === 0 ? (
         <p className="text-slate-500 text-center py-4">No HI leads found.</p>
       ) : (
         <>
+          {/* --- This div enables horizontal scrolling --- */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
@@ -527,14 +528,15 @@ export function Table({ setFormState, initialFormState }) {
                   const uniqueLeadId = lead.id || lead.lead_id || `lead-${lead.name}-${lead.mob}`
                   return (
                     <tr key={uniqueLeadId}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{lead.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.mob}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.email}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.pref_language}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.timestamp}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead.priority}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead.source}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 flex items-center space-x-2">
+                      {/* --- This is the class you want: text-xs md:text-sm --- */}
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm font-medium text-slate-900">{lead.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">{lead.mob}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">{lead.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">{lead.pref_language}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">{lead.timestamp}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500 capitalize">{lead.priority}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500 capitalize">{lead.source}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500 flex items-center space-x-2">
                         <a href={linkToCopy} className="text-blue-600 hover:underline" rel="noopener noreferrer">
                           Link
                         </a>
@@ -549,7 +551,7 @@ export function Table({ setFormState, initialFormState }) {
                           <span className="text-xs text-green-600 font-semibold">{copyFeedback[uniqueLeadId]}</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">
                         <button
                           onClick={() => enableEdit(lead)}
                           className="text-sky-600 hover:text-sky-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md p-1"
@@ -558,7 +560,7 @@ export function Table({ setFormState, initialFormState }) {
                           <FontAwesomeIcon icon={faEdit} className="w-4 h-4" />
                         </button>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">
                         <div className="flex flex-col items-start space-y-1">
                           <button
                             onClick={() => generateInsight(lead)}
@@ -605,7 +607,7 @@ export function Table({ setFormState, initialFormState }) {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">
                         {lead.plan_summary !== "N/A" ? (
                           <a
                             href={lead.plan_summary}
@@ -626,8 +628,9 @@ export function Table({ setFormState, initialFormState }) {
             </table>
           </div>
 
+          {/* --- This pagination is responsive --- */}
           <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="text-sm text-slate-600">
+            <div className="text-sm text-slate-600 text-center md:text-left">
               {totalItems > 0 ? (
                 <>
                   Showing <span className="font-medium text-slate-800">{startItem}</span>–
@@ -641,7 +644,7 @@ export function Table({ setFormState, initialFormState }) {
 
             {totalPages > 1 && (
               <nav
-                className="inline-flex items-center gap-1"
+                className="flex flex-wrap items-center justify-center gap-1"
                 role="navigation"
                 aria-label="Pagination"
                 onKeyDown={(e) => {
@@ -653,7 +656,7 @@ export function Table({ setFormState, initialFormState }) {
                   type="button"
                   onClick={() => paginate(1)}
                   disabled={currentPage === 1}
-                  className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="hidden md:inline-block px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   First
                 </button>
@@ -701,14 +704,14 @@ export function Table({ setFormState, initialFormState }) {
                   type="button"
                   onClick={() => paginate(totalPages)}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="hidden md:inline-block px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   Last
                 </button>
               </nav>
             )}
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
               <label htmlFor="rows-per-page" className="text-sm text-slate-600">
                 Rows per page
               </label>
@@ -881,9 +884,9 @@ function LeadDashboard() {
 
   return (
     <DataContext.Provider value={{ base_url, getFormData, formData }}>
-      <div className="min-h-screen bg-slate-100 font-sans">
+      <div className="min-h-screen bg-slate-100 font-sans" style={{}}>
         {/* <Sidebar links={mylink} /> */}
-        <div style={{ margin: "0 8%" }}>
+        <div style={{ }} className="mx-0 lg:mx-[8rem]">
           <div className="py-6">
             <Header title="Lead Management" dashboardLink="/#/" />
           </div>

@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react'
+import React, { useEffect,useState } from 'react'
 import { useAppSelector } from '../store/store';
 // import '../css/All.css'
 // import '../css/msg.css'
 // Import all content components
-import BasicInfo from '../components/Health/BasicInfo';
+//import BasicInfo from '../components/Health/BasicInfo';
 import Assets from '../components/UI2/Assets'
 import Liabilities from '../components/UI2/Liabilities'
 import FinancialGoals from '../components/UI2/FinancialGoals';
@@ -11,6 +11,7 @@ import FinancialGoals from '../components/UI2/FinancialGoals';
 import Recommendations from '../components/UI2/Recommendations';
 
 import SideNavigation from '../components/UI2/SideNavigation'
+import SideBarMobile from '../components/UI2/SideBarMobile'
 import Header from '../components/UI2/Header'
 import RightPanel from '../components/UI2/RightPanel'
 import { useDispatch } from 'react-redux';
@@ -25,12 +26,19 @@ import { useData } from '../context/DataWrapper';
 export default function App() {
     const {socket}=useData()
      const {salesData,navigation:currentNavigation} = useAppSelector((state) => state.healthManagmentReducer)
-     console.log('salesData', salesData.Recommendations)
+     //console.log('salesData', salesData.Recommendations)
 //   console.log(currentNavigation,"basic sales data is ",salesData.liabilities);
 
      const qpState = useAppSelector((state) => state.qpReducer);
      const dispatch = useDispatch();
-    // Helper function for currency formatting (moved from index2.html)
+
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    
+    // Handlers
+    const toggleSidebar = () => setIsSidebarOpen(prev => !prev);
+    const closeSidebar = () => setIsSidebarOpen(false);
+
+     // Helper function for currency formatting (moved from index2.html)
     const formatCurrency = (num: number) => {
         if (isNaN(num)) return '₹ 0';
         const crores = num / 10000000;
@@ -49,6 +57,7 @@ export default function App() {
     };
 
     const renderContent = () => {
+        console.log('sales data',salesData)
     switch (currentNavigation) {
         case 'Basic Info':
             return <BasicInfoH data={salesData.basicInfo} />;
@@ -99,19 +108,35 @@ export default function App() {
   return (
     
     <div className="bg-slate-50 text-slate-800 antialiased">
-        <div className="flex h-screen overflow-hidden">
+        <div className="flex h-screen overflow-scroll" style={{}}>
             <SideNavigation/>
-            <div className="flex-1 flex flex-col">
+            <SideBarMobile />
+            <div className="flex-1 flex flex-col w-full">
                 
                 <Header/>
-                <div className="flex-1 flex overflow-hidden">
+                <div className="flex flex-col lg:flex-row-reverse flex-1 overflow-y-scroll">
                     {/* <!-- Main Content --> */}
-                    <main className="flex-1 flex flex-col bg-slate-100 overflow-y-auto p-6 md:p-8">
+                    <main 
+        className="flex-1 flex flex-col bg-slate-100 px-2 py-1 sm:p-6 lg:px-8 
+                   order-2 lg:order-1 min-w-0 overflow-x-auto overflow-y-auto pb-5 w-full 
+                   lg:w-4/6 lg:mx-8
+                    "
+                    >
                         {renderContent()}
                     </main>
 
                     {/* <!-- AI Cues Sidebar --> */}
+                    <aside 
+        className="w-full
+                    lg:w-2/6
+                   
+                   order-1 lg:order-2 
+                   bg-white border-l border-slate-200 
+                    lg:shadow-none lg:h-full 
+                   flex-shrink-0" // Added overflow-y-auto here for the aside element
+                    style={{overflow:'hidden'}}>
                     <RightPanel/>
+                    </aside>
                 </div>
             </div>
         </div>

@@ -24,9 +24,9 @@ export default function VadWrapper({children}){
     const ngrokServerUrl = ''
     const {socket,isSocketConnected,setMsgLoading} = useData()
     const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
-    console.log('roomId in vad wrapper',roomId)
+    //('roomId in vad wrapper',roomId)
       const navigation = useAppSelector((state) => state.healthManagmentReducer.navigation)
-      console.log('navigation in vad wrapper',roomId,navigation)
+      //console.log('navigation in vad wrapper',roomId,navigation)
     
     //const {currentUser} = useAuth()
     const [vadRecordingOn,setVadRecordingOn] = useState<boolean>(false);
@@ -50,10 +50,10 @@ export default function VadWrapper({children}){
     //     "ort-wasm-threaded.wasm": `/ort-wasm-threaded.wasm`,
     //   }
 
-    console.log('vad wrapper',roomId)
+    //console.log('vad wrapper',roomId)
 
 async function processAudioToBase64(audio,url,data){
-    console.log("vad stopped")
+    //console.log("vad stopped")
     const wavBuffer = utils.encodeWAV(audio)
       // const base64 = utils.arrayBufferToBase64(wavBuffer)
       // console.log("hello world",base64)
@@ -87,16 +87,16 @@ async function processAudioToBase64(audio,url,data){
 
     useEffect(()=>{
       if (socket === null  || isQuestionLoaderRunsFirstTime.current === false) {
-      console.log("Event not emitted because:", {
-        socket: socket !== null,
-        isSocketConnected,
-        isFirstTime: isQuestionLoaderRunsFirstTime.current,
-      })
+      // console.log("Event not emitted because:", {
+      //   socket: socket !== null,
+      //   isSocketConnected,
+      //   isFirstTime: isQuestionLoaderRunsFirstTime.current,
+      // })
       return
     }
 
     isQuestionLoaderRunsFirstTime.current = false
-    console.log("questions_loader_req_heal_v2 event being emitted")
+    //console.log("questions_loader_req_heal_v2 event being emitted")
 
     const questionsApiReqPayload = {
       roomid: roomId,
@@ -105,7 +105,7 @@ async function processAudioToBase64(audio,url,data){
       name: name,
     }
 
-    console.log("Emitting questions_loader_req_heal_v2 with payload:", questionsApiReqPayload)
+    //console.log("Emitting questions_loader_req_heal_v2 with payload:", questionsApiReqPayload)
     socket.emit("questions_loader_req_health_ins", questionsApiReqPayload)
     },[socket,isSocketConnected])
 
@@ -187,7 +187,7 @@ async function processAudioToBase64(audio,url,data){
 
     function getVadInstance(){
       VAD(start,stop).then((myVad)=>{
-         console.log('getVad instance',myVad)
+         //console.log('getVad instance',myVad)
          return myVad
       })
     }
@@ -216,9 +216,9 @@ async function processAudioToBase64(audio,url,data){
 
       if( vadStatus===true ){
         vadInstance?.start()
-        console.log('if 1 called',vadInstance)
+        //console.log('if 1 called',vadInstance)
       }else{
-        console.log('else 1 called',vadInstance)
+        //console.log('else 1 called',vadInstance)
         vadInstance?.pause()
       }
       
@@ -278,15 +278,15 @@ async function processAudioToBase64(audio,url,data){
         return ;
 
         if(manualVadStatus===true){
-            console.log('vad2',VAD2)
+            //('vad2',VAD2)
             //VAD2.vadOptions.positiveSpeechThreshold=0.9 
             //VAD2.vadOptions.negativeSpeechThreshold=0.85
             VAD2?.start()
             //console.log('manual vad is active',VAD2)
-            console.log('vad2 after changing parameteres',VAD2)
+            //console.log('vad2 after changing parameteres',VAD2)
          
         }else{
-          console.log('manual vad is paused',VAD2)
+          //console.log('manual vad is paused',VAD2)
           VAD2?.pause()
         }
       },[manualVadStatus])
@@ -299,7 +299,7 @@ async function processAudioToBase64(audio,url,data){
     */
     useEffect(()=>{
       
-        console.log(`%c vadRecordingOn toggle ${new Date().toLocaleTimeString()} ${recordingStatus.current} ${vadRecordingOn}`,'background-color:teal;color:white')
+        //console.log(`%c vadRecordingOn toggle ${new Date().toLocaleTimeString()} ${recordingStatus.current} ${vadRecordingOn}`,'background-color:teal;color:white')
           recordingStatus.current = vadRecordingOn
       
           let id:number;

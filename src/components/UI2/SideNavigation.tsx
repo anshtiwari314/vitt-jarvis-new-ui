@@ -72,7 +72,7 @@ export default function SideNavigation() {
     }, []);
 
     return (
-        <aside className="w-72 bg-white border-r border-slate-200 flex flex-col">
+        <aside className="w-72 bg-white border-r border-slate-200 flex flex-col hidden lg:block">
             {/* Top Section with Date & Back Button */}
             <div className="p-4 border-b border-slate-200 flex items-center justify-between">
                 <a
@@ -112,6 +112,7 @@ export default function SideNavigation() {
                         key={item.id}
                         className={`flex items-center px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 ${currentNavigation === item.id ? 'bg-slate-100 text-sky-600' : ''}`}
                         onClick={() => handleNavigationClick(item.id)}
+                        style={{cursor:'pointer'}}
                     >
                         {item.icon}
                         {item.label}
