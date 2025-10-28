@@ -63,7 +63,7 @@ export default function Login() {
  function handleAuth() {
   setLoading(true);
 
-  const url = `https://ae5ca5144a4b.ngrok-free.app/main_router`;
+  const url = `https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router`;
 
   fetch(url, {
     method: 'POST',
