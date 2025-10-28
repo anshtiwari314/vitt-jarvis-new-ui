@@ -114,7 +114,7 @@ export default function App() {
             <div className="flex-1 flex flex-col w-full">
                 
                 <Header/>
-                <div className="flex flex-col lg:flex-row-reverse flex-1 overflow-y-scroll">
+                <div className="flex flex-col lg:flex-row flex-1 overflow-y-scroll">
                     {/* <!-- Main Content --> */}
                     <main 
         className="flex-1 flex flex-col bg-slate-100 px-2 py-1 sm:p-6 lg:px-8 
