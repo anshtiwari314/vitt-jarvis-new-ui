@@ -6,7 +6,8 @@ import { useData } from '../../context/DataWrapper';
 export default function SideNavigation() {
     const dispatch = useAppDispatch();
     const currentNavigation = useAppSelector(state => state.healthManagmentReducer.navigation);
-    const { recommendationsGenerated } = useData();
+    const { recommendationsGenerated, pref_language } = useData();
+    console.log("in side panel ", pref_language);
 
     const handleNavigationClick = (page: string) => {
         dispatch(setNavigation(page));
@@ -14,10 +15,40 @@ export default function SideNavigation() {
 
     const iconClass = "w-6 h-6 mr-3 text-sky-500";
 
+    // Language-based labels
+    const labels = {
+        en: {
+            basicInfo: 'Basic Info',
+            healthProfile: 'Health Profile',
+            recommendations: 'Recommendation',
+            planSummary: 'Plan Summary',
+            aiCopilot: 'AI Copilot',
+            recGenerated: 'Recommendations Generated',
+            systemStatus: 'System Status',
+            audioStreaming: 'Audio Streaming',
+            liveTranscription: 'Live Transcription',
+            aiProcessing: 'AI Processing',
+        },
+        mr: {
+            basicInfo: 'मूलभूत माहिती',
+            healthProfile: 'आरोग्य प्रोफाइल',
+            recommendations: 'शिफारसी',
+            planSummary: 'योजनेचा सारांश',
+            aiCopilot: 'एआय सहाय्यक',
+            recGenerated: 'शिफारसी तयार झाल्या',
+            systemStatus: 'प्रणाली स्थिती',
+            audioStreaming: 'ऑडिओ प्रवाह',
+            liveTranscription: 'थेट लिप्यंतरण',
+            aiProcessing: 'एआय प्रक्रिया',
+        }
+    };
+
+    const lang = pref_language === 'mr' ? labels.mr : labels.en;
+
     const navItems = [
         {
             id: 'basicInfo',
-            label: 'Basic Info',
+            label: lang.basicInfo,
             icon: (
                 <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
@@ -27,7 +58,7 @@ export default function SideNavigation() {
         },
         {
             id: 'healthProfile',
-            label: 'Health Profile',
+            label: lang.healthProfile,
             icon: (
                 <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
@@ -37,7 +68,7 @@ export default function SideNavigation() {
         },
         {
             id: 'recommendations',
-            label: 'Recommendation',
+            label: lang.recommendations,
             icon: (
                 <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
@@ -47,7 +78,7 @@ export default function SideNavigation() {
         },
         {
             id: 'planSummary',
-            label: 'Plan Summary',
+            label: lang.planSummary,
             icon: (
                 <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
@@ -102,7 +133,7 @@ export default function SideNavigation() {
                         <path d="M12 22V2" />
                     </svg>
                 </div>
-                <h1 className="text-lg font-bold text-slate-800">AI Copilot</h1>
+                <h1 className="text-lg font-bold text-slate-800">{lang.aiCopilot}</h1>
             </div>
 
             {/* Navigation */}
@@ -125,23 +156,23 @@ export default function SideNavigation() {
                 <div className="p-4 border-t border-slate-200">
                     <div className="flex items-center text-slate-500 text-sm">
                         <div className="w-2.5 h-2.5 mr-2 rounded-full bg-green-400"></div>
-                        Recommendations Generated
+                        {lang.recGenerated}
                     </div>
                 </div>
             )}
 
             {/* System Status */}
             <div className="p-4 border-t border-slate-200">
-                <h3 className="text-sm font-semibold text-slate-600 mb-3">System Status</h3>
+                <h3 className="text-sm font-semibold text-slate-600 mb-3">{lang.systemStatus}</h3>
                 <div className="space-y-2 text-sm">
                     <div className="flex items-center text-slate-500">
-                        <div className="w-2.5 h-2.5 rounded-full mr-2 bg-gray-300"></div> Audio Streaming
+                        <div className="w-2.5 h-2.5 rounded-full mr-2 bg-gray-300"></div> {lang.audioStreaming}
                     </div>
                     <div className="flex items-center text-slate-500">
-                        <div className="w-2.5 h-2.5 rounded-full mr-2 bg-gray-300"></div> Live Transcription
+                        <div className="w-2.5 h-2.5 rounded-full mr-2 bg-gray-300"></div> {lang.liveTranscription}
                     </div>
                     <div className="flex items-center text-slate-500">
-                        <div className="w-2.5 h-2.5 rounded-full mr-2 bg-gray-300"></div> AI Processing
+                        <div className="w-2.5 h-2.5 rounded-full mr-2 bg-gray-300"></div> {lang.aiProcessing}
                     </div>
                 </div>
             </div>

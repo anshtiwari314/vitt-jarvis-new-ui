@@ -36,7 +36,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
 
   const [socket, setSocket] = useState<Socket | null>(null)
   const [isSocketConnected,setIsSocketConnected] = useState(false)
-
+  const [pref_language,setPref_language]=useState("English")
   const navigation = useAppSelector((state) => state.healthManagmentReducer.navigation)
   const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
   const healthManageMentState = useAppSelector((state) => state.healthManagmentReducer);
@@ -186,8 +186,8 @@ useEffect(() => {
 
   
     updateNotifications,
-    recommendationsGenerated,setRecommendationsGenerated
-
+    recommendationsGenerated,setRecommendationsGenerated,
+    pref_language,setPref_language
   }
   return <Context.Provider value={values}>{children}</Context.Provider>
 }

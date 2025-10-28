@@ -11,7 +11,9 @@ const MAIN_ROUTER_URL ='https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/
 // --- Placeholder Components (Replace with your actual components) ---
 
 // Mock Data Context for demonstration
+
 const DataContext = createContext(null)
+
 const useData = () => useContext(DataContext)
 
 const Form = ({ state, setState, submitForm, loading, error }) => {
@@ -120,10 +122,8 @@ const Form = ({ state, setState, submitForm, loading, error }) => {
             onChange={handleChange}
             className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
           >
-            <option value="Hindi">Hindi</option>
             <option value="Marathi">Marathi</option>
             <option value="English">English</option>
-            <option value="Telgu">Telgu</option>
           </select>
         </div>
         <div className="md:col-span-2">
@@ -220,7 +220,7 @@ export function Table({ setFormState, initialFormState }) {
           setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: false }))
 
           // open the Postfacto dashboard
-          window.open(`https://postfacto.netlify.app/#/${sessionId}`, "_blank", "noopener,noreferrer")
+          window.open(`https://postfacto-health.netlify.app/#/${sessionId}`, "_blank", "noopener,noreferrer")
 
           // refresh the list so postfacto_status updates to 'done'
           if (typeof getFormData === "function" && base_url) {
@@ -268,7 +268,7 @@ export function Table({ setFormState, initialFormState }) {
       const linkParams = lead.link_params || ""
       const cidMatch = linkParams.match(/cid_\w+/)
       const idOf = cidMatch ? cidMatch[0] : "cid_8459"
-      window.open(`https://postfacto.netlify.app/#/${idOf}`, "_blank", "noopener,noreferrer")
+      window.open(`https://postfacto-health.netlify.app/#/${idOf}`, "_blank", "noopener,noreferrer")
       return
     }
 
@@ -287,7 +287,7 @@ export function Table({ setFormState, initialFormState }) {
 
       // Initial trigger
       const response = await PostReq(MAIN_ROUTER_URL, {
-        trigger_func: "trigger_metrics_LI",
+        trigger_func: "trigger_metrics_HI",
         params: { session_id: sessionId },
       })
 
@@ -315,7 +315,7 @@ export function Table({ setFormState, initialFormState }) {
       if (response?.status === "done") {
         setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "Dashboard is ready" }))
         setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: false }))
-        window.open(`https://postfacto.netlify.app/#/${sessionId}`, "_blank", "noopener,noreferrer")
+        window.open(`https://postfacto-health.netlify.app/#/${sessionId}`, "_blank", "noopener,noreferrer")
         if (typeof getFormData === "function" && base_url) {
           getFormData(`${base_url}/recent_uploads`)
         }
@@ -771,6 +771,7 @@ function LeadDashboard() {
   const [formData, setFormData] = useState([])
   const base_url = AppConfig.serverBaseUrl
   const { currentUser } = useAuth()
+  console.log(currentUser.userid,"the current user is")
   const pollingRef = useRef(null)
   const pollingRefs = useRef({})
 

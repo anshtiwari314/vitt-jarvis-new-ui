@@ -52,6 +52,7 @@ export default function RecommendedHealthPlan({
   reason,
   riders: initialRiders,
 }: PlanProps) {
+  console.log({ planName, sumInsured, premium, reason, initialRiders },"from Recomendation");
   const [reasonOpen, setReasonOpen] = useState(false);
   const [riders, setRiders] = useState<Rider[]>(initialRiders);
 
@@ -117,7 +118,7 @@ export default function RecommendedHealthPlan({
           {reasonOpen && (
             <ul className="list-disc pl-10 pr-5 pb-4 space-y-2 text-slate-600 leading-relaxed">
               {reason
-                .split("- ")
+                .split("<br/>")
                 .filter((point) => point.trim())
                 .map((point, idx) => (
                   <li key={idx} dangerouslySetInnerHTML={{ __html: point.trim() }} />

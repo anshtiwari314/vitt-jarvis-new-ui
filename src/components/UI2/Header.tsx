@@ -4,10 +4,14 @@ import { useVad } from "../../context/VadWrapper"
 import { TailSpin } from "react-loading-icons"
 import { useDispatch } from "react-redux"
 import { useAuth } from "../../context/AuthContext"
+import { useData } from "../../context/DataWrapper"
 // import { setPageTitle } from "../../store/actions"
 
 export default function Header() {
-  const currentNavigation = useAppSelector((state) => state.healthManagmentReducer.navigation)
+  const { pref_language, setPref_language } = useData()
+  const currentNavigation = useAppSelector(
+    (state) => state.healthManagmentReducer.navigation
+  )
   //@ts-ignore
   const { manualVadStatus, setManualVadStatus, VAD2 } = useVad()
   const clientName = useAppSelector((state) => state.healthManagmentReducer.clientName)
@@ -29,9 +33,12 @@ export default function Header() {
     "Plan Summary": "Plan Summary",
     Recommendations: "Recommendations",
   }
-  // Timer state and functions (moved from index2.html)
+
+  // Timer setup
   const [timerSeconds, setTimerSeconds] = React.useState(0)
-  const [timerState, setTimerState] = React.useState<"stopped" | "running" | "paused">("stopped")
+  const [timerState, setTimerState] = React.useState<
+    "stopped" | "running" | "paused"
+  >("stopped")
   const timerIntervalRef = React.useRef<NodeJS.Timeout | null>(null)
 
   const updateTimer = React.useCallback(() => {
@@ -57,63 +64,31 @@ export default function Header() {
   }
 
   React.useEffect(() => {
-    // Cleanup interval on component unmount
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
     }
   }, [])
 
-  // Auto-start timer when the component mounts (app starts)
   React.useEffect(() => {
     handleTimerControls("start")
   }, [])
 
-  // Simulate status (moved from index2.html)
+  // Simulate status updates
   React.useEffect(() => {
     const statuses = ["audio", "transcription", "processing"]
     let currentStatusIndex = 0
     const statusInterval = setInterval(() => {
-      if (timerState !== "running") {
-        statuses.forEach((s) => {
-          const el = document.getElementById(`status-${s}`)
-          if (el && el.querySelector(".status-indicator")) {
-            el.querySelector(".status-indicator")?.classList.remove("bg-green-500")
-            el.querySelector(".status-indicator")?.classList.add("bg-gray-300")
-            el.classList.add("text-slate-500")
-            el.classList.remove("text-slate-700", "font-medium")
-          }
-        })
-        return
-      }
+      if (timerState !== "running") return
 
       const statusId = statuses[currentStatusIndex]
       const statusElement = document.getElementById(`status-${statusId}`)
-
       if (statusElement) {
         const indicator = statusElement.querySelector(".status-indicator")
         indicator?.classList.add("bg-green-500")
         statusElement.classList.add("text-slate-700", "font-medium")
       }
 
-      currentStatusIndex = currentStatusIndex + 1
-
-      if (currentStatusIndex >= statuses.length) {
-        currentStatusIndex = 0
-        setTimeout(() => {
-          if (timerState === "running") {
-            // Re-check state before resetting
-            statuses.forEach((s) => {
-              const el = document.getElementById(`status-${s}`)
-              if (el && el.querySelector(".status-indicator")) {
-                el.querySelector(".status-indicator")?.classList.remove("bg-green-500")
-                el.querySelector(".status-indicator")?.classList.add("bg-gray-300")
-                el.classList.remove("text-slate-700", "font-medium")
-                el.classList.add("text-slate-500")
-              }
-            })
-          }
-        }, 500)
-      }
+      currentStatusIndex = (currentStatusIndex + 1) % statuses.length
     }, 750)
 
     return () => clearInterval(statusInterval)
@@ -138,9 +113,12 @@ export default function Header() {
     console.log("manual vad status", manualVadStatus)
   }, [manualVadStatus])
 
-//   useEffect(() => {
-//     dispatch(setPageTitle(pageDetails[currentNavigation] || "Dashboard"))
-//   }, [currentNavigation, dispatch])
+  // 🌐 Handle language change using context
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedLang = e.target.value
+    setPref_language(selectedLang)
+    console.log("Preferred language updated:", selectedLang)
+  }
 
   return (
     <header className="bg-white p-3 sm:p-4 border-b border-slate-200 flex justify-between items-center sticky top-0 z-10">
@@ -205,11 +183,25 @@ export default function Header() {
              className="text-base sm:text-lg font-mono font-semibold text-slate-700 bg-slate-100 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md sm:rounded-lg">
             {minutes}:{seconds}
         </div>
-        {/* Logout */}
-        <a onClick={handleLogout} style={{ cursor: "pointer" }} 
-           // Reduced font size for mobile
-           className="text-blue-600 hover:underline text-sm sm:text-base">
-            Logout
+
+        {/* 🌐 Language Selector */}
+        <select
+          value={pref_language}
+          onChange={handleLanguageChange}
+          className="bg-slate-100 border border-slate-300 text-slate-700 rounded-lg px-3 py-2 cursor-pointer hover:bg-slate-200 transition"
+        >
+          <option value="en">English</option>
+          <option value="mr">Marathi</option>
+        </select>
+
+
+        {/* 🚪 Logout */}
+        <a
+          onClick={handleLogout}
+          style={{ cursor: "pointer" }}
+          className="text-blue-600 hover:underline"
+        >
+          Logout
         </a>
     </div>
 </header>
