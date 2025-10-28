@@ -4,15 +4,19 @@ import { useVad } from "../../context/VadWrapper"
 import { TailSpin } from "react-loading-icons"
 import { useDispatch } from "react-redux"
 import { useAuth } from "../../context/AuthContext"
+import { useData } from "../../context/DataWrapper"
 // import { setPageTitle } from "../../store/actions"
 
 export default function Header() {
-  const currentNavigation = useAppSelector((state) => state.healthManagmentReducer.navigation)
+  const { pref_language, setPref_language } = useData()
+  const currentNavigation = useAppSelector(
+    (state) => state.healthManagmentReducer.navigation
+  )
   //@ts-ignore
   const { manualVadStatus, setManualVadStatus, VAD2 } = useVad()
-  const clientName = useAppSelector((state) => state.healthManagmentReducer.clientName)
-  console.log("client name in header", clientName)
-
+  const clientName = useAppSelector(
+    (state) => state.healthManagmentReducer.clientName
+  )
   const { setCurrentUser } = useAuth()
   const dispatch = useDispatch()
 
@@ -29,9 +33,12 @@ export default function Header() {
     "Plan Summary": "Plan Summary",
     Recommendations: "Recommendations",
   }
-  // Timer state and functions (moved from index2.html)
+
+  // Timer setup
   const [timerSeconds, setTimerSeconds] = React.useState(0)
-  const [timerState, setTimerState] = React.useState<"stopped" | "running" | "paused">("stopped")
+  const [timerState, setTimerState] = React.useState<
+    "stopped" | "running" | "paused"
+  >("stopped")
   const timerIntervalRef = React.useRef<NodeJS.Timeout | null>(null)
 
   const updateTimer = React.useCallback(() => {
@@ -57,63 +64,31 @@ export default function Header() {
   }
 
   React.useEffect(() => {
-    // Cleanup interval on component unmount
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
     }
   }, [])
 
-  // Auto-start timer when the component mounts (app starts)
   React.useEffect(() => {
     handleTimerControls("start")
   }, [])
 
-  // Simulate status (moved from index2.html)
+  // Simulate status updates
   React.useEffect(() => {
     const statuses = ["audio", "transcription", "processing"]
     let currentStatusIndex = 0
     const statusInterval = setInterval(() => {
-      if (timerState !== "running") {
-        statuses.forEach((s) => {
-          const el = document.getElementById(`status-${s}`)
-          if (el && el.querySelector(".status-indicator")) {
-            el.querySelector(".status-indicator")?.classList.remove("bg-green-500")
-            el.querySelector(".status-indicator")?.classList.add("bg-gray-300")
-            el.classList.add("text-slate-500")
-            el.classList.remove("text-slate-700", "font-medium")
-          }
-        })
-        return
-      }
+      if (timerState !== "running") return
 
       const statusId = statuses[currentStatusIndex]
       const statusElement = document.getElementById(`status-${statusId}`)
-
       if (statusElement) {
         const indicator = statusElement.querySelector(".status-indicator")
         indicator?.classList.add("bg-green-500")
         statusElement.classList.add("text-slate-700", "font-medium")
       }
 
-      currentStatusIndex = currentStatusIndex + 1
-
-      if (currentStatusIndex >= statuses.length) {
-        currentStatusIndex = 0
-        setTimeout(() => {
-          if (timerState === "running") {
-            // Re-check state before resetting
-            statuses.forEach((s) => {
-              const el = document.getElementById(`status-${s}`)
-              if (el && el.querySelector(".status-indicator")) {
-                el.querySelector(".status-indicator")?.classList.remove("bg-green-500")
-                el.querySelector(".status-indicator")?.classList.add("bg-gray-300")
-                el.classList.remove("text-slate-700", "font-medium")
-                el.classList.add("text-slate-500")
-              }
-            })
-          }
-        }, 500)
-      }
+      currentStatusIndex = (currentStatusIndex + 1) % statuses.length
     }, 750)
 
     return () => clearInterval(statusInterval)
@@ -138,56 +113,70 @@ export default function Header() {
     console.log("manual vad status", manualVadStatus)
   }, [manualVadStatus])
 
-//   useEffect(() => {
-//     dispatch(setPageTitle(pageDetails[currentNavigation] || "Dashboard"))
-//   }, [currentNavigation, dispatch])
+  // 🌐 Handle language change using context
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedLang = e.target.value
+    setPref_language(selectedLang)
+    console.log("Preferred language updated:", selectedLang)
+  }
 
   return (
     <header className="bg-white p-4 border-b border-slate-200 flex justify-between items-center sticky top-0 z-10">
       <div>
         <h2 id="page-title" className="text-2xl font-bold text-slate-800"></h2>
-        <p id="client-name-header" className="mt-1 text-lg text-slate-500 hidden">
+        <p
+          id="client-name-header"
+          className="mt-1 text-lg text-slate-500 hidden"
+        >
           Roshan
         </p>
       </div>
+
       <div className="flex-shrink-0 flex items-center gap-4">
-        {/* <button
-          id="skip-pfr-btn"
-          className="bg-white border border-slate-300 text-slate-700 font-bold py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors duration-200"
-        >
-          Skip PFR
-        </button> */}
+        {/* 🎧 Voice activity detector controls */}
         <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
           {VAD2 !== undefined && !VAD2.loading ? (
             <div>
               {VAD2.listening ? (
                 <button
                   id="pause-btn"
-                  className={`p-2 rounded-md hover:bg-slate-200 text-slate-600 ${timerState === "paused" ? "text-sky-600" : ""}`}
+                  className={`p-2 rounded-md hover:bg-slate-200 text-slate-600 ${
+                    timerState === "paused" ? "text-sky-600" : ""
+                  }`}
                   onClick={() => {
                     setManualVadStatus(false)
                   }}
                 >
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-6 h-6"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M5.75 4.5a.75.75 0 00-.75.75v10.5a.75.75 0 001.5 0V5.25A.75.75 0 005.75 4.5zm8.5 0a.75.75 0 00-.75.75v10.5a.75.75 0 001.5 0V5.25a.75.75 0 00-.75-.75z"></path>
                   </svg>
                 </button>
               ) : (
                 <button
                   id="start-btn"
-                  className={`p-2 rounded-md hover:bg-slate-200 text-slate-600 ${timerState === "running" ? "text-sky-600" : ""}`}
+                  className={`p-2 rounded-md hover:bg-slate-200 text-slate-600 ${
+                    timerState === "running" ? "text-sky-600" : ""
+                  }`}
                   onClick={() => {
                     setManualVadStatus(true)
                   }}
                 >
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <svg
+                    className="w-6 h-6"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
                     <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path>
                   </svg>
                 </button>
               )}
             </div>
           ) : (
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <div className="flex justify-center items-center">
               <TailSpin
                 stroke="red"
                 strokeOpacity={1}
@@ -197,10 +186,31 @@ export default function Header() {
             </div>
           )}
         </div>
-        <div id="timer" className="text-lg font-mono font-semibold text-slate-700 bg-slate-100 px-3 py-2 rounded-lg">
+
+        {/* 🕒 Timer */}
+        <div
+          id="timer"
+          className="text-lg font-mono font-semibold text-slate-700 bg-slate-100 px-3 py-2 rounded-lg"
+        >
           {minutes}:{seconds}
         </div>
-        <a onClick={handleLogout} style={{ cursor: "pointer" }} className="text-blue-600 hover:underline">
+
+        {/* 🌐 Language Selector */}
+        <select
+          value={pref_language}
+          onChange={handleLanguageChange}
+          className="bg-slate-100 border border-slate-300 text-slate-700 rounded-lg px-3 py-2 cursor-pointer hover:bg-slate-200 transition"
+        >
+          <option value="en">English</option>
+          <option value="mr">Marathi</option>
+        </select>
+
+        {/* 🚪 Logout */}
+        <a
+          onClick={handleLogout}
+          style={{ cursor: "pointer" }}
+          className="text-blue-600 hover:underline"
+        >
           Logout
         </a>
       </div>

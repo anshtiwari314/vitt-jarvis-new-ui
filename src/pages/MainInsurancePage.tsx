@@ -20,12 +20,15 @@ import RecommendedHealthPlan from '../components/Health/Recomendation';
 import PlanSummary from '../components/Health/PlanSummary';
 import BasicInfoH from '../components/Health/BasicInfo';
 import { useData } from '../context/DataWrapper';
+import { normalizeRecommendationData } from '../functions/normalisedRecomendationData';
 //import BasicInfoH from '../components/UI2/BasicInfo';
 
 export default function App() {
     const {socket}=useData()
      const {salesData,navigation:currentNavigation} = useAppSelector((state) => state.healthManagmentReducer)
      console.log('salesData', salesData.Recommendations)
+     const normalisdSalesData = normalizeRecommendationData(salesData.Recommendations);
+     console.log('normalisdSalesData', normalisdSalesData);
 //   console.log(currentNavigation,"basic sales data is ",salesData.liabilities);
 
      const qpState = useAppSelector((state) => state.qpReducer);
@@ -55,7 +58,7 @@ export default function App() {
         case 'Health Profile':
             return <HealthProfile data={salesData.HealthProfile} socketC={socket}/>;
         case 'Recommendations':
-            return <RecommendedHealthPlan planName={salesData.Recommendations?.planName} sumInsured={salesData.Recommendations?.sumInsured} riders={salesData.Recommendations?.riders} premium={salesData.Recommendations?.premium} reason={salesData.Recommendations.reason} />;
+            return <RecommendedHealthPlan planName={normalisdSalesData?.planName} sumInsured={normalisdSalesData?.sumInsured} riders={normalisdSalesData?.riders} premium={normalisdSalesData?.premium} reason={normalisdSalesData.reason} />;
         case 'Plan Summary':
             return  <BasicInfoH data={salesData.basicInfo} />;
       

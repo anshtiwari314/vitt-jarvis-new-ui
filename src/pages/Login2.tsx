@@ -60,52 +60,51 @@ export default function Login() {
     handleAuth();
   }
 
-  function handleAuth() {
-    setLoading(true);
-    //localStorage.setItem('insurance-auth', JSON.stringify({userid:'vois'}))
+ function handleAuth() {
+  setLoading(true);
 
-    const url = `https://qhpv9mvz1h.execute-api.ap-south-1.amazonaws.com/prod/check-jarvis-login`;
+  const url = `https://ae5ca5144a4b.ngrok-free.app/main_router`;
 
-    fetch(url, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      trigger_func: 'check_agent_login',
+      params: {
         userid: email,
         password: pass,
-      }),
-      cache: 'default',
+      },
+    }),
+    cache: 'default',
+  })
+    .then((res) => {
+      if (!res.ok) {
+        return res.json().then(err => { throw err; });
+      }
+      console.log('Response status:', res);
+      return res.json();
     })
-      .then((res) => {
-        if (!res.ok) {
-          // If response is not ok, parse the error body
-          return res.json().then(err => { throw err; });
-        }
-        return res.json();
-      })
-      .then((result) => {
-        setLoading(false);
-        if (result.error) {
-          setError(result.error);
-        } else if (result.result === true) {
-          // Successfully logged in
-          localStorage.setItem('insurance-auth', JSON.stringify({userid:result.data.sessionid}))
-          setCurrentUser({ userid: result.data.sessionid, sessionuid: uuidv4() });
-        } else {
-          // Handle cases where login is not successful but no specific error is returned
-          
-          setError('Login failed. Please check your credentials.');
-        }
-      })
-      .catch((err) => {
-        setLoading(false);
-        // Display a user-friendly error from the server if available, otherwise a generic one
-        setError(err.error || 'An unexpected error occurred. Please try again.');
-        console.error('Fetch error:', err);
-      });
-  }
+    .then((result) => {
+      setLoading(false);
+      if (result.error) {
+        setError(result.error);
+      } else if (result.result === true) {
+        localStorage.setItem('insurance-auth', JSON.stringify({ userid: result.data.sessionid }));
+        setCurrentUser({ userid: result.data.sessionid, sessionuid: uuidv4() });
+      } else {
+        setError('Login failed. Please check your credentials.');
+      }
+    })
+    .catch((err) => {
+      setLoading(false);
+      setError(err.error || 'An unexpected error occurred. Please try again.');
+      console.error('Fetch error:', err);
+    });
+}
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
