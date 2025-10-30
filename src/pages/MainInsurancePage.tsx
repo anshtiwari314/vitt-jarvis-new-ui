@@ -123,7 +123,7 @@ export default function App() {
                     <main 
         className="flex-1 flex flex-col bg-slate-100 px-2 py-1 sm:p-6 lg:px-8 
                    order-2 lg:order-1 min-w-0 overflow-x-auto overflow-y-auto pb-5 w-full 
-                   lg:w-4/6 lg:mx-8
+                   lg:w-4/6 lg:mx-8 
                     "
                     >
                         {renderContent()}

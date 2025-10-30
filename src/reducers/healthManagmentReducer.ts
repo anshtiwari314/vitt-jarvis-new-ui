@@ -325,10 +325,10 @@ const initialCopilotState = {
       }
     },
     "Recommendations": {
-      "planName": "",
-      "sumInsured": 0,
-      "premium": 0,
-      "reason":"",
+      "planName": {heading:'',value:''},
+      "sumInsured": {heading:'',value:''},
+      "premium": {heading:'',value:''},
+      "reason":{heading:'reason',value:''},
       "riders": [
         // { "name": "", "price": 0 },
         // { "name": "", "price": 0 },

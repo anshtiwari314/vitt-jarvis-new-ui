@@ -20,7 +20,10 @@ const Form = ({ state, setState, submitForm, loading, error }) => {
   //console.log("Form state:", state)
   const handleChange = (e) => {
     const { name, value } = e.target
+    console.log('handle change in form ',e.target.name ,e.target.value)
     setState((prevState) => ({ ...prevState, [name]: value }))
+    
+    //setState(prevState=>)
   }
 
   return (
@@ -117,8 +120,8 @@ const Form = ({ state, setState, submitForm, loading, error }) => {
           </label>
           <select
             id="Language"
-            name="Language"
-            value={state.Langauge}
+            name="language"
+            value={state.langauge}
             onChange={handleChange}
             className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
           >
@@ -811,7 +814,7 @@ function LeadDashboard() {
     leadSourceFrom: "social-media",
     file: null,
     priority: "low",
-    language:"English",
+    language:"Marathi",
   }
 
   const [formState, setFormState] = useState(initialState)
@@ -825,6 +828,10 @@ function LeadDashboard() {
     { name: "Sales Manager Page", icon: faUserTie, redirectTo: "/#/sales-manager", isActive: false },
     { name: "Sales Manager Dashboard", icon: faChartLine, redirectTo: "/#/sales-manager-dashboard", isActive: false },
   ]
+
+  useEffect(()=>{
+    console.log('form state',formState)
+  },[formState])
 
   useEffect(() => {
     getFormData(`${base_url}/recent_uploads`)
@@ -845,6 +852,7 @@ function LeadDashboard() {
     setLoading(true)
     setError("")
     e.preventDefault()
+
 
     if (
       formState.fname === "" ||
@@ -867,7 +875,7 @@ function LeadDashboard() {
       priority: formState.priority,
       source: formState.leadSourceFrom,
       agent_id: currentUser.userid,
-      pref_language: formState.Language,
+      pref_language: formState.language,
       lead_type: "HI",
     }
 
@@ -880,6 +888,9 @@ function LeadDashboard() {
       console.error(e)
       setError("Failed to submit lead.")
     }
+
+
+
     setLoading(false)
   }
 

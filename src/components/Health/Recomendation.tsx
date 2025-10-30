@@ -84,18 +84,18 @@ export default function RecommendedHealthPlan({
         </h2>
         <div className="bg-slate-50 rounded-lg p-5 grid grid-cols-1 md:grid-cols-3 gap-4 border border-sky-200 hover:border-sky-500 transition-colors duration-300">
           <div>
-            <p className="text-sm text-slate-500">Plan Name</p>
+            <p className="text-sm text-slate-500">{planName.heading}</p>
             <p className="font-semibold text-slate-700">
-              {planName.toUpperCase()}
+              {planName.value.toUpperCase()}
             </p>
           </div>
           <div>
-            <p className="text-sm text-slate-500">Sum Insured</p>
-            <p className="font-semibold text-slate-700">₹{sumInsured}</p>
+            <p className="text-sm text-slate-500">{sumInsured.heading}</p>
+            <p className="font-semibold text-slate-700">₹{sumInsured.value}</p>
           </div>
           <div>
-            <p className="text-sm text-slate-500">Annual Premium</p>
-            <p className="font-semibold text-green-600">₹{premium}</p>
+            <p className="text-sm text-slate-500">{premium.heading}</p>
+            <p className="font-semibold text-green-600">₹{premium.value}</p>
           </div>
         </div>
       </div>
@@ -107,7 +107,7 @@ export default function RecommendedHealthPlan({
             onClick={() => setReasonOpen(!reasonOpen)}
             className="w-full flex items-center justify-between px-5 py-3 text-left"
           >
-            <h3 className="text-lg font-semibold text-slate-700">Reason</h3>
+            <h3 className="text-lg font-semibold text-slate-700">{reason?.heading}</h3>
             {reasonOpen ? (
               <ExpandMoreIcon className="text-slate-600" />
             ) : (
@@ -117,7 +117,7 @@ export default function RecommendedHealthPlan({
 
           {reasonOpen && (
             <ul className="list-disc pl-10 pr-5 pb-4 space-y-2 text-slate-600 leading-relaxed">
-              {reason
+              {reason.value
                 .split("<br/>")
                 .filter((point) => point.trim())
                 .map((point, idx) => (
@@ -131,11 +131,11 @@ export default function RecommendedHealthPlan({
       {/* Riders Section */}
       <div>
         <h3 className="text-lg font-semibold text-slate-700 mb-4">
-          Select Add-ons (Riders)
+          {riders.heading}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {riders?.length > 0 ? (
-            riders.map((rider, idx) => (
+          {riders.value?.length > 0 ? (
+            riders.value.map((rider, idx) => (
               <div
                 key={idx}
                 className={`p-4 rounded-xl border-2 ${

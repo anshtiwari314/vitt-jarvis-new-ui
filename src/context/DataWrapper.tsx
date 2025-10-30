@@ -10,7 +10,7 @@ import {
     updatePlanSummary,updateRecommendation, updateHeathProfile,
     }from 
     "../reducers/healthManagmentReducer"
-import {config as AppConfig} from '../configuration.js'
+
 // interface DataContextType {
 //   socket: Socket | null
 //   setSocket: (socket: Socket | null) => void
@@ -19,6 +19,8 @@ import {config as AppConfig} from '../configuration.js'
 //   setMsgLoading?: (loading: boolean) => void
 //   oneWayUrl?: string
 // }
+import {config as AppConfig} from '../configuration.js'
+
 
 const Context = createContext<any>("")
 
@@ -116,7 +118,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
 
  useEffect(() => {
 
-  const socketUrl ='wss://recruito.vitti.insure'
+  const socketUrl =AppConfig.wsUrl
 
   //const socketUrl = 'https://b18e4904236b.ngrok-free.app'
   // 500ms delay before connecting

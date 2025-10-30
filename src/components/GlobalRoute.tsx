@@ -9,14 +9,15 @@ export default function GlobalRoute({component,...rest}) {
     //@ts-ignore
     const {currentUser} = useAuth()
     
-    console.log(component,currentUser)
+    console.log('global route',component,currentUser)
 
-    if(currentUser!==null){
+    if(currentUser === null){
         return component
-    }else {
+    }
+    else {
         // console.log("trying redirecting")
         // redirect("/")
      //  window.location.href = '/'
-     return <Navigate to="/" replace />
+     return <Navigate to="/lead-management" replace />
     }
 }
