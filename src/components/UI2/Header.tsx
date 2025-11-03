@@ -3,15 +3,20 @@ import { useAppSelector } from "../../store/store"
 import { useVad } from "../../context/VadWrapper"
 import { TailSpin } from "react-loading-icons"
 import { useAuth } from "../../context/AuthContext"
+import { useData } from "../../context/DataWrapper"
+import { useDispatch } from "react-redux"
 
 export default function Header() {
+  const { socket } = useData()
   const currentNavigation = useAppSelector((state) => state.salesCopilotReducer.navigation)
   //@ts-ignore
   const { manualVadStatus, setManualVadStatus, VAD2 } = useVad()
-  const clientName = useAppSelector((state) => state.salesCopilotReducer.clientName)
+  const [clientName,qpParams] = useAppSelector((state) => [state.salesCopilotReducer.clientName,state.qpReducer])
 
   const { setCurrentUser } = useAuth()
 
+  const dispatch = useDispatch()
+  
   function handleLogout() {
     localStorage.removeItem("insurance-auth")
     setCurrentUser(null)
@@ -138,21 +143,44 @@ export default function Header() {
     console.log("manual vad status", manualVadStatus)
   }, [manualVadStatus])
 
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedLang = e.target.value
+    //setPref_language(selectedLang)
+    dispatch(updatePrefLanguage(selectedLang))
+
+    socket && 
+    socket.emit('switch_pref_language_hi',{"roomid": qpParams.roomId, "pref_language": qpParams.pref_language})
+    
+
+
+    console.log("Preferred language updated:", selectedLang)
+  }
+
   return (
-    <header className="bg-white p-4 border-b border-slate-200 flex justify-between items-center sticky top-0 z-10">
+    <header className="bg-white p-4 border-b border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center sticky top-0 z-10 gap-4 md:gap-2">
+      {/* --- Left Side: Title --- */}
       <div>
-        <h2 id="page-title" className="text-2xl font-bold text-slate-800">
+        <h2 id="page-title" className="text-xl md:text-2xl font-bold text-slate-800"> {/* Responsive text size */}
           {pageDetails[currentNavigation] || "Dashboard"}
         </h2>
-        <p id="client-name-header" className="mt-1 text-lg text-slate-500 hidden"></p>
+        <p id="client-name-header" className="mt-1 text-base md:text-lg text-slate-500 hidden"></p> {/* Responsive text size */}
       </div>
-      <div className="flex-shrink-0 flex items-center gap-4">
+
+      {/* --- Right Side: Controls --- */}
+      {/* - flex-wrap: Allows buttons to wrap to the next line on small screens
+        - w-full md:w-auto: Makes the container full-width on mobile
+        - justify-start md:justify-end: Aligns items left on mobile (as it's full width) and right on desktop
+        - gap-2 md:gap-4: Smaller gap on mobile
+      */}
+      <div className="flex-shrink-0 flex items-center flex-wrap justify-start md:justify-end gap-2 md:gap-4 w-full md:w-auto">
         <button
           id="skip-pfr-btn"
-          className="bg-white border border-slate-300 text-slate-700 font-bold py-2 px-4 rounded-lg hover:bg-slate-50 transition-colors duration-200"
+          className="bg-white border border-slate-300 text-slate-700 font-bold py-2 px-3 md:px-4 rounded-lg hover:bg-slate-50 transition-colors duration-200 text-sm md:text-base" /* Responsive padding & text */
         >
           Skip PFR
         </button>
+
+        {/* VAD Controls */}
         <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
           {/* <button onClick={()=>setManualVadStatus(false)}>
                         stop manual vad
@@ -234,17 +262,28 @@ export default function Header() {
                     </button>
                     } */}
         </div>
-        <div id="timer" className="text-lg font-mono font-semibold text-slate-700 bg-slate-100 px-3 py-2 rounded-lg">
+        
+        {/* Timer */}
+        <div id="timer" className="text-base md:text-lg font-mono font-semibold text-slate-700 bg-slate-100 px-3 py-2 rounded-lg"> {/* Responsive text */}
           {minutes}:{seconds}
         </div>
-        <button id="start-btn" className={`p-2 rounded-md bg-slate-200 text-slate-600 `}>
-          <a
-            onClick={handleLogout}
-            style={{ cursor: "pointer", color: "black" }}
-            className="text-black-800 hover:underline"
-          >
-            Logout
-          </a>
+
+        {/* 🌐 Language Selector */}
+        <select
+          value={qpParams.pref_language}
+          onChange={handleLanguageChange}
+          className="bg-slate-100 border border-slate-300 text-slate-700 rounded-lg px-3 py-2 cursor-pointer hover:bg-slate-200 transition"
+        >
+          <option value="english">English</option>
+          <option value="marathi">Marathi</option>
+        </select>
+
+        {/* Logout Button (Cleaned up) */}
+        <button
+          onClick={handleLogout}
+          className="bg-slate-100 border border-slate-300 text-slate-700 font-bold py-2 px-3 md:px-4 rounded-lg hover:bg-slate-200 transition-colors duration-200 text-sm md:text-base" /* Matched style of other buttons */
+        >
+          Logout
         </button>
       </div>
     </header>

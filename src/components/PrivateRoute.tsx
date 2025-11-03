@@ -12,15 +12,20 @@ export default function PrivateRoute({component,...rest}:{component:React.ReactN
     
     
 
-    console.log(component)
-    if(currentUser===null){
+    console.log('the current user is ',currentUser)
+    
+    if(currentUser !== null){
         return component
-    }else {
-      //  redirect("/#/mainpage")
-     // window.location.href = '/#/mainpage'
-     // navigate.to('/#/mainpage')
-     //<Navigate to="/#/mainpage" />
-     return <Navigate to="/lead-management" replace />
+    }else{
+        return <Navigate to="/" replace />
     }
+
+    // else {
+    //   //  redirect("/#/mainpage")
+    //  // window.location.href = '/#/mainpage'
+    //  // navigate.to('/#/mainpage')
+    //  //<Navigate to="/#/mainpage" />
+    //  return <Navigate to="/lead-management" replace />
+    // }
 
 }

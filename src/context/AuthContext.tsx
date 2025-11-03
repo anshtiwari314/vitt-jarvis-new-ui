@@ -10,9 +10,13 @@ export function useAuth(){
 export default function AuthContext({children}:{children:React.ReactNode}) {
   
   //  const [currentUser,setCurrentUser] = useState({userid:'vois',sessionuid:uuidv4()})
+
    const [currentUser,setCurrentUser] = useState(null)
+   const [isAuthenticated,setIsAuthenticated] = useState(false)
+
   let values = {
-    currentUser,setCurrentUser
+    currentUser,setCurrentUser,
+    isAuthenticated,setIsAuthenticated
   }
   return (
     // @ts-ignore

@@ -11,6 +11,7 @@ import PlanSummary from '../components/UI2/PlanSummary'
 import Recommendations from '../components/UI2/Recommendations';
 
 import SideNavigation from '../components/UI2/SideNavigation'
+import SideBarMobile from '../components/UI2/SideBarMobile'
 import Header from '../components/UI2/Header'
 import RightPanel from '../components/UI2/RightPanel'
 import { useDispatch } from 'react-redux';
@@ -67,7 +68,7 @@ export default function App() {
               const roomParam = parts[0] || "";
               //const candidParam = parts[1] || "";
               const name = parts[1] || "";
-      
+             let  language = parts?.[2] || "english"
       
               //http://localhost:5173/?anuj-anuj-anuj&cid_7761
               //new URLSearchParams(window.location.href)[1]
@@ -77,7 +78,8 @@ export default function App() {
              // candid: candidParam,
              // agentId,
               //isHost: login.isAuthenticated,
-              name
+              name,
+              pref_language:language
               //meetingIsLegit: true,
             };
       
@@ -94,19 +96,40 @@ export default function App() {
   return (
     
     <div className="bg-slate-50 text-slate-800 antialiased">
-        <div className="flex h-screen overflow-hidden">
+        <div className="flex h-screen overflow-scroll">
             <SideNavigation/>
+            <SideBarMobile />
             <div className="flex-1 flex flex-col">
                 
                 <Header/>
-                <div className="flex-1 flex overflow-hidden">
+                <div className="flex flex-col lg:flex-row flex-1 overflow-y-scroll ">
                     {/* <!-- Main Content --> */}
-                    <main className="flex-1 flex flex-col bg-slate-100 overflow-y-auto p-6 md:p-8">
+                    <main 
+                    className="
+                        flex-1 flex flex-col bg-slate-100 py-1 sm:p-6 pb-5
+                        order-2 lg:order-1 
+                        min-w-0 overflow-y-auto 
+                        
+                        {/* FIX 3: Your 99% width request. */}
+                        w-[94vw] mx-auto    {/* <-- ADDED */}
+                        lg:w-4/6 lg:mx-8 {/* <-- 'lg:mx-8' will override mx-auto on large screens */}
+                      "
+                    >
                         {renderContent()}
                     </main>
 
                     {/* <!-- AI Cues Sidebar --> */}
+                    <aside 
+                    className="
+                        w-[99vw] lg:w-2/6
+                        order-1 lg:order-2 
+                        bg-white border-l border-slate-200 
+                        lg:shadow-none lg:h-full 
+                        flex-shrink-0
+                      " // Added overflow-y-auto here for the aside element
+                    style={{overflow:'hidden'}}>
                     <RightPanel/>
+                    </aside>
                 </div>
             </div>
         </div>

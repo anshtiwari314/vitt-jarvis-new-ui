@@ -47,7 +47,7 @@ export default function SideNavigation(){
     }, []);
 
     return (
-        <aside className="w-72 bg-white border-r border-slate-200 flex flex-col">
+         <aside className="w-72 bg-white border-r border-slate-200 flex flex-col hidden lg:block">
                 <div className="p-4 border-b border-slate-200 flex items-center justify-between">
                     <a href="#/lead-management" id="home-button" className="text-slate-500 hover:text-sky-600" onClick={() => handleNavigationClick('basicInfo')}>
                         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

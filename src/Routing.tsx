@@ -24,7 +24,7 @@ import {v4 as uuidv4} from 'uuid'
 export default function RenderChildren(){
   
     const dispatch = useDispatch();
-  const {setCurrentUser}= useAuth()
+  const {currentUser, setCurrentUser,isAuthenticated,setIsAuthenticated}= useAuth()
   
 
   useEffect(()=>{
@@ -34,20 +34,26 @@ export default function RenderChildren(){
 
     //console.log('routing',insuranceAuthKey.userid)
     setCurrentUser({userid:insuranceAuthKey.userid,sessionuid:uuidv4()})
+    
   }
+  setIsAuthenticated(true)
   },[]) 
 
+  console.log('currentUser',currentUser)
 
+  if(!isAuthenticated){
+    return null
+  }
   return (
     <Router>
       <Routes>
             {/* @ts-ignore */}
-            <Route path='/' element={<PrivateRoute component={<Login2/>}/>}/>
+            <Route path='/' element={<GlobalRoute component={<Login2/>}/>}/>
             {/* @ts-ignore */}
-            <Route path='/lead-management' element={<GlobalRoute component={<LeadDashboard/>}/>}/>
+            <Route path='/lead-management' element={<PrivateRoute component={<LeadDashboard/>}/>}/>
             {/* <Route path='/signup' element={<PrivateRoute component={<SignIn/>}/>}/> */}
             {/* @ts-ignore */}
-            <Route path='/mainpage' element={<GlobalRoute component={<DataWrapper><VadWrapper><MainInsurancePage/></VadWrapper></DataWrapper>}/>}/>
+            <Route path='/mainpage' element={<PrivateRoute component={<DataWrapper><VadWrapper><MainInsurancePage/></VadWrapper></DataWrapper>}/>}/>
             <Route path='*' element={<ErrorPage/>}/>
       </Routes>
     </Router>

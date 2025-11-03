@@ -20,6 +20,7 @@ const initialQPState = {
   name:"",
   isHost: false,
   meetingIsLegit: false,
+  pref_language:""
 } as QPState;
 
 // Create a slice for "queryparams"
@@ -36,6 +37,12 @@ const qpSlice = createSlice({
       state = { ...state, ...action.payload };
       
       //state 
+      return state
+    },
+    updatePrefLanguage:(state,action)=>{
+      console.log('update language',action)
+      state = {...state,pref_language:action.payload}
+    
       return state
     }
   },

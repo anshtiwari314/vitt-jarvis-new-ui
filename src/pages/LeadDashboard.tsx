@@ -421,7 +421,7 @@ export function Table({ setFormState, initialFormState }) {
                 {currentLeads.map((lead, index) => {
                   // Ensure lead.link_params exists for the link generation
                   const linkToCopy = lead.link_params
-                    ? `${window.location.protocol}//${window.location.host}/#/mainpage/?${lead.link_params}`
+                    ? `${window.location.protocol}//${window.location.host}/#/mainpage/?${lead.link_params}&${lead.pref_language.toLowerCase()}`
                     : "#" // Fallback link if link_params is missing
 
                   // Using a combination of lead.id (if available) and index for unique key
@@ -491,10 +491,9 @@ export function Table({ setFormState, initialFormState }) {
             </table>
           </div>
 
-          {/* Pagination Controls */}
+          {/* --- This pagination is responsive --- */}
           <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            {/* Range info */}
-            <div className="text-sm text-slate-600">
+            <div className="text-sm text-slate-600 text-center md:text-left">
               {totalItems > 0 ? (
                 <>
                   Showing <span className="font-medium text-slate-800">{startItem}</span>–
@@ -506,10 +505,9 @@ export function Table({ setFormState, initialFormState }) {
               )}
             </div>
 
-            {/* Pagination controls */}
             {totalPages > 1 && (
               <nav
-                className="inline-flex items-center gap-1"
+                className="flex flex-wrap items-center justify-center gap-1"
                 role="navigation"
                 aria-label="Pagination"
                 onKeyDown={(e) => {
@@ -521,7 +519,7 @@ export function Table({ setFormState, initialFormState }) {
                   type="button"
                   onClick={() => paginate(1)}
                   disabled={currentPage === 1}
-                  className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="hidden md:inline-block px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   First
                 </button>
@@ -569,15 +567,14 @@ export function Table({ setFormState, initialFormState }) {
                   type="button"
                   onClick={() => paginate(totalPages)}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="hidden md:inline-block px-3 py-2 text-sm border border-slate-300 rounded-md bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   Last
                 </button>
               </nav>
             )}
 
-            {/* Rows per page */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
               <label htmlFor="rows-per-page" className="text-sm text-slate-600">
                 Rows per page
               </label>
@@ -764,7 +761,7 @@ function LeadDashboard() {
     <DataContext.Provider value={{ base_url, getFormData, formData }}>
       <div className="min-h-screen bg-slate-100 font-sans">
         {/* <Sidebar links={mylink} /> */}
-        <div style={{ margin: "0 8%" }}>
+        <div style={{  }} className="mx-0 lg:mx-[8rem]">
           <div className="py-6">
             <Header title="Lead Management" dashboardLink="/#/" />
           </div>

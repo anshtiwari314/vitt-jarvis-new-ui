@@ -42,7 +42,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
 
   const [socket, setSocket] = useState<Socket | null>(null)
   const [isSocketConnected,setIsSocketConnected] = useState(false)
-
+const [pref_language,setPref_language]=useState("English")
   const navigation = useAppSelector((state) => state.salesCopilotReducer.navigation)
   const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
 
@@ -212,7 +212,8 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
     setMsgLoading: (loading: boolean) => console.log("Loading:", loading),
     oneWayUrl: "http://localhost:5000", 
     toggleNotificationModal,setToggleNotificationModal,updateField,
-    recommendationsGenerated,setRecommendationsGenerated
+    recommendationsGenerated,setRecommendationsGenerated,
+    pref_language,setPref_language
   }
   return <Context.Provider value={values}>{children}</Context.Provider>
 }
