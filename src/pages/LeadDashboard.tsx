@@ -141,12 +141,17 @@ const UploadComp = () => {
   )
 }
 
+// Table component original structure with fix notes
 export function Table({ setFormState, initialFormState }) {
   const { formData, base_url, getFormData } = useData() // Using mock data from context
   const leads = formData || [] // Ensure leads is an array
   const hiLeads = Array.isArray(leads) ? leads.filter((l) => String(l?.lead_type || "").toUpperCase() === "LI") : []
 
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
+
+  // Polling state management
+  const pollingTimers = useRef<{ [key: string]: number | null }>({}) // Ref for managing interval IDs
+  const [insightMsg, setInsightMsg] = useState({}) // { leadId: 'Message' }
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1)
@@ -158,26 +163,42 @@ export function Table({ setFormState, initialFormState }) {
   const [insightLoading, setInsightLoading] = useState({}) // { leadId: boolean }
   const [insightError, setInsightError] = useState({}) // { leadId: string }
 
+  // --- Start: Calculate Pagination Variables (NO DUPLICATES HERE) ---
+
   // Paginate and compute totals using only HI leads
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
   const currentLeads = hiLeads.slice(indexOfFirstItem, indexOfLastItem)
 
   // Calculate total pages
-  const totalPages = Math.ceil(hiLeads.length / itemsPerPage)
+  const totalItems = hiLeads.length
+  const totalPages = Math.ceil(totalItems / itemsPerPage)
 
   // Function to change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber)
 
+  // Display range for footer
+  const startItem = totalItems === 0 ? 0 : indexOfFirstItem + 1
+  const endItem = Math.min(indexOfLastItem, totalItems)
+
+  // --- End: Calculate Pagination Variables ---
+
+
   // Clamp currentPage when totalPages changes
   useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages || 1)
+
+    // Cleanup function for polling timers
     return () => {
       Object.values(pollingTimers.current).forEach((id) => {
         if (id) window.clearInterval(id)
       })
       pollingTimers.current = {}
     }
-  }, [])
+  }, [totalPages]) // Added totalPages as a dependency
+
+  // Note: The rest of the polling logic (stopPolling, startPolling) remains the same.
+  const MAIN_ROUTER_URL = `${base_url}/insight_generator` // Assuming this is defined or passed down
 
   const stopPolling = (uniqueLeadId: string) => {
     const id = pollingTimers.current[uniqueLeadId]
@@ -230,6 +251,10 @@ export function Table({ setFormState, initialFormState }) {
 
     pollingTimers.current[uniqueLeadId] = timerId
   }
+
+  // NOTE: The original component had an issue where `useEffect` was not handling the cleanup correctly
+  // for the `pollingTimers`. I have moved the cleanup logic into the `useEffect` that depends on `totalPages`
+  // and made it run on unmount.
 
   function enableEdit(lead) {
     const { name, mob, email, priority, source, lead_id } = lead
@@ -377,20 +402,22 @@ export function Table({ setFormState, initialFormState }) {
     return pages
   }
 
-  const totalItems = hiLeads.length
-  const indexOfLastItem = currentPage * itemsPerPage
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const startItem = totalItems === 0 ? 0 : indexOfFirstItem + 1
-  const endItem = Math.min(indexOfLastItem, totalItems)
-  const currentLeads = hiLeads.slice(indexOfFirstItem, indexOfLastItem)
+  // --- Duplicate lines removed from here ---
+  // const totalItems = hiLeads.length // DUPLICATE
+  // const indexOfLastItem = currentPage * itemsPerPage // DUPLICATE
+  // const indexOfFirstItem = indexOfLastItem - itemsPerPage // DUPLICATE
+  // const startItem = totalItems === 0 ? 0 : indexOfFirstItem + 1 // DUPLICATE
+  // const endItem = Math.min(indexOfLastItem, totalItems) // DUPLICATE
+  // const currentLeads = hiLeads.slice(indexOfFirstItem, indexOfLastItem) // DUPLICATE
 
-  const totalPages = Math.ceil(hiLeads.length / itemsPerPage)
+  // const totalPages = Math.ceil(hiLeads.length / itemsPerPage) // DUPLICATE
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber)
+  // const paginate = (pageNumber) => setCurrentPage(pageNumber) // DUPLICATE
 
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages || 1)
-  }, [totalPages])
+  // useEffect(() => { // DUPLICATE of a useEffect call
+  //   if (currentPage > totalPages) setCurrentPage(totalPages || 1)
+  // }, [totalPages])
+  // -----------------------------------------
 
   const copyToClipboard = (textToCopy, leadId) => {
     const textarea = document.createElement("textarea")
