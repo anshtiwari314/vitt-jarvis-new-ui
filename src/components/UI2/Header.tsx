@@ -6,16 +6,18 @@ import { useDispatch } from "react-redux"
 import { useAuth } from "../../context/AuthContext"
 import { useData } from "../../context/DataWrapper"
 // import { setPageTitle } from "../../store/actions"
+import {updatePrefLanguage} from '../../reducers/queryparamReducer' 
 
 export default function Header() {
-  const { pref_language, setPref_language } = useData()
+  const { socket } = useData()
   const currentNavigation = useAppSelector(
     (state) => state.healthManagmentReducer.navigation
   )
   //@ts-ignore
   const { manualVadStatus, setManualVadStatus, VAD2 } = useVad()
-  const clientName = useAppSelector((state) => state.healthManagmentReducer.clientName)
-  //console.log("client name in header", clientName)
+  const [clientName,qpParams] = useAppSelector((state) => [state.healthManagmentReducer.clientName,state.qpReducer])
+   
+  //console.log("client name in header", clientName,qpParams)
 
   const { setCurrentUser } = useAuth()
   const dispatch = useDispatch()
@@ -116,7 +118,14 @@ export default function Header() {
   // 🌐 Handle language change using context
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedLang = e.target.value
-    setPref_language(selectedLang)
+    //setPref_language(selectedLang)
+    dispatch(updatePrefLanguage(selectedLang))
+
+    socket && 
+    socket.emit('switch_pref_language_hi',{"roomid": qpParams.roomId, "pref_language": qpParams.pref_language})
+    
+
+
     console.log("Preferred language updated:", selectedLang)
   }
 
@@ -185,14 +194,14 @@ export default function Header() {
         </div>
 
         {/* 🌐 Language Selector */}
-        {/* <select
-          value={pref_language}
+        <select
+          value={qpParams.pref_language}
           onChange={handleLanguageChange}
           className="bg-slate-100 border border-slate-300 text-slate-700 rounded-lg px-3 py-2 cursor-pointer hover:bg-slate-200 transition"
         >
-          <option value="en">English</option>
-          <option value="mr">Marathi</option>
-        </select> */}
+          <option value="english">English</option>
+          <option value="marathi">Marathi</option>
+        </select>
 
 
         {/* 🚪 Logout */}

@@ -20,6 +20,7 @@ const initialQPState = {
   name:"",
   isHost: false,
   meetingIsLegit: false,
+  pref_language:""
 } as QPState;
 
 // Create a slice for "queryparams"
@@ -37,13 +38,19 @@ const qpSlice = createSlice({
       
       //state 
       return state
+    },
+    updatePrefLanguage:(state,action)=>{
+      console.log('update language',action)
+      state = {...state,pref_language:action.payload}
+    
+      return state
     }
   },
 });
 
 export type { QPState };
 // Export actions so they can be dispatched from components
-export const { resetQP, setQP } = qpSlice.actions;
+export const { resetQP, setQP,updatePrefLanguage } = qpSlice.actions;
 
 // Export the reducer to be included in the store
 export default {
