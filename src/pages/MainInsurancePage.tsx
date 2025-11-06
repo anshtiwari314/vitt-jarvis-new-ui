@@ -30,6 +30,7 @@ export default function App() {
      console.log('salesData', salesData.Recommendations)
      const normalisdSalesData = normalizeRecommendationData(salesData.Recommendations);
      console.log('normalisdSalesData', normalisdSalesData);
+     const {pref_language,setPref_language} = useData()
      //console.log('salesData', salesData.Recommendations)
 //   console.log(currentNavigation,"basic sales data is ",salesData.liabilities);
 
@@ -85,21 +86,24 @@ export default function App() {
               const roomParam = parts?.[0] || "";
               //const candidParam = parts[1] || "";
               const name = parts?.[1] || "";
-      
-      
+              let  language = parts?.[2] || "english"
+              //language = language.charAt(0).toUpperCase() + language.slice(1)
+
               //http://localhost:5173/?anuj-anuj-anuj&cid_7761
               //new URLSearchParams(window.location.href)[1]
-              console.log('query params',roomParam,name,query)
+              console.log('query params',roomParam,name,language)
               const qParams = {
               roomId: roomParam,
              // candid: candidParam,
              // agentId,
               //isHost: login.isAuthenticated,
-              name
+              name,
+              pref_language:language
               //meetingIsLegit: true,
             };
       
               dispatch(setQP(qParams))
+              //setPref_language(language)
           } 
               getMeetingInfo()
           },[])
@@ -121,9 +125,13 @@ export default function App() {
                 <div className="flex flex-col lg:flex-row flex-1 overflow-y-scroll">
                     {/* <!-- Main Content --> */}
                     <main 
-        className="flex-1 flex flex-col bg-slate-100 px-2 py-1 sm:p-6 lg:px-8 
-                   order-2 lg:order-1 min-w-0 overflow-x-auto overflow-y-auto pb-5 w-full 
-                   lg:w-4/6 lg:mx-8 
+        className="flex-1 flex flex-col bg-slate-100 py-1 sm:p-6 pb-5
+                        order-2 lg:order-1 
+                        min-w-0 overflow-y-auto 
+                        
+                        {/* FIX 3: Your 99% width request. */}
+                        w-[94vw] mx-auto    {/* <-- ADDED */}
+                        lg:w-4/6 lg:mx-8 {/* <-- 'lg:mx-8' will override mx-auto on large screens */}
                     "
                     >
                         {renderContent()}

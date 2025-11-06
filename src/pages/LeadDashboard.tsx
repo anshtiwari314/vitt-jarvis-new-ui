@@ -524,8 +524,9 @@ export function Table({ setFormState, initialFormState }) {
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
                 {currentLeads.map((lead, index) => {
+                  console.log('lead_links',lead.link_params)
                   const linkToCopy = lead.link_params
-                    ? `${window.location.protocol}//${window.location.host}/#/mainpage/?${lead.link_params}`
+                    ? `${window.location.protocol}//${window.location.host}/#/mainpage/?${lead.link_params}&${lead.pref_language.toLowerCase()}`
                     : "#"
 
                   const uniqueLeadId = lead.id || lead.lead_id || `lead-${lead.name}-${lead.mob}`
