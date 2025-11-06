@@ -169,8 +169,9 @@ useEffect(() => {
       agentid: "1234",
       name: name,
       selected_topic: navigation,
+      agent_name:JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name || ''
     }
-    console.log("it happened",navigation);
+    console.log("it happened",navigation,data);
     socket.emit("selected_topic_req_health_ins", data)
 }, [socket,navigation])
 

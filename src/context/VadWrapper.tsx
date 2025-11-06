@@ -24,6 +24,9 @@ export default function VadWrapper({children}){
     const ngrokServerUrl = ''
     const {socket,isSocketConnected,setMsgLoading} = useData()
     const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
+    const agent_name = JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name || ''
+    // console.log("agent name is",agent_name);
+    
     //('roomId in vad wrapper',roomId)
       const navigation = useAppSelector((state) => state.healthManagmentReducer.navigation)
       //console.log('navigation in vad wrapper',roomId,navigation)
@@ -103,9 +106,10 @@ async function processAudioToBase64(audio,url,data){
       jobid: "abcde",
       agentid: "1234",
       name: name,
+      agent_name:agent_name,
     }
 
-    //console.log("Emitting questions_loader_req_heal_v2 with payload:", questionsApiReqPayload)
+    console.log("Emitting questions_loader_req_heal_v2 with payload:", questionsApiReqPayload)
     socket.emit("questions_loader_req_health_ins", questionsApiReqPayload)
     },[socket,isSocketConnected])
 
@@ -150,6 +154,7 @@ async function processAudioToBase64(audio,url,data){
               //custemailid: custEmailId,
               //isHost: isHost,
               name: name, 
+              agent_name:agent_name,
               //sessionid:usersArrRef.current[0]?.id,
                
               speech_stop_time:`${speechStopDate.toLocaleDateString()} ${speechStopDate.toLocaleTimeString()}:${speechStopDate.getMilliseconds()}`

@@ -93,6 +93,7 @@ export default function Login() {
         setError(result.error);
       } else if (result.result === true) {
         localStorage.setItem('insurance-auth', JSON.stringify({ userid: result.data.sessionid }));
+        localStorage.setItem('agent_name',  JSON.stringify({ agent_name: email }));
         setCurrentUser({ userid: result.data.sessionid, sessionuid: uuidv4() });
       } else {
         setError('Login failed. Please check your credentials.');
