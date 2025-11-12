@@ -6,6 +6,9 @@ import { faCloudUploadAlt, faUser, faChartLine, faUserTie, faEdit, faCopy } from
 import { PostReq } from "../functions/requests"
 import { useAuth } from "../context/AuthContext"
 import { config as AppConfig } from "../configuration.js"
+import NewLeadPopup from "../components/UI2/NewLeadPopup.js"
+
+
 const MAIN_ROUTER_URL ='https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router'
 
 // --- Placeholder Components (Replace with your actual components) ---
@@ -17,6 +20,9 @@ const DataContext = createContext(null)
 const useData = () => useContext(DataContext)
 
 const Form = ({ state, setState, submitForm, loading, error }) => {
+
+  
+
   //console.log("Form state:", state)
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -25,6 +31,7 @@ const Form = ({ state, setState, submitForm, loading, error }) => {
     
     //setState(prevState=>)
   }
+
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm flex-1">
@@ -140,6 +147,7 @@ const Form = ({ state, setState, submitForm, loading, error }) => {
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         </div>
       </form>
+      
     </div>
   )
 }
@@ -779,6 +787,8 @@ function LeadDashboard() {
   const pollingRef = useRef(null)
   const pollingRefs = useRef({})
 
+  const [isPopupVisible,setIsPopupVisible] = useState(false)
+
   const getFormData = async (url) => {
     console.log("Mock getFormData:", url)
     const resp = await PostReq(`${base_url}/recent_uploads`, { agent_id: currentUser.userid })
@@ -883,6 +893,7 @@ function LeadDashboard() {
     console.log("before submitting", data)
     try {
       await PostReq(`${base_url}/single_lead_upload`, data)
+      setIsPopupVisible(true)
       setFormState(initialState)
       getFormData(`${base_url}/recent_uploads`)
     } catch (e) {
@@ -907,6 +918,7 @@ function LeadDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <Form state={formState} setState={setFormState} submitForm={submitForm} loading={loading} error={error} />
             <UploadComp />
+            <NewLeadPopup isOpen={isPopupVisible} setIsOpen={setIsPopupVisible}/>
           </div>
 
           <div className="mt-6 pb-8">
