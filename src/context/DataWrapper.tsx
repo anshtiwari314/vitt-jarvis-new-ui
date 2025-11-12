@@ -137,12 +137,12 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
       setIsSocketConnected(false)
     }
 
-    // tempSocket.on("connect1", connected)  
-    // tempSocket.on("disconnect1", disconnect)
+    tempSocket.on("connect1", connected)  
+    tempSocket.on("disconnect1", disconnect)
 
-    // tempSocket.on('questions_loader_res', initialisationSalesState)
-    // tempSocket.on('ai_suggestion_res', updateSalesState)
-    // tempSocket.on('notifications',updateNotifications)
+    tempSocket.on('questions_loader_res', initialisationSalesState)
+    tempSocket.on('ai_suggestion_res', updateSalesState)
+    tempSocket.on('notifications',updateNotifications)
     setSocket(tempSocket)
     return () => {
       timer && clearTimeout(timer)
