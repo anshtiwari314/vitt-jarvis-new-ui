@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCloudUploadAlt, faUser, faChartLine, faUserTie, faEdit, faCopy } from "@fortawesome/free-solid-svg-icons"
 import { PostReq } from "../functions/requests"
 import { useAuth } from "../context/AuthContext"
+import NewLeadPopup from "../components/UI2/NewLeadPopup"
 // --- Placeholder Components (Replace with your actual components) ---
 
 // Mock Data Context for demonstration
@@ -778,6 +779,8 @@ function LeadDashboard() {
   const pollingRef = useRef(null)
   const pollingRefs = useRef({})
 
+  const [isPopupVisible,setIsPopupVisible] = useState(false)
+
   const getFormData = async (url) => {
     console.log("Mock getFormData:", url)
     const resp = await PostReq(`${base_url}/recent_uploads`, { agent_id: currentUser.userid })
@@ -877,6 +880,7 @@ function LeadDashboard() {
 
     try {
       await PostReq(`${base_url}/single_lead_upload`, data)
+      setIsPopupVisible(true)
       setFormState(initialState)
       getFormData(`${base_url}/recent_uploads`)
     } catch (e) {
@@ -898,6 +902,7 @@ function LeadDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <Form state={formState} setState={setFormState} submitForm={submitForm} loading={loading} error={error} />
             <UploadComp />
+            <NewLeadPopup isOpen={isPopupVisible} setIsOpen={setIsPopupVisible}/>
           </div>
 
           <div className="mt-6 pb-8">
