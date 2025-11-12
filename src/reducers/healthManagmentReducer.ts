@@ -1,4 +1,5 @@
 import { createSlice,current } from "@reduxjs/toolkit";
+import Recommendations from "../components/UI2/Recommendations";
 
 
 export interface HealthData {
@@ -18,11 +19,16 @@ export interface HealthData {
     }[];
   };
   Recommendations: {
-    planName: string;
-    sumInsured: string | number;
-    premium: string | number;
-    riders: { name: string; price: string | number }[];
-  };
+  Recommendations: [
+    {
+      planName: { heading: '', value: '' },
+      sumInsured: { heading: '', value: '' },
+      premium: { heading: '', value: '' },
+      reason: { heading: 'reason', value: '' },
+      riders: []
+    }
+  ]
+}
   
   planSummary: {
     summary:{
@@ -276,6 +282,7 @@ const initialCopilotLoadState= {
 
 const initialCopilotState = {
   "navigation": "",
+  "planSelected":"",
   "chat": [],
   "clientName":"",
   "salesData": {
@@ -325,16 +332,17 @@ const initialCopilotState = {
       }
     },
     "Recommendations": {
-      "planName": {heading:'',value:''},
-      "sumInsured": {heading:'',value:''},
-      "premium": {heading:'',value:''},
-      "reason":{heading:'reason',value:''},
-      "riders": [
-        // { "name": "", "price": 0 },
-        // { "name": "", "price": 0 },
-        // { "name": "", "price": 0 }
+      "Recommendations": [
+        {
+          "planName": { "heading": "", "value": "" },
+          "sumInsured": { "heading": "", "value": "" },
+          "premium": { "heading": "", "value": "" },
+          "reason": { "heading": "reason", "value": "" },
+          "riders": []
+        }
       ]
     },
+
     "PlanSummary":{
         "type":"",
         "data":""
@@ -485,17 +493,18 @@ const healthReducerSlice = createSlice({
 
    setNavigation: (state, action) => {
         console.log("it got hitted");
-
         const navMap = {
           basicInfo: "Basic Info",
           healthProfile: "Health Profile",
           recommendations: "Recommendations",
           planSummary: "Plan Summary", 
         };
-
       const readableName = navMap[action.payload] || action.payload; 
       state.navigation = readableName;
     },
+    setPlanSelected:(state,action)=>{
+      state.planSelected=action.payload;
+    }
   },
 });
 export const { initSalesState,
@@ -503,7 +512,7 @@ export const { initSalesState,
   updateFollowUpQn,
   addCues,updateCues,updateAlerts,updateHeathProfile,
   updatePlanSummary,updateRecommendation,
-  setNavigation } = healthReducerSlice.actions;
+  setNavigation,setPlanSelected } = healthReducerSlice.actions;
 
 export default {
   healthReducerSlice: healthReducerSlice.reducer,

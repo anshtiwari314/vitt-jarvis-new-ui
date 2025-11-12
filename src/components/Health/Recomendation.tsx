@@ -8,12 +8,28 @@ interface Rider {
   include: boolean;
 }
 
+interface Field {
+  heading: string;
+  value: string | number;
+}
+
+interface TextField {
+  heading: string;
+  value: string;
+}
+
+interface RidersField {
+  heading: string;
+  value: Rider[];
+}
+
 interface PlanProps {
-  planName: string;
-  sumInsured: string | number;
-  premium: string | number;
-  reason: string;
-  riders: Rider[];
+  planName: Field;
+  sumInsured: Field;
+  premium: Field;
+  reason: TextField;
+  keyFetures: TextField;
+  riders: RidersField;
 }
 
 const riderDescMap: Record<string, string> = {
@@ -50,20 +66,29 @@ export default function RecommendedHealthPlan({
   sumInsured,
   premium,
   reason,
+  keyFetures,
   riders: initialRiders,
 }: PlanProps) {
-  console.log({ planName, sumInsured, premium, reason, initialRiders },"from Recomendation");
-  const [reasonOpen, setReasonOpen] = useState(false);
-  const [riders, setRiders] = useState<Rider[]>(initialRiders);
-
+ console.log("all the values are", {
+    planName,
+    sumInsured,
+    premium,
+    reason,
+    keyFetures,
+    initialRiders,
+  });
   
+  const [reasonOpen, setReasonOpen] = useState(false);
+  const [keyFeturesOpen, setKeyFeturesOpen] = useState(false);
+  const [riders, setRiders] = useState<RidersField>(initialRiders);
+
   const handleToggle = (index: number) => {
-    const updatedRiders = riders.map((r, i) =>
+    const updatedList = riders.value.map((r, i) =>
       i === index ? { ...r, include: !r.include } : r
     );
-    setRiders(updatedRiders);
+    setRiders({ ...riders, value: updatedList });
 
-    const toggledRider = { ...riders[index], include: !riders[index].include };
+    const toggledRider = { ...riders.value[index], include: !riders.value[index].include };
 
     fetch("/api/update-rider", {
       method: "POST",
@@ -75,6 +100,11 @@ export default function RecommendedHealthPlan({
       .catch((err) => console.error("API update failed", err));
   };
 
+  const keyFeturesValue =
+    keyFetures?.value ||
+    "• Cashless treatment at 10,000+ network hospitals across India.<br/>• No claim bonus up to 100% of sum insured.<br/>• Coverage for pre-existing diseases after a waiting period.";
+  console.log("key feature value",keyFeturesValue);
+  
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6 border-2 border-sky-200 hover:border-sky-500 transition-colors duration-300">
       {/* Header */}
@@ -86,7 +116,7 @@ export default function RecommendedHealthPlan({
           <div>
             <p className="text-sm text-slate-500">{planName.heading}</p>
             <p className="font-semibold text-slate-700">
-              {planName.value.toUpperCase()}
+              {String(planName.value).toUpperCase()}
             </p>
           </div>
           <div>
@@ -107,7 +137,9 @@ export default function RecommendedHealthPlan({
             onClick={() => setReasonOpen(!reasonOpen)}
             className="w-full flex items-center justify-between px-5 py-3 text-left"
           >
-            <h3 className="text-lg font-semibold text-slate-700">{reason?.heading}</h3>
+            <h3 className="text-lg font-semibold text-slate-700">
+              {reason.heading}
+            </h3>
             {reasonOpen ? (
               <ExpandMoreIcon className="text-slate-600" />
             ) : (
@@ -121,14 +153,50 @@ export default function RecommendedHealthPlan({
                 .split("<br/>")
                 .filter((point) => point.trim())
                 .map((point, idx) => (
-                  <li key={idx} dangerouslySetInnerHTML={{ __html: point.trim() }} />
+                  <li
+                    key={idx}
+                    dangerouslySetInnerHTML={{ __html: point.trim() }}
+                  />
                 ))}
             </ul>
           )}
         </div>
       )}
 
-      {/* Riders Section */}
+      {/* Key Features */}
+      {keyFetures && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl shadow-sm">
+          <button
+            onClick={() => setKeyFeturesOpen(!keyFeturesOpen)}
+            className="w-full flex items-center justify-between px-5 py-3 text-left"
+          >
+            <h3 className="text-lg font-semibold text-slate-700">
+              {keyFetures.heading}
+            </h3>
+            {keyFeturesOpen ? (
+              <ExpandMoreIcon className="text-slate-600" />
+            ) : (
+              <ChevronRightIcon className="text-slate-600" />
+            )}
+          </button>
+
+          {keyFeturesOpen && (
+            <ul className="list-disc pl-10 pr-5 pb-4 space-y-2 text-slate-600 leading-relaxed">
+              {keyFeturesValue
+                
+                .filter((point) => point.trim())
+                .map((point, idx) => (
+                  <li
+                    key={idx}
+                    dangerouslySetInnerHTML={{ __html: point.trim() }}
+                  />
+                ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {/* Riders */}
       <div>
         <h3 className="text-lg font-semibold text-slate-700 mb-4">
           {riders.heading}
@@ -159,7 +227,9 @@ export default function RecommendedHealthPlan({
               </div>
             ))
           ) : (
-            <p className="text-slate-500 text-sm">No add-ons available for this plan.</p>
+            <p className="text-slate-500 text-sm">
+              No add-ons available for this plan.
+            </p>
           )}
         </div>
       </div>

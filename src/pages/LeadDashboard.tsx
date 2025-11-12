@@ -1,145 +1,113 @@
-"use client"
-
 import { useEffect, useState, createContext, useContext, useRef } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCloudUploadAlt, faUser, faChartLine, faUserTie, faEdit, faCopy } from "@fortawesome/free-solid-svg-icons"
 import { PostReq } from "../functions/requests"
 import { useAuth } from "../context/AuthContext"
 import { config as AppConfig } from "../configuration.js"
-const MAIN_ROUTER_URL ='https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router'
-
-// --- Placeholder Components (Replace with your actual components) ---
-
-// Mock Data Context for demonstration
+const MAIN_ROUTER_URL = "https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router"
 
 const DataContext = createContext(null)
 
 const useData = () => useContext(DataContext)
 
-const Form = ({ state, setState, submitForm, loading, error }) => {
-  //console.log("Form state:", state)
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    console.log('handle change in form ',e.target.name ,e.target.value)
-    setState((prevState) => ({ ...prevState, [name]: value }))
-    
-    //setState(prevState=>)
+const Form = ({ submitForm, loading, error }) => {
+  const [fields, setFields] = useState([])
+  const [formState, setFormState] = useState({})
+
+  useEffect(() => {
+    const fetchDynamicFields = async () => {
+      try {
+        const agentData = JSON.parse(localStorage.getItem("agent_name"))
+        const agent_name = agentData?.agent_name || ""
+        const res = await fetch(MAIN_ROUTER_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            trigger_func: "req_lms_field_names",
+            params: { agent_name, type: "HI" },
+          }),
+        })
+
+        const data = await res.json()
+        console.log("Fetched field data:", data)
+        if (data?.field_data) {
+          setFields(data.field_data)
+
+          const initialState = {}
+          data.field_data.forEach((f) => {
+            initialState[f.cell_name] = Array.isArray(f.cell_value) ? f.cell_value[0] : f.cell_value || ""
+          })
+          setFormState(initialState)
+        }
+      } catch (err) {
+        console.error("Error fetching field data:", err)
+      }
+    }
+
+    fetchDynamicFields()
+  }, [])
+
+  const handleChange = (e, name) => {
+    const { value } = e.target
+    setFormState((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    submitForm(formState)
   }
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm flex-1">
       <h3 className="text-lg font-semibold text-slate-700 mb-4">Add New Lead</h3>
-      <form onSubmit={submitForm} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-        <div>
-          <label htmlFor="fname" className="block text-slate-500 mb-1">
-            First Name
-          </label>
-          <input
-            type="text"
-            id="fname"
-            name="fname"
-            value={state.fname}
-            onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-          />
-        </div>
-        <div>
-          <label htmlFor="lname" className="block text-slate-500 mb-1">
-            Last Name
-          </label>
-          <input
-            type="text"
-            id="lname"
-            name="lname"
-            value={state.lname}
-            onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-          />
-        </div>
-        <div>
-          <label htmlFor="email" className="block text-slate-500 mb-1">
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={state.email}
-            onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-          />
-        </div>
-        <div>
-          <label htmlFor="mob" className="block text-slate-500 mb-1">
-            Mobile Number
-          </label>
-          <input
-            type="text"
-            id="mob"
-            name="mob"
-            value={state.mob}
-            onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-          />
-        </div>
-        <div>
-          <label htmlFor="leadSourceFrom" className="block text-slate-500 mb-1">
-            Lead Source
-          </label>
-          <select
-            id="leadSourceFrom"
-            name="leadSourceFrom"
-            value={state.leadSourceFrom}
-            onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-          >
-            <option value="social-media">Social Media</option>
-            <option value="website">Website</option>
-            <option value="referral">Referral</option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor="priority" className="block text-slate-500 mb-1">
-            Priority
-          </label>
-          <select
-            id="priority"
-            name="priority"
-            value={state.priority}
-            onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor="priority" className="block text-slate-500 mb-1">
-            Language
-          </label>
-          <select
-            id="Language"
-            name="language"
-            value={state.langauge}
-            onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-          >
-            <option value="Marathi">Marathi</option>
-            <option value="English">English</option>
-          </select>
-        </div>
-        <div className="md:col-span-2">
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-200"
-            disabled={loading}
-          >
-            {loading ? "Submitting..." : state?.lead_id ? "Upload Lead" : "Add Lead"}
-          </button>
-          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-        </div>
-      </form>
+
+      {fields.length === 0 ? (
+        <p className="text-gray-500 text-sm">Loading form fields...</p>
+      ) : (
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+          {fields.map((field, index) => (
+            <div key={index}>
+              <label className="block text-slate-500 mb-1">{field.cell_name}</label>
+
+              {field.type === "user-input" ? (
+                <input
+                  type="text"
+                  name={field.cell_name}
+                  value={formState[field.cell_name] || ""}
+                  onChange={(e) => handleChange(e, field.cell_name)}
+                  className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
+                />
+              ) : field.type === "drop-down" ? (
+                <select
+                  name={field.cell_name}
+                  value={formState[field.cell_name] || ""}
+                  onChange={(e) => handleChange(e, field.cell_name)}
+                  className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
+                >
+                  {field.cell_value.map((opt, i) => (
+                    <option key={i} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              ) : null}
+            </div>
+          ))}
+
+          <div className="md:col-span-2">
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-200"
+              disabled={loading}
+            >
+              {loading ? "Submitting..." : "Add Lead"}
+            </button>
+            {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+          </div>
+        </form>
+      )}
     </div>
   )
 }
@@ -165,22 +133,20 @@ const UploadComp = () => {
 }
 
 export function Table({ setFormState, initialFormState }) {
-  const { formData, base_url, getFormData } = useData() // Using mock data from context
-  const leads = formData || [] // Ensure leads is an array
+  const { formData, base_url, getFormData } = useData()
+  const leads = formData || []
   const hiLeads = Array.isArray(leads) ? leads.filter((l) => String(l?.lead_type || "").toUpperCase() === "HI") : []
 
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
 
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10) // 10 entries per page as requested
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
-  // State to manage copy feedback message
-  const [copyFeedback, setCopyFeedback] = useState({}) // { leadId: 'Copied!' }
+  const [copyFeedback, setCopyFeedback] = useState({})
 
-  const [insightLoading, setInsightLoading] = useState({}) // { leadId: boolean }
-  const [insightError, setInsightError] = useState({}) // { leadId: string }
-  const [insightMsg, setInsightMsg] = useState({}) // { leadId: string }
+  const [insightLoading, setInsightLoading] = useState({})
+  const [insightError, setInsightError] = useState({})
+  const [insightMsg, setInsightMsg] = useState({})
 
   const pollingTimers = useRef<Record<string, number>>({})
 
@@ -202,9 +168,8 @@ export function Table({ setFormState, initialFormState }) {
   }
 
   const startPolling = (sessionId: string, uniqueLeadId: string) => {
-    if (pollingTimers.current[uniqueLeadId]) return // already polling
+    if (pollingTimers.current[uniqueLeadId]) return
 
-    // keep the current row in loading state while polling
     setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: true }))
     setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "" }))
     setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "Checking dashboard status..." }))
@@ -215,26 +180,22 @@ export function Table({ setFormState, initialFormState }) {
           trigger_func: "ins_postfacto_status_check",
           params: { session_id: sessionId },
         })
-        const status = pollResp?.status // expects "done" | "pending"
+        const status = pollResp?.status
 
         if (status === "done") {
           stopPolling(uniqueLeadId)
           setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "Dashboard is ready" }))
           setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: false }))
 
-          // open the Postfacto dashboard
           window.open(`https://postfacto-health.netlify.app/#/${sessionId}`, "_blank", "noopener,noreferrer")
 
-          // refresh the list so postfacto_status updates to 'done'
           if (typeof getFormData === "function" && base_url) {
             getFormData(`${base_url}/recent_uploads`)
           }
         } else if (status === "pending") {
-          // continue polling; optional micro-feedback
           setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "Preparing dashboard…" }))
         }
       } catch (_e) {
-        // transient errors; keep polling
         setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "Status check failed, retrying..." }))
         setTimeout(() => {
           setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "" }))
@@ -246,7 +207,7 @@ export function Table({ setFormState, initialFormState }) {
   }
 
   function enableEdit(lead) {
-    const { name, mob, email, priority, source, lead_id, link_params,pref_language } = lead
+    const { name, mob, email, priority, source, lead_id, link_params, pref_language } = lead
     const [fname, ...restName] = name.split(" ")
 
     console.log("enable edit", lead)
@@ -260,7 +221,7 @@ export function Table({ setFormState, initialFormState }) {
       email,
       priority,
       leadSourceFrom: source,
-      pref_language
+      pref_language,
     })
   }
 
@@ -288,7 +249,6 @@ export function Table({ setFormState, initialFormState }) {
       const cidMatch = linkParams.match(/cid_\w+/)
       const sessionId = cidMatch ? cidMatch[0] : "cid_8459"
 
-      // Initial trigger
       const response = await PostReq(MAIN_ROUTER_URL, {
         trigger_func: "trigger_metrics_HI",
         params: { session_id: sessionId },
@@ -309,12 +269,10 @@ export function Table({ setFormState, initialFormState }) {
         return
       }
       if (msg === "session not done") {
-        // stop loading; user can try again later
         setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: false }))
         return
       }
 
-      // If backend ever returns immediate done (rare)
       if (response?.status === "done") {
         setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "Dashboard is ready" }))
         setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: false }))
@@ -411,7 +369,7 @@ export function Table({ setFormState, initialFormState }) {
     const textarea = document.createElement("textarea")
     textarea.value = textToCopy
     textarea.style.position = "fixed"
-    textarea.style.opacity = 0
+    textarea.style.opacity = "0"
     document.body.appendChild(textarea)
     textarea.focus()
     textarea.select()
@@ -447,7 +405,6 @@ export function Table({ setFormState, initialFormState }) {
         <p className="text-slate-500 text-center py-4">No HI leads found.</p>
       ) : (
         <>
-          {/* --- This div enables horizontal scrolling --- */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
@@ -482,7 +439,6 @@ export function Table({ setFormState, initialFormState }) {
                   >
                     Created At
                   </th>
-                  
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -495,7 +451,6 @@ export function Table({ setFormState, initialFormState }) {
                   >
                     Source
                   </th>
-
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -524,7 +479,7 @@ export function Table({ setFormState, initialFormState }) {
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
                 {currentLeads.map((lead, index) => {
-                  console.log('lead_links',lead.link_params)
+                  console.log("lead_links", lead.link_params)
                   const linkToCopy = lead.link_params
                     ? `${window.location.protocol}//${window.location.host}/#/mainpage/?${lead.link_params}&${lead.pref_language.toLowerCase()}`
                     : "#"
@@ -532,14 +487,23 @@ export function Table({ setFormState, initialFormState }) {
                   const uniqueLeadId = lead.id || lead.lead_id || `lead-${lead.name}-${lead.mob}`
                   return (
                     <tr key={uniqueLeadId}>
-                      {/* --- This is the class you want: text-xs md:text-sm --- */}
-                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm font-medium text-slate-900">{lead.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm font-medium text-slate-900">
+                        {lead.name}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">{lead.mob}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">{lead.email}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">{lead.pref_language}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">{lead.timestamp}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500 capitalize">{lead.priority}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500 capitalize">{lead.source}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">
+                        {lead.pref_language}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">
+                        {lead.timestamp}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500 capitalize">
+                        {lead.priority}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500 capitalize">
+                        {lead.source}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500 flex items-center space-x-2">
                         <a href={linkToCopy} className="text-blue-600 hover:underline" rel="noopener noreferrer">
                           Link
@@ -632,7 +596,6 @@ export function Table({ setFormState, initialFormState }) {
             </table>
           </div>
 
-          {/* --- This pagination is responsive --- */}
           <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="text-sm text-slate-600 text-center md:text-left">
               {totalItems > 0 ? (
@@ -680,12 +643,7 @@ export function Table({ setFormState, initialFormState }) {
                       type="button"
                       onClick={() => paginate(p)}
                       aria-current={currentPage === p ? "page" : undefined}
-                      className={`px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500
-                        ${
-                          currentPage === p
-                            ? "border-blue-600 bg-blue-50 text-blue-700"
-                            : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800"
-                        }`}
+                      className={`px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentPage === p ? "border-blue-600 bg-blue-50 text-blue-700" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800"}`}
                     >
                       {p}
                     </button>
@@ -775,7 +733,7 @@ function LeadDashboard() {
   const [formData, setFormData] = useState([])
   const base_url = AppConfig.serverBaseUrl
   const { currentUser } = useAuth()
-  console.log(currentUser.userid,"the current user is")
+  console.log(currentUser.userid, "the current user is")
   const pollingRef = useRef(null)
   const pollingRefs = useRef({})
 
@@ -815,7 +773,7 @@ function LeadDashboard() {
     leadSourceFrom: "social-media",
     file: null,
     priority: "low",
-    language:"Marathi",
+    language: "Marathi",
   }
 
   const [formState, setFormState] = useState(initialState)
@@ -830,14 +788,13 @@ function LeadDashboard() {
     { name: "Sales Manager Dashboard", icon: faChartLine, redirectTo: "/#/sales-manager-dashboard", isActive: false },
   ]
 
-  useEffect(()=>{
-    console.log('form state',formState)
-  },[formState])
+  useEffect(() => {
+    console.log("form state", formState)
+  }, [formState])
 
   useEffect(() => {
     getFormData(`${base_url}/recent_uploads`)
 
-    // Polling setup
     const interval = setInterval(() => {
       if (!pollingRef.current) return
       getFormData(`${base_url}/recent_uploads`)
@@ -849,34 +806,32 @@ function LeadDashboard() {
     }
   }, [])
 
-  async function submitForm(e) {
+  async function submitForm(formDataToSubmit:any) {
     setLoading(true)
     setError("")
-    e.preventDefault()
+    console.log("Submitting form data:", formDataToSubmit)
 
+    const requiredFields = ["First Name", "Last Name", "Email", "Mobile Number", "Priority", "Lead Source"]
+    const hasEmptyFields = requiredFields.some((field) => {
+      const value = formDataToSubmit[field]
+      return value === "" || value === null || value === undefined
+    })
 
-    if (
-      formState.fname === "" ||
-      formState.lname === "" ||
-      formState.email === "" ||
-      formState.mob === "" ||
-      formState.priority === "" ||
-      formState.leadSourceFrom === ""
-    ) {
+    if (hasEmptyFields) {
       setError("Please fill all fields of form")
       setLoading(false)
       return
     }
 
     const data = {
-      lead_id: formState.lead_id,
-      customer_name: formState.fname + " " + formState.lname,
-      mobile_num: formState.mob,
-      email: formState.email,
-      priority: formState.priority,
-      source: formState.leadSourceFrom,
+      lead_id: formDataToSubmit.lead_id,
+      customer_name: formDataToSubmit["First Name"]+ " " + formDataToSubmit["Last Name"],
+      mobile_num: formDataToSubmit["Mobile Number"],
+      email: formDataToSubmit.Email,
+      priority: formDataToSubmit.Priority,
+      source: formDataToSubmit["Lead Source"],
       agent_id: currentUser.userid,
-      pref_language: formState.language,
+      pref_language: formDataToSubmit.Language || "Marathi",
       lead_type: "HI",
     }
 
@@ -889,9 +844,6 @@ function LeadDashboard() {
       console.error(e)
       setError("Failed to submit lead.")
     }
-
-
-
     setLoading(false)
   }
 
@@ -899,7 +851,7 @@ function LeadDashboard() {
     <DataContext.Provider value={{ base_url, getFormData, formData }}>
       <div className="min-h-screen bg-slate-100 font-sans" style={{}}>
         {/* <Sidebar links={mylink} /> */}
-        <div style={{ }} className="mx-0 lg:mx-[8rem]">
+        <div style={{}} className="mx-0 lg:mx-[8rem]">
           <div className="py-6">
             <Header title="Lead Management" dashboardLink="/#/" />
           </div>
@@ -910,7 +862,7 @@ function LeadDashboard() {
           </div>
 
           <div className="mt-6 pb-8">
-            <Table formState={formState} setFormState={setFormState} />
+            <Table formState={formState} setFormState={setFormState} initialFormState={initialState} />
           </div>
         </div>
       </div>
