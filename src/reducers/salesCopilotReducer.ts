@@ -458,7 +458,7 @@ const initialCopilotState = {
 
 const salesCopilotSlice = createSlice({
   name: "salesCopilotReducer", // Changed from "usersReducer" for consistency
-  initialState: initialCopilotLoadState,
+  initialState: initialCopilotState,
   reducers: {
     initSalesState:(state,action)=>{
       console.log('action payload',action.payload)
