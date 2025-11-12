@@ -266,11 +266,38 @@ const initialCopilotLoadState= {
     cues:{ 
       header:'ai cues',
       cards :[
-        
+        {
+          header:'Follow-up Question',
+          card_type:'notification_card',
+          options:["true","false"],
+          text:`Lorem Ipsum is simply dummy text of the printing 
+              and typesetting industry. Lorem Ipsum has been the industry's 
+              standard dummy text ever since the 1500s, when an unknown printer 
+              took a galley of type and scrambled it to make a type 
+              specimen book. It has survived not only five centuries, but also 
+              the leap into electronic typesetting, remaining essentially unchanged. 
+              It was popularised in the 1960s with the release of Letraset 
+              sheets containing Lorem Ipsum passages, and more recently with 
+              desktop publishing software like Aldus PageMaker including 
+              versions of Lorem Ipsum.`
+
+        },
+
         {
           header:'Follow-up Question',
           color:'blue',
+          
           type:'regular-card',
+          text:`Lorem Ipsum is simply dummy text of the printing 
+              and typesetting industry. Lorem Ipsum has been the industry's 
+              standard dummy text ever since the 1500s, when an unknown printer 
+              took a galley of type and scrambled it to make a type 
+              specimen book. It has survived not only five centuries, but also 
+              the leap into electronic typesetting, remaining essentially unchanged. 
+              It was popularised in the 1960s with the release of Letraset 
+              sheets containing Lorem Ipsum passages, and more recently with 
+              desktop publishing software like Aldus PageMaker including 
+              versions of Lorem Ipsum.`,
            data:[
             {
               id:'unique',
@@ -431,7 +458,7 @@ const initialCopilotState = {
 
 const salesCopilotSlice = createSlice({
   name: "salesCopilotReducer", // Changed from "usersReducer" for consistency
-  initialState: initialCopilotState,
+  initialState: initialCopilotLoadState,
   reducers: {
     initSalesState:(state,action)=>{
       console.log('action payload',action.payload)

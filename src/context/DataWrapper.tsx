@@ -161,12 +161,12 @@ useEffect(()=>{
         setIsSocketConnected(false)
         }
 
-        tempSocket.on("connect", connected);
-        tempSocket.on("disconnect", disconnect);
+        // tempSocket.on("connect", connected);
+        // tempSocket.on("disconnect", disconnect);
 
-        tempSocket.on('questions_loader_res',initialisationSalesState)
-        tempSocket.on('ai_suggestion_res',updateSalesState)
-        tempSocket.on('notifications',updateNotifications)
+        // tempSocket.on('questions_loader_res',initialisationSalesState)
+        // tempSocket.on('ai_suggestion_res',updateSalesState)
+        // tempSocket.on('notifications',updateNotifications)
         
     setSocket(tempSocket)
 

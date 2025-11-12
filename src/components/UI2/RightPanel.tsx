@@ -106,12 +106,14 @@ function NotificationCard({card}){
       flex flex-col space-y-3 shadow-sm my-2
       flex-shrink-0    /* <--- 💡 THE FIX (Part 1): Added flex-shrink-0 */
       min-w-64         /* <--- 💡 THE FIX (Part 2): Added min-w to match other cards */
+      max-w-80
       max-h-32
       mx-2
       overflow-y-scroll
 
-      sm:min-w-min      /* <--- 💡 THE FIX (Part 3): Added sm:min-w to match other cards */
-      sm:max-w-96
+      sm:min-w-min
+      sm:max-w-64     /* <--- 💡 THE FIX (Part 3): Added sm:min-w to match other cards */
+      
       sm:max-h-32  
       
       lg:mx-0
