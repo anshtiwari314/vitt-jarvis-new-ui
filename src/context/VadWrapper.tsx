@@ -111,6 +111,7 @@ export default function VadWrapper({children}){
         //custemailid: custEmailId,
         //isHost: isHost,
         name: name, 
+        agent_name:JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name || ''
          //roomid: "abc-123-fgh-456",
         //name:'bayya'
          // jobid: "1",
@@ -174,6 +175,7 @@ export default function VadWrapper({children}){
               //custemailid: custEmailId,
               //isHost: isHost,
               name: name, 
+              agent_name:JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name || '',
               //sessionid:usersArrRef.current[0]?.id,
                
               speech_stop_time:`${speechStopDate.toLocaleDateString()} ${speechStopDate.toLocaleTimeString()}:${speechStopDate.getMilliseconds()}`
