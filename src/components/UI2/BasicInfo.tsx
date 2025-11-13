@@ -46,7 +46,7 @@ export default function BasicInfo({ data }: Props) {
                 <input
                   type="text"
                   onChange={(e)=>updateBasicInfoFields(key,e.target.value)}
-                  defaultValue={value ?? ''} // Show blank if null or undefined
+                  value={value ?? ''} // Show blank if null or undefined
                   className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
                   //readOnly
                 />

@@ -266,29 +266,64 @@ const initialCopilotLoadState= {
     cues:{ 
       header:'ai cues',
       cards :[
-        // {
-        //   // visibility:false,
-        //   header:"",
-        //   color:'orange',
-        //   type:'notification-card',
-        //   options:[],
-        //   old_json:{},
-        //   new_json:{},
-        //   old_json_raw:{},
-        //   new_json_raw:{}
-        // },
+        {
+          header:'Follow-up Question',
+          card_type:'notification_card',
+          options:["true","false"],
+          text:`Lorem Ipsum is simply dummy text of the printing 
+              and typesetting industry. Lorem Ipsum has been the industry's 
+              standard dummy text ever since the 1500s, when an unknown printer 
+              took a galley of type and scrambled it to make a type 
+              specimen book. It has survived not only five centuries, but also 
+              the leap into electronic typesetting, remaining essentially unchanged. 
+              It was popularised in the 1960s with the release of Letraset 
+              sheets containing Lorem Ipsum passages, and more recently with 
+              desktop publishing software like Aldus PageMaker including 
+              versions of Lorem Ipsum.`
+
+        },
+
         {
           header:'Follow-up Question',
           color:'blue',
+          
           type:'regular-card',
+          text:`Lorem Ipsum is simply dummy text of the printing 
+              and typesetting industry. Lorem Ipsum has been the industry's 
+              standard dummy text ever since the 1500s, when an unknown printer 
+              took a galley of type and scrambled it to make a type 
+              specimen book. It has survived not only five centuries, but also 
+              the leap into electronic typesetting, remaining essentially unchanged. 
+              It was popularised in the 1960s with the release of Letraset 
+              sheets containing Lorem Ipsum passages, and more recently with 
+              desktop publishing software like Aldus PageMaker including 
+              versions of Lorem Ipsum.`,
            data:[
             {
               id:'unique',
-              text:'Primary financial goals?'
+              text:`Lorem Ipsum is simply dummy text of the printing 
+              and typesetting industry. Lorem Ipsum has been the industry's 
+              standard dummy text ever since the 1500s, when an unknown printer 
+              took a galley of type and scrambled it to make a type 
+              specimen book. It has survived not only five centuries, but also 
+              the leap into electronic typesetting, remaining essentially unchanged. 
+              It was popularised in the 1960s with the release of Letraset 
+              sheets containing Lorem Ipsum passages, and more recently with 
+              desktop publishing software like Aldus PageMaker including 
+              versions of Lorem Ipsum.`
             },
             {
               id:'unique',
-              text:'Typical month financially?'
+             text:`Lorem Ipsum is simply dummy text of the printing 
+              and typesetting industry. Lorem Ipsum has been the industry's 
+              standard dummy text ever since the 1500s, when an unknown printer 
+              took a galley of type and scrambled it to make a type 
+              specimen book. It has survived not only five centuries, but also 
+              the leap into electronic typesetting, remaining essentially unchanged. 
+              It was popularised in the 1960s with the release of Letraset 
+              sheets containing Lorem Ipsum passages, and more recently with 
+              desktop publishing software like Aldus PageMaker including 
+              versions of Lorem Ipsum.`
             }
           ],
         },
@@ -326,49 +361,7 @@ const initialCopilotLoadState= {
         }
       ] 
     }
-    // followUpQn:{
-    //   header:'Follow-up Question',
-    //   data:[
-    //     {
-    //       id:'unique',
-    //       text:'Primary financial goals?'
-    //     },
-    //     {
-    //       id:'unique',
-    //       text:'Typical month financially?'
-    //     }
-    //   ],
-    // },
-    // cues:{
-    //   header:'Answer to "Why Term Plan?',
-    //   data:[
-    //     {
-    //       id:'unique',
-    //       text:'Financial safety net.'
-    //     },
-    //     {
-    //       id:'unique',
-    //       text:"Covers loans, secures family's future."
-    //     },
-    //     {
-    //       id:'unique',
-    //       text:"Most affordable, high-cover option."
-    //     }
-    //   ],
-    // },
-    // alert:{
-    //   header:'Compliance Alert',
-    //   data:[
-    //     {
-    //       id:'unique',
-    //       text:'Disclose commission structures if asked.'
-    //     },
-    //     {
-    //       id:'unique',
-    //       text:'Avoid guaranteeing returns.'
-    //     }
-    //   ]
-    // }
+    
   }
 };
 
@@ -455,45 +448,11 @@ const initialCopilotState = {
     //   "header": "",
     //   "data": []
     // }
-     "followUpQn": {
-           "header": 'Follow-up Question',
-           "data": [
-               {
-                   "id": 'unique1',
-                   "text": ''
-               },
-               {
-                   "id": 'unique2',
-                   "text": ''
-               }
-           ],
-       },
-       "cues": {
-           "header": 'User Cues',
-           "data": [
-               {
-                   "id": 'unique1',
-                   "text": ''
-               },
-               {
-                   "id": 'unique2',
-                   "text": ''
-               }
-           ],
-       },
-       "alert": {
-           "header": 'Compliance Alert',
-           "data": [
-              //  {
-              //      "id": 'unique1',
-              //      "text": 'Disclose commission structures if asked.'
-              //  },
-              //  {
-              //      "id": 'unique2',
-              //      "text": 'Avoid guaranteeing returns.'
-              //  }
-           ]
-       }
+    "cues":{
+      header:"",
+      cards:[]
+    },
+    
   }
 }
 
@@ -514,6 +473,9 @@ const salesCopilotSlice = createSlice({
         ...state.salesData,
         ...action.payload
       }
+
+      console.log('state after update sales copilot runs',state.salesData)
+      return state 
     },
     updateBasicInfo: (state, action) => {
       console.log('add chat triggers', action.payload, current(state));
@@ -524,13 +486,17 @@ const salesCopilotSlice = createSlice({
         ...state.salesData.basicInfo,
         ...action.payload
       }
-      // console.log("afyter update",state.salesData.basicInfo,"Debug")
+       console.log("afyter update",state.salesData.basicInfo,"Debug")
+
+       return state;
     },
     updateAssets:(state,action)=>{
       state.salesData.assets={
         ...state.salesData.assets,
         ...action.payload,
       }
+     
+      return state;
     },
     updateLiabilities:(state,action)=>{
       console.log('liabilities',action)
@@ -539,17 +505,24 @@ const salesCopilotSlice = createSlice({
         ...state.salesData.liabilities,
         ...action.payload
       }
+      return state;
     },
     updateFinancialGoals: (state, action) => {
       state.salesData.financialGoals = action.payload;
+
+      return state;
     },
 
     updatePlanSummary: (state, action) => {
       state.salesData.planSummary = action.payload;
+
+      return state;
     },
 
     updateRecommendations: (state, action) => {
       state.salesData.recommendations = action.payload;
+
+      return state;
     },
     updateFollowUpQn:(state,action)=>{
       console.log("follow up question that came",action.payload);
@@ -558,6 +531,7 @@ const salesCopilotSlice = createSlice({
         ...action.payload
       }
       console.log("follow up question that got updated",state.salesData.followUpQn);
+      return state;
     },
     addCues:(state,action)=>{
       console.log('add cues trigger',action.payload)
@@ -566,13 +540,13 @@ const salesCopilotSlice = createSlice({
         ...state.salesData.cues.cards
         
       ]
-
+      return state 
     },
     updateCues: (state, action) => {
-      state.salesData.cues = {
-        ...state.salesData.cues,
-        ...action.payload,
-      }
+      // state.salesData.cues = {
+      //   ...state.salesData.cues,
+      //   ...action.payload,
+      // }
       
     },
     updateAlerts: (state, action) => {
@@ -580,6 +554,7 @@ const salesCopilotSlice = createSlice({
         ...state.salesData.alert,
         ...action.payload,
       };
+      return state
     },
 
    setNavigation: (state, action) => {
@@ -596,6 +571,8 @@ const salesCopilotSlice = createSlice({
 
       const readableName = navMap[action.payload] || action.payload; 
       state.navigation = readableName;
+
+      return state 
     },
     setRecomendationSelected:(state,action)=>{
       state.RecomendationSelected=action.payload;

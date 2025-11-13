@@ -4,79 +4,8 @@ import { useData } from "../../context/DataWrapper";
 import { useDispatch } from "react-redux";
 import { updateSalesCopilotState } from "../../reducers/salesCopilotReducer";
 import ReactHtmlParser from 'react-html-parser';
-import DraggableWindow from "./DraggableWindow";
-//import NotificationCard from "./NotificationCard";
 
-export default function RightPanel() {
-  const [cues] = useAppSelector((state) => [state.salesCopilotReducer.salesData.cues]);
-
-  // State to manage the input values for the new UI element
-  const [oldValue, setOldValue] = useState("");
-  const [newValue, setNewValue] = useState("");
-  const {toggleNotificationModal,setToggleNotificationModal,socket} = useData()
-  const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
-  
-  const dispatch = useDispatch()
-  
-
-  useEffect(()=>{
-    console.log('cues in right panel',cues)
-  },[cues])
-
-  return (
-    <aside className="w-full h-full bg-white lg:border-l lg:border-slate-200 lg:shadow-none lg:px-2" style={{}}>
-      
-      {/* This is your scrolling container. 
-        It has overflow-x-scroll and flex (which defaults to flex-row).
-        This is correct.
-      */}
-      <div style={{}} 
-      className={`
-      flex overflow-x-scroll mb-2
-      sm:flex-row 
-      lg:flex-col lg:items-center  lg:h-full lg:overflow-x-hidden lg:overflow-y-scroll lg:px-5 lg:mb-0` } >
-      {cues?.cards?.map((card, index) => {
-
-        const colorClass = card.color || "blue";
-
-        if(card.card_type === 'notification_card')
-          // The NotificationCard component itself needs to handle its own sizing
-          return <NotificationCard key={card.id} card={card} />
-         
-        return (
-          <div 
-            key={index} 
-            className={`
-              bg-${colorClass}-50 border border-${colorClass}-200 p-4 rounded-lg m-2 shadow-sm 
-              max-w-80 max-h-32 flex-shrink-0 overflow-y-scroll
-              sm:max-w-80
-              lg:overflow-y-visible lg:min-w-64 lg:w-full lg:max-w-full lg:h-fit lg:max-h-max lg:mx-8
-              
-            `} 
-            style={{}}
-          >
-            <h4 className={`font-semibold text-${colorClass}-800 flex items-center mb-2`}>
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
-              </svg>
-              {card?.header}
-            </h4>
-            <ul className={`list-disc list-inside space-y-1 text-${colorClass}-700 text-sm`}>
-              {card.data?.map((item, subIndex) => (
-                <li key={subIndex}>{item.text}</li>
-              ))}
-            </ul>
-          </div>
-        );
-      })}
-      </div>
-
-    </aside>
-  );
-}
-
-
-function NotificationCard({card}){
+export default function NotificationCard({card}){
 
   const [selectedOption,setSelectedOption] = useState(null)
   const {toggleNotificationModal,setToggleNotificationModal,socket} = useData()
@@ -106,21 +35,9 @@ function NotificationCard({card}){
       flex flex-col space-y-3 shadow-sm my-2
       flex-shrink-0    /* <--- 💡 THE FIX (Part 1): Added flex-shrink-0 */
       min-w-64         /* <--- 💡 THE FIX (Part 2): Added min-w to match other cards */
-      max-w-80
-      max-h-32
-      mx-2
-      overflow-y-scroll
-
-      sm:min-w-min
-      sm:max-w-64     /* <--- 💡 THE FIX (Part 3): Added sm:min-w to match other cards */
-      
-      sm:max-h-32  
-      
-      lg:mx-0
-      lg:h-fit       
-                 
-      lg:max-h-max
-      lg:overflow-y-visible
+      sm:min-w-96      /* <--- 💡 THE FIX (Part 3): Added sm:min-w to match other cards */
+      sm:max-h-32 overflow-y-scroll
+      lg:max-h-64
       lg:min-w-64 lg:w-full lg:max-w-full lg:mx-8 /* <--- Added responsive classes for lg screens */
       `}
       
@@ -170,5 +87,3 @@ function NotificationCard({card}){
       </div>
   )
 }
-
-// ... NotificationsModal remains the same

@@ -45,6 +45,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
 const [pref_language,setPref_language]=useState("English")
   const navigation = useAppSelector((state) => state.salesCopilotReducer.navigation)
   const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
+  const salesCopilotState = useAppSelector(state=>state.salesCopilotReducer)
 
   const [recommendationsGenerated,setRecommendationsGenerated] = useState(false)
   const [toggleNotificationModal,setToggleNotificationModal] = useState({
@@ -60,7 +61,7 @@ const [pref_language,setPref_language]=useState("English")
   //console.log("sales state", navigation)
 
   function updateSalesState(data:any) {
-    //console.log("handle incoming data", data, " the data type", data.type)
+    console.log("handle incoming data", data, " the data type", data.type)
     //return null;
     switch (data.type) {
       case "value-modified":
@@ -126,6 +127,10 @@ const [pref_language,setPref_language]=useState("English")
   }
 
   
+  
+useEffect(()=>{
+  console.log('sales copilot state',salesCopilotState)
+},[salesCopilotState])
   //console.log('config',config)
   //console.log("hello world")
     useEffect(()=>{
