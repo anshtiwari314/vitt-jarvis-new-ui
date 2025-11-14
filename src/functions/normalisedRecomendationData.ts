@@ -45,7 +45,8 @@ export function normalizeRecommendationData(rawData: any) {
   normalized.premium ??= 0;
   normalized.reason ??= "";
   normalized.riders ??= [];
-  normalized.keyFeatures ??= { heading: "Key Features", value: [] };
+  normalized.keyFeatures ??= [];
+  normalized.context_name ??= "";
 
   return normalized;
 }

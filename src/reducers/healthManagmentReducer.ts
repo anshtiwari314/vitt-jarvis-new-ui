@@ -18,17 +18,20 @@ export interface HealthData {
       previousClaims: { date: string; amount: number }[];
     }[];
   };
-  Recommendations: {
-  Recommendations: [
+  Recommendations:  [
     {
       planName: { heading: '', value: '' },
       sumInsured: { heading: '', value: '' },
       premium: { heading: '', value: '' },
       reason: { heading: 'reason', value: '' },
-      riders: []
+      riders: [],
+      keyFeatures: [
+        {desc: '',name: ''}
+      ],
+      context_name:"",
     }
-  ]
-}
+  ][]
+;
   
   planSummary: {
     summary:{
@@ -116,7 +119,13 @@ const initialCopilotLoadState= {
         {name:"Critical Illness Cover",price:5000},
         {name:"Maternity Cover",price:3000},
         {name:"OPD Benefits",price:2000}
-    ] 
+    ] ,
+    keyFeatures:[
+        {name:"Feature 1",desc:"Comprehensive coverage for a wide range of medical conditions."},
+        {name:"Feature 2",desc:"Affordable premiums with flexible payment options."},
+        {name:"Feature 3",desc:"Cashless treatment at a vast network of hospitals."}
+    ],
+    context_name:"",
     },
     PlanSummary:{
         summary:{
@@ -219,16 +228,34 @@ const initialCopilotLoadState= {
           header:'Follow-up Question',
           color:'blue',
           type:'regular-card',
-           data:[
-            {
-              id:'unique',
-              text:'Primary financial goals?'
-            },
-            {
-              id:'unique',
-              text:'Typical month financially?'
-            }
-          ],
+           "data": [
+               {
+                   "id": 'unique1',
+                   text:`Lorem Ipsum is simply dummy text of the printing 
+              and typesetting industry. Lorem Ipsum has been the industry's 
+              standard dummy text ever since the 1500s, when an unknown printer 
+              took a galley of type and scrambled it to make a type 
+              specimen book. It has survived not only five centuries, but also 
+              the leap into electronic typesetting, remaining essentially unchanged. 
+              It was popularised in the 1960s with the release of Letraset 
+              sheets containing Lorem Ipsum passages, and more recently with 
+              desktop publishing software like Aldus PageMaker including 
+              versions of Lorem Ipsum.`
+               },
+               {
+                   "id": 'unique2',
+                   text:`Lorem Ipsum is simply dummy text of the printing 
+              and typesetting industry. Lorem Ipsum has been the industry's 
+              standard dummy text ever since the 1500s, when an unknown printer 
+              took a galley of type and scrambled it to make a type 
+              specimen book. It has survived not only five centuries, but also 
+              the leap into electronic typesetting, remaining essentially unchanged. 
+              It was popularised in the 1960s with the release of Letraset 
+              sheets containing Lorem Ipsum passages, and more recently with 
+              desktop publishing software like Aldus PageMaker including 
+              versions of Lorem Ipsum.`
+               }
+           ],
         },
         {
           header:'Answer to "Why Term Plan?',
@@ -331,17 +358,30 @@ const initialCopilotState = {
         "table_values": []
       }
     },
-    "Recommendations": {
-      "Recommendations": [
+    "Recommendations":[ 
         {
           "planName": { "heading": "", "value": "" },
           "sumInsured": { "heading": "", "value": "" },
           "premium": { "heading": "", "value": "" },
           "reason": { "heading": "reason", "value": "" },
-          "riders": []
+          "riders": [],
+          "keyFeatures": [
+            { "desc": "", "name": "" }
+          ],
+          "context_name":""
+        },
+        {
+          "planName": { "heading": "", "value": "" },
+          "sumInsured": { "heading": "", "value": "" },
+          "premium": { "heading": "", "value": "" },
+          "reason": { "heading": "reason", "value": "" },
+          "riders": [],
+          "keyFeatures": [
+            { "desc": "", "name": "" }
+          ],
+          "context_name":""
         }
-      ]
-    },
+    ],
 
     "PlanSummary":{
         "type":"",
@@ -454,10 +494,7 @@ const healthReducerSlice = createSlice({
     },
     updateRecommendation: (state, action) => {
       console.log("recommendation data that came",action.payload);
-      state.salesData.Recommendations = {
-        ...state.salesData.Recommendations,
-        ...action.payload
-      };
+      state.salesData.Recommendations = action.payload;
       console.log("recommendation data that got updated",state.salesData.Recommendations);
     },
     updateFollowUpQn:(state,action)=>{

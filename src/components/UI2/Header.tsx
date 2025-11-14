@@ -116,18 +116,22 @@ export default function Header() {
   }, [manualVadStatus])
 
   // 🌐 Handle language change using context
-  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedLang = e.target.value
-    //setPref_language(selectedLang)
-    dispatch(updatePrefLanguage(selectedLang))
-
-    socket && 
-    socket.emit('switch_pref_language_hi',{"roomid": qpParams.roomId, "pref_language": qpParams.pref_language})
-    
+const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  let selectedLang = e.target.value
+  // Capitalize first letter
+  dispatch(updatePrefLanguage(selectedLang))
+  selectedLang = selectedLang.charAt(0).toUpperCase() + selectedLang.slice(1)
 
 
-    console.log("Preferred language updated:", selectedLang)
+  const pyLoad = {
+    roomid: qpParams.roomId,
+    pref_language: selectedLang
   }
+
+  socket && socket.emit('switch_pref_language_hi', pyLoad)
+  console.log("Preferred language updated:", selectedLang)
+}
+
 
   return (
     <header className="bg-white p-3 sm:p-4 border-b border-slate-200 flex justify-between items-center sticky top-0 z-10">

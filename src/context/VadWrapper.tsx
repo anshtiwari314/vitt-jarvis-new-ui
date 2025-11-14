@@ -110,7 +110,7 @@ async function processAudioToBase64(audio,url,data){
     }
 
     console.log("Emitting questions_loader_req_heal_v2 with payload:", questionsApiReqPayload)
-    socket.emit("questions_loader_req_health_ins", questionsApiReqPayload)
+    socket.emit("questions_loader_req_health_ins", questionsApiReqPayload )
     },[socket,isSocketConnected])
 
 

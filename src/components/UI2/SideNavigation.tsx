@@ -1,104 +1,51 @@
-import React, { useState, useEffect } from "react";
-import { useAppDispatch, useAppSelector } from "../../store/store";
-import { setNavigation } from "../../reducers/salesCopilotReducer";
-import { useData } from "../../context/DataWrapper";
-import { setPlanSelected } from "../../reducers/healthManagmentReducer";
+
+import React,{useState, useEffect,useRef} from 'react';
+import { useAppDispatch, useAppSelector } from '../../store/store';
+import { setNavigation } from '../../reducers/salesCopilotReducer';
+import { useData } from '../../context/DataWrapper';
+import { useVad } from '../../context/VadWrapper';
+import { setPlanSelected } from '../../reducers/healthManagmentReducer';
+import { log } from 'console';
 
 export default function SideNavigation() {
   const { salesData, planSelected } = useAppSelector(
     (state) => state.healthManagmentReducer
   );
-  const recommendations = [
-  {
-    "planName": {"heading": "Plan Name", "value": "Arogya Supreme Gold"},
-    "sumInsured": {"heading": "Sum Insured", "value": "₹10,00,000"},
-    "premium": {"heading": "Premium", "value": "₹12,000/year"},
-    "riders": {
-      "heading": "Riders",
-      "value": [
-        {"name": "Infinite Care", "desc": "Get one-time infinite claim amount for your selected claim.", "include": true},
-        {"name": "2-hr Hospitalization", "desc": "Medical expenses covered for hospitalisation of 2 hrs or more, like room rent, practitioner fees, ICU charges.", "include": true},
-        {"name": "Claim Protector", "desc": "Non-payable items like gloves, cotton, syringes, and masks are covered up to the sum insured.", "include": true},
-        {"name": "Power Booster", "desc": "Get a loyalty bonus of 100% every year irrespective of claim for an indefinite period.", "include": true},
-        {"name": "Dependent Accommodation Benefit", "desc": "Will pay 1000 per day for a dependent's accommodation if there is a hospitalisation of a minimum 3 consecutive days.", "include": true},
-        {"name": "Annual Health Checkups", "desc": "Predefined health checkup package, up to 0.5% of annual sum insured (max ₹5000) on a cashless basis.", "include": true},
-        {"name": "Inflation Protector", "desc": "The annual sum insured will increase at renewal based on the previous year's inflation rate.", "include": true},
-        {"name": "Durable Medical Equipment", "desc": "Reimbursement for expenses for renting or purchasing listed durable medical equipment up to Rs 5 lakh annually.", "include": true},
-        {"name": "Domestic Air Ambulance Cover", "desc": "Cover Air Ambulance expenses up to the annual sum insured.", "include": true},
-        {"name": "Nursing At Home", "desc": "Reimburse up to ₹2000 per day for a maximum of 10 days for post-hospitalisation medical services.", "include": true},
-        {"name": "Compassionate Visit", "desc": "If hospitalisation exceeds 5 days, we will cover up to 20k per year for an economy class/rail ticket for an immediate family member.", "include": true},
-        {"name": "Personal Accident", "desc": "On occurrence of any insured event, we will pay the Annual Sum Insured, up to a maximum of Rs 50 lakhs.", "include": true},
-        {"name": "Critical Illness", "desc": "Cover 20 listed Critical Illnesses up to a maximum of 50 lakhs. For adults aged 18 to 50.", "include": true},
-        {"name": "Room Modifier", "desc": "Insured can upgrade or downgrade their room category.", "include": true}
-      ]
-    },
-    "reason": {"heading": "Reason", "value": "Recommended for individuals seeking high coverage at moderate cost."},
-    "keyFeatures": {"heading": "Key Features", "value": ["Cashless treatment at network hospitals", "No-claim bonus up to 100%", "Coverage for pre-existing diseases after waiting period"]}
-  },
-  {
-    "planName": {"heading": "Plan Name", "value": "Health Secure Silver"},
-    "sumInsured": {"heading": "Sum Insured", "value": "₹5,00,000"},
-    "premium": {"heading": "Premium", "value": "₹8,500/year"},
-    "riders": {
-      "heading": "Riders",
-      "value": [
-        {"name": "Infinite Care", "desc": "Get one-time infinite claim amount for your selected claim.", "include": true},
-        {"name": "2-hr Hospitalization", "desc": "Medical expenses covered for hospitalisation of 2 hrs or more, like room rent, practitioner fees, ICU charges.", "include": true},
-        {"name": "Claim Protector", "desc": "Non-payable items like gloves, cotton, syringes, and masks are covered up to the sum insured.", "include": true},
-        {"name": "Power Booster", "desc": "Get a loyalty bonus of 100% every year irrespective of claim for an indefinite period.", "include": true},
-        {"name": "Dependent Accommodation Benefit", "desc": "Will pay 1000 per day for a dependent's accommodation if there is a hospitalisation of a minimum 3 consecutive days.", "include": true},
-        {"name": "Annual Health Checkups", "desc": "Predefined health checkup package, up to 0.5% of annual sum insured (max ₹5000) on a cashless basis.", "include": true},
-        {"name": "Inflation Protector", "desc": "The annual sum insured will increase at renewal based on the previous year's inflation rate.", "include": true},
-        {"name": "Durable Medical Equipment", "desc": "Reimbursement for expenses for renting or purchasing listed durable medical equipment up to Rs 5 lakh annually.", "include": true},
-        {"name": "Domestic Air Ambulance Cover", "desc": "Cover Air Ambulance expenses up to the annual sum insured.", "include": true},
-        {"name": "Nursing At Home", "desc": "Reimburse up to ₹2000 per day for a maximum of 10 days for post-hospitalisation medical services.", "include": true},
-        {"name": "Compassionate Visit", "desc": "If hospitalisation exceeds 5 days, we will cover up to 20k per year for an economy class/rail ticket for an immediate family member.", "include": true},
-        {"name": "Personal Accident", "desc": "On occurrence of any insured event, we will pay the Annual Sum Insured, up to a maximum of Rs 50 lakhs.", "include": true},
-        {"name": "Critical Illness", "desc": "Cover 20 listed Critical Illnesses up to a maximum of 50 lakhs. For adults aged 18 to 50.", "include": true},
-        {"name": "Room Modifier", "desc": "Insured can upgrade or downgrade their room category.", "include": true}
-      ]
-    },
-    "reason": {"heading": "Reason", "value": "Ideal for small families or young professionals starting out."}
-  },
-  {
-    "planName": {"heading": "Plan Name", "value": "Elite Health Platinum"},
-    "sumInsured": {"heading": "Sum Insured", "value": "₹25,00,000"},
-    "premium": {"heading": "Premium", "value": "₹22,000/year"},
-    "riders": {
-      "heading": "Riders",
-      "value": [
-        {"name": "Infinite Care", "desc": "Get one-time infinite claim amount for your selected claim.", "include": true},
-        {"name": "2-hr Hospitalization", "desc": "Medical expenses covered for hospitalisation of 2 hrs or more, like room rent, practitioner fees, ICU charges.", "include": true},
-        {"name": "Claim Protector", "desc": "Non-payable items like gloves, cotton, syringes, and masks are covered up to the sum insured.", "include": true},
-        {"name": "Power Booster", "desc": "Get a loyalty bonus of 100% every year irrespective of claim for an indefinite period.", "include": true},
-        {"name": "Dependent Accommodation Benefit", "desc": "Will pay 1000 per day for a dependent's accommodation if there is a hospitalisation of a minimum 3 consecutive days.", "include": true},
-        {"name": "Annual Health Checkups", "desc": "Predefined health checkup package, up to 0.5% of annual sum insured (max ₹5000) on a cashless basis.", "include": true},
-        {"name": "Inflation Protector", "desc": "The annual sum insured will increase at renewal based on the previous year's inflation rate.", "include": true},
-        {"name": "Durable Medical Equipment", "desc": "Reimbursement for expenses for renting or purchasing listed durable medical equipment up to Rs 5 lakh annually.", "include": true},
-        {"name": "Domestic Air Ambulance Cover", "desc": "Cover Air Ambulance expenses up to the annual sum insured.", "include": true},
-        {"name": "Nursing At Home", "desc": "Reimburse up to ₹2000 per day for a maximum of 10 days for post-hospitalisation medical services.", "include": true},
-        {"name": "Compassionate Visit", "desc": "If hospitalisation exceeds 5 days, we will cover up to 20k per year for an economy class/rail ticket for an immediate family member.", "include": true},
-        {"name": "Personal Accident", "desc": "On occurrence of any insured event, we will pay the Annual Sum Insured, up to a maximum of Rs 50 lakhs.", "include": true},
-        {"name": "Critical Illness", "desc": "Cover 20 listed Critical Illnesses up to a maximum of 50 lakhs. For adults aged 18 to 50.", "include": true},
-        {"name": "Room Modifier", "desc": "Insured can upgrade or downgrade their room category.", "include": true}
-      ]
-    },
-    "reason": {"heading": "Reason", "value": "Best suited for high-income individuals or families looking for maximum coverage benefits."}
-  }
-     ];
+  const recommendations =salesData.Recommendations;
+  const { socket } = useData()
+  const [clientName,qpParams] = useAppSelector((state) => [state.healthManagmentReducer.clientName,state.qpReducer])
 
   const dispatch = useAppDispatch();
   const currentNavigation = useAppSelector(
     (state) => state.healthManagmentReducer.navigation
   );
   const { recommendationsGenerated, pref_language } = useData();
+  console.log("recoomendation Genrated--->",recommendationsGenerated);
+  
   const [recommendationsOpen, setRecommendationsOpen] = useState(false);
 
   const handleNavigationClick = (page: string) => {
     dispatch(setNavigation(page));
   };
 
+
   const handlePlanClick = (planName: string) => {
+    //yaha se planNme ke naam se filter karna hai ki konsaplan hai phir uska context_name bhejna hai backned ko 
+   const selectedPlan = recommendations?.find(
+  (p: any) => p.planName?.value === planName
+);
+            console.log(selectedPlan,"[DEBUG!]---");
+    let context_name = selectedPlan?.context_name || "";
+    console.log("context_name--->",context_name);
+  const pyLoad = {
+    roomid: qpParams.roomId,
+    context_name: context_name
+  }
+  console.log("the pyload is",pyLoad);
+  
+
+  socket && socket.emit('save_user_context', pyLoad)
+
     dispatch(setPlanSelected(planName));
   };
 
@@ -133,12 +80,13 @@ export default function SideNavigation() {
 
   const lang = pref_language === "mr" ? labels.mr : labels.en;
 
-  // ✅ Dynamic recommendation list from salesData
   const recommendationSubItems = recommendations?.map((rec: any, index: number) => ({
     id: `recommendation_${index + 1}`,
     label: rec.planName?.value || `Recommendation ${index + 1}`,
     planName: rec.planName?.value || "",
   }));
+  console.log(recommendationSubItems,"recommendation sub items---");
+
 
   const navItems = [
     {
@@ -265,6 +213,7 @@ export default function SideNavigation() {
                 currentNavigation === item.id ? "bg-slate-100 text-sky-600" : ""
               }`}
               onClick={() =>
+                // console.log(item.id,"item id--->"),
                 item.subItems ? setRecommendationsOpen((prev) => !prev) : handleNavigationClick(item.id)
               }
             >
@@ -280,6 +229,8 @@ export default function SideNavigation() {
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  
+
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                 </svg>
@@ -292,10 +243,12 @@ export default function SideNavigation() {
                 {item.subItems.map((sub) => (
                   <div
                     key={sub.id}
-                    onClick={() => {
-                      handleNavigationClick("recommendations");
-                      handlePlanClick(sub.planName);
-                    }}
+                    onClick={(e) => {
+  e.stopPropagation();
+  setRecommendationsOpen(true);
+  handleNavigationClick("recommendations");
+  handlePlanClick(sub.planName);
+}}
                     className={`px-3 py-2 text-sm rounded-md cursor-pointer ${
                       currentNavigation === "recommendations" &&
                       planSelected === sub.planName
@@ -310,33 +263,151 @@ export default function SideNavigation() {
             )}
           </div>
         ))}
+       
       </nav>
-
-      {/* Recommendations Status */}
-      {recommendationsGenerated && (
-        <div className="p-4 border-t border-slate-200">
-          <div className="flex items-center text-slate-500 text-sm">
-            <div className="w-2.5 h-2.5 mr-2 rounded-full bg-green-400"></div>
-            {lang.recGenerated}
+       {recommendationsGenerated && (
+          <div className="p-4 border-t border-slate-200">
+            <div className="flex items-center text-slate-500 text-sm">
+              <div className="w-2.5 h-2.5 mr-2 rounded-full bg-green-400"></div>
+              Recommendations Generated
+            </div>
           </div>
+        )}
+
+
+            {/* System Status */}
+            {/* <div className="p-4 border-t border-slate-200">
+                <h3 className="text-sm font-semibold text-slate-600 mb-3">{lang.systemStatus}</h3>
+                <div className="space-y-2 text-sm">
+                    <div className="flex items-center text-slate-500">
+                        <div className="w-2.5 h-2.5 rounded-full mr-2 bg-gray-300"></div> {lang.audioStreaming}
+                    </div>
+                    <div className="flex items-center text-slate-500">
+                        <div className="w-2.5 h-2.5 rounded-full mr-2 bg-gray-300"></div> {lang.liveTranscription}
+                    </div>
+                    <div className="flex items-center text-slate-500">
+                        <div className="w-2.5 h-2.5 rounded-full mr-2 bg-gray-300"></div> {lang.aiProcessing}
+                    </div>
+                </div>
+            </div> */}
+            <SystemStatus/>
+        </aside>
+    );
+
+}
+
+
+const SystemStatus = () => {
+  const [isActive, setIsActive] = useState(false);
+  const intervalRef = useRef(null);
+  const currentIndexRef = useRef(-1); // Start with -1 to indicate no items are green initially
+
+  const {VAD2} = useVad()
+  // Create refs for each individual indicator DOM element
+  const audioRef = useRef(null);
+  const transcriptionRef = useRef(null);
+  const processingRef = useRef(null);
+
+  // Store the refs in an array for easy iteration
+  const indicatorRefs = [audioRef, transcriptionRef, processingRef];
+
+  const startAnimation = () => {
+    setIsActive(true);
+  };
+
+  const stopAnimation = () => {
+    setIsActive(false);
+    clearInterval(intervalRef.current);
+    currentIndexRef.current = -1; // Reset the index
+    // Reset all indicators to gray when stopping
+    indicatorRefs.forEach(ref => {
+      if (ref.current) {
+        ref.current.classList.remove('bg-green-500');
+        ref.current.classList.add('bg-gray-300');
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (isActive) {
+      intervalRef.current = setInterval(() => {
+        // Increment the index
+        currentIndexRef.current = (currentIndexRef.current + 1) % (indicatorRefs.length + 1);
+
+        // Iterate through the refs and update their colors
+        indicatorRefs.forEach((ref, index) => {
+          if (ref.current) {
+            if (index < currentIndexRef.current) {
+              // If the indicator's index is less than the current index, make it green
+              ref.current.classList.remove('bg-gray-300');
+              ref.current.classList.add('bg-green-500');
+            } else {
+              // Otherwise, make it gray
+              ref.current.classList.remove('bg-green-500');
+              ref.current.classList.add('bg-gray-300');
+            }
+          }
+        });
+
+        // Special case: if currentIndexRef.current is 3, all are green and we wait for the loop to reset
+        // The next cycle (currentIndexRef.current === 0) will then make all gray again
+      }, 1000); // Change every 1 second
+    } else {
+      clearInterval(intervalRef.current);
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [isActive]);
+
+  useEffect(()=>{
+    if(VAD2?.listening){
+        startAnimation()
+    }else{
+        stopAnimation()
+    }       
+  },[VAD2])
+  return (
+    <div className="p-4 border-t border-slate-200">
+      <h3 className="text-sm font-semibold text-slate-600 mb-3">System Status</h3>
+      <div className="space-y-2 text-sm">
+        <div className="flex items-center text-slate-500">
+          <div
+            ref={audioRef}
+            className="status-indicator w-2.5 h-2.5 rounded-full mr-2 transition-colors bg-gray-300"
+          ></div>
+          Audio Streaming
         </div>
-      )}
-
-      {/* System Status */}
-      <div className="p-4 border-t border-slate-200">
-        <h3 className="text-sm font-semibold text-slate-600 mb-3">{lang.systemStatus}</h3>
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center text-slate-500">
-            <div className="w-2.5 h-2.5 rounded-full mr-2 bg-gray-300"></div> {lang.audioStreaming}
-          </div>
-          <div className="flex items-center text-slate-500">
-            <div className="w-2.5 h-2.5 rounded-full mr-2 bg-gray-300"></div> {lang.liveTranscription}
-          </div>
-          <div className="flex items-center text-slate-500">
-            <div className="w-2.5 h-2.5 rounded-full mr-2 bg-gray-300"></div> {lang.aiProcessing}
-          </div>
+        <div className="flex items-center text-slate-500">
+          <div
+            ref={transcriptionRef}
+            className="status-indicator w-2.5 h-2.5 rounded-full mr-2 transition-colors bg-gray-300"
+          ></div>
+          Live Transcription
+        </div>
+        <div className="flex items-center text-slate-500">
+          <div
+            ref={processingRef}
+            className="status-indicator w-2.5 h-2.5 rounded-full mr-2 transition-colors bg-gray-300"
+          ></div>
+          AI Processing
         </div>
       </div>
-    </aside>
+
+      {/* <div className="mt-4 flex space-x-2">
+        <button
+          onClick={startAnimation}
+          className="px-4 py-2 text-white bg-green-500 rounded-md disabled:bg-gray-400"
+          disabled={isActive}
+        >
+          Start
+        </button>
+        <button
+          onClick={stopAnimation}
+          className="px-4 py-2 text-white bg-red-500 rounded-md disabled:bg-gray-400"
+          disabled={!isActive}
+        >
+          Stop
+        </button>
+      </div> */}
+    </div>
   );
-}
+};

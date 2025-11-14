@@ -28,93 +28,98 @@ export default function App() {
     const {socket}=useData()
      const {salesData,navigation:currentNavigation} = useAppSelector((state) => state.healthManagmentReducer)
      console.log('salesData', salesData.Recommendations)
-     const mockData=[
-  {
-    "planName": {"heading": "Plan Name", "value": "Arogya Supreme Gold"},
-    "sumInsured": {"heading": "Sum Insured", "value": "10,00,000"},
-    "premium": {"heading": "Premium", "value": "12,000/year"},
-    "riders": {
-      "heading": "Riders",
-      "value": [
-        {"name": "Infinite Care", "desc": "Get one-time infinite claim amount for your selected claim.", "include": true},
-        {"name": "2-hr Hospitalization", "desc": "Medical expenses covered for hospitalisation of 2 hrs or more, like room rent, practitioner fees, ICU charges.", "include": true},
-        {"name": "Claim Protector", "desc": "Non-payable items like gloves, cotton, syringes, and masks are covered up to the sum insured.", "include": true},
-        {"name": "Power Booster", "desc": "Get a loyalty bonus of 100% every year irrespective of claim for an indefinite period.", "include": true},
-        {"name": "Dependent Accommodation Benefit", "desc": "Will pay 1000 per day for a dependent's accommodation if there is a hospitalisation of a minimum 3 consecutive days.", "include": true},
-        {"name": "Annual Health Checkups", "desc": "Predefined health checkup package, up to 0.5% of annual sum insured (max ₹5000) on a cashless basis.", "include": true},
-        {"name": "Inflation Protector", "desc": "The annual sum insured will increase at renewal based on the previous year's inflation rate.", "include": true},
-        {"name": "Durable Medical Equipment", "desc": "Reimbursement for expenses for renting or purchasing listed durable medical equipment up to Rs 5 lakh annually.", "include": true},
-        {"name": "Domestic Air Ambulance Cover", "desc": "Cover Air Ambulance expenses up to the annual sum insured.", "include": true},
-        {"name": "Nursing At Home", "desc": "Reimburse up to ₹2000 per day for a maximum of 10 days for post-hospitalisation medical services.", "include": true},
-        {"name": "Compassionate Visit", "desc": "If hospitalisation exceeds 5 days, we will cover up to 20k per year for an economy class/rail ticket for an immediate family member.", "include": true},
-        {"name": "Personal Accident", "desc": "On occurrence of any insured event, we will pay the Annual Sum Insured, up to a maximum of Rs 50 lakhs.", "include": true},
-        {"name": "Critical Illness", "desc": "Cover 20 listed Critical Illnesses up to a maximum of 50 lakhs. For adults aged 18 to 50.", "include": true},
-        {"name": "Room Modifier", "desc": "Insured can upgrade or downgrade their room category.", "include": true}
-      ]
-    },
-    "reason": {"heading": "Reason", "value": "Recommended for individuals seeking high coverage at moderate cost."},
-    "keyFeatures": {"heading": "Key Features", "value": ["Cashless treatment at network hospitals", "No-claim bonus up to 100%", "Coverage for pre-existing diseases after waiting period"]}
-  },
-  {
-    "planName": {"heading": "Plan Name", "value": "Health Secure Silver"},
-    "sumInsured": {"heading": "Sum Insured", "value": "₹5,00,000"},
-    "premium": {"heading": "Premium", "value": "₹8,500/year"},
-    "riders": {
-      "heading": "Riders",
-      "value": [
-        {"name": "Infinite Care", "desc": "Get one-time infinite claim amount for your selected claim.", "include": true},
-        {"name": "2-hr Hospitalization", "desc": "Medical expenses covered for hospitalisation of 2 hrs or more, like room rent, practitioner fees, ICU charges.", "include": true},
-        {"name": "Claim Protector", "desc": "Non-payable items like gloves, cotton, syringes, and masks are covered up to the sum insured.", "include": true},
-        {"name": "Power Booster", "desc": "Get a loyalty bonus of 100% every year irrespective of claim for an indefinite period.", "include": true},
-        {"name": "Dependent Accommodation Benefit", "desc": "Will pay 1000 per day for a dependent's accommodation if there is a hospitalisation of a minimum 3 consecutive days.", "include": true},
-        {"name": "Annual Health Checkups", "desc": "Predefined health checkup package, up to 0.5% of annual sum insured (max ₹5000) on a cashless basis.", "include": true},
-        {"name": "Inflation Protector", "desc": "The annual sum insured will increase at renewal based on the previous year's inflation rate.", "include": true},
-        {"name": "Durable Medical Equipment", "desc": "Reimbursement for expenses for renting or purchasing listed durable medical equipment up to Rs 5 lakh annually.", "include": true},
-        {"name": "Domestic Air Ambulance Cover", "desc": "Cover Air Ambulance expenses up to the annual sum insured.", "include": true},
-        {"name": "Nursing At Home", "desc": "Reimburse up to ₹2000 per day for a maximum of 10 days for post-hospitalisation medical services.", "include": true},
-        {"name": "Compassionate Visit", "desc": "If hospitalisation exceeds 5 days, we will cover up to 20k per year for an economy class/rail ticket for an immediate family member.", "include": true},
-        {"name": "Personal Accident", "desc": "On occurrence of any insured event, we will pay the Annual Sum Insured, up to a maximum of Rs 50 lakhs.", "include": true},
-        {"name": "Critical Illness", "desc": "Cover 20 listed Critical Illnesses up to a maximum of 50 lakhs. For adults aged 18 to 50.", "include": true},
-        {"name": "Room Modifier", "desc": "Insured can upgrade or downgrade their room category.", "include": true}
-      ]
-    },
-    "reason": {"heading": "Reason", "value": "Ideal for small families or young professionals starting out."}
-  },
-  {
-    "planName": {"heading": "Plan Name", "value": "Elite Health Platinum"},
-    "sumInsured": {"heading": "Sum Insured", "value": "₹25,00,000"},
-    "premium": {"heading": "Premium", "value": "₹22,000/year"},
-    "riders": {
-      "heading": "Riders",
-      "value": [
-        {"name": "Infinite Care", "desc": "Get one-time infinite claim amount for your selected claim.", "include": true},
-        {"name": "2-hr Hospitalization", "desc": "Medical expenses covered for hospitalisation of 2 hrs or more, like room rent, practitioner fees, ICU charges.", "include": true},
-        {"name": "Claim Protector", "desc": "Non-payable items like gloves, cotton, syringes, and masks are covered up to the sum insured.", "include": true},
-        {"name": "Power Booster", "desc": "Get a loyalty bonus of 100% every year irrespective of claim for an indefinite period.", "include": true},
-        {"name": "Dependent Accommodation Benefit", "desc": "Will pay 1000 per day for a dependent's accommodation if there is a hospitalisation of a minimum 3 consecutive days.", "include": true},
-        {"name": "Annual Health Checkups", "desc": "Predefined health checkup package, up to 0.5% of annual sum insured (max ₹5000) on a cashless basis.", "include": true},
-        {"name": "Inflation Protector", "desc": "The annual sum insured will increase at renewal based on the previous year's inflation rate.", "include": true},
-        {"name": "Durable Medical Equipment", "desc": "Reimbursement for expenses for renting or purchasing listed durable medical equipment up to Rs 5 lakh annually.", "include": true},
-        {"name": "Domestic Air Ambulance Cover", "desc": "Cover Air Ambulance expenses up to the annual sum insured.", "include": true},
-        {"name": "Nursing At Home", "desc": "Reimburse up to ₹2000 per day for a maximum of 10 days for post-hospitalisation medical services.", "include": true},
-        {"name": "Compassionate Visit", "desc": "If hospitalisation exceeds 5 days, we will cover up to 20k per year for an economy class/rail ticket for an immediate family member.", "include": true},
-        {"name": "Personal Accident", "desc": "On occurrence of any insured event, we will pay the Annual Sum Insured, up to a maximum of Rs 50 lakhs.", "include": true},
-        {"name": "Critical Illness", "desc": "Cover 20 listed Critical Illnesses up to a maximum of 50 lakhs. For adults aged 18 to 50.", "include": true},
-        {"name": "Room Modifier", "desc": "Insured can upgrade or downgrade their room category.", "include": true}
-      ]
-    },
-    "reason": {"heading": "Reason", "value": "Best suited for high-income individuals or families looking for maximum coverage benefits."}
-  }
-     ]
+  //    const mockData=[
+  // {
+  //   "planName": {"heading": "Plan Name", "value": "Arogya Supreme Gold"},
+  //   "sumInsured": {"heading": "Sum Insured", "value": "10,00,000"},
+  //   "premium": {"heading": "Premium", "value": "12,000/year"},
+  //   "riders": {
+  //     "heading": "Riders",
+  //     "value": [
+  //       {"name": "Infinite Care", "desc": "Get one-time infinite claim amount for your selected claim.", "include": true},
+  //       {"name": "2-hr Hospitalization", "desc": "Medical expenses covered for hospitalisation of 2 hrs or more, like room rent, practitioner fees, ICU charges.", "include": true},
+  //       {"name": "Claim Protector", "desc": "Non-payable items like gloves, cotton, syringes, and masks are covered up to the sum insured.", "include": true},
+  //       {"name": "Power Booster", "desc": "Get a loyalty bonus of 100% every year irrespective of claim for an indefinite period.", "include": true},
+  //       {"name": "Dependent Accommodation Benefit", "desc": "Will pay 1000 per day for a dependent's accommodation if there is a hospitalisation of a minimum 3 consecutive days.", "include": true},
+  //       {"name": "Annual Health Checkups", "desc": "Predefined health checkup package, up to 0.5% of annual sum insured (max ₹5000) on a cashless basis.", "include": true},
+  //       {"name": "Inflation Protector", "desc": "The annual sum insured will increase at renewal based on the previous year's inflation rate.", "include": true},
+  //       {"name": "Durable Medical Equipment", "desc": "Reimbursement for expenses for renting or purchasing listed durable medical equipment up to Rs 5 lakh annually.", "include": true},
+  //       {"name": "Domestic Air Ambulance Cover", "desc": "Cover Air Ambulance expenses up to the annual sum insured.", "include": true},
+  //       {"name": "Nursing At Home", "desc": "Reimburse up to ₹2000 per day for a maximum of 10 days for post-hospitalisation medical services.", "include": true},
+  //       {"name": "Compassionate Visit", "desc": "If hospitalisation exceeds 5 days, we will cover up to 20k per year for an economy class/rail ticket for an immediate family member.", "include": true},
+  //       {"name": "Personal Accident", "desc": "On occurrence of any insured event, we will pay the Annual Sum Insured, up to a maximum of Rs 50 lakhs.", "include": true},
+  //       {"name": "Critical Illness", "desc": "Cover 20 listed Critical Illnesses up to a maximum of 50 lakhs. For adults aged 18 to 50.", "include": true},
+  //       {"name": "Room Modifier", "desc": "Insured can upgrade or downgrade their room category.", "include": true}
+  //     ]
+  //   },
+  //   "reason": {"heading": "Reason", "value": "Recommended for individuals seeking high coverage at moderate cost."},
+  //   "keyFeatures": {"heading": "Key Features", "value": ["Cashless treatment at network hospitals", "No-claim bonus up to 100%", "Coverage for pre-existing diseases after waiting period"]}
+  // },
+  // {
+  //   "planName": {"heading": "Plan Name", "value": "Health Secure Silver"},
+  //   "sumInsured": {"heading": "Sum Insured", "value": "₹5,00,000"},
+  //   "premium": {"heading": "Premium", "value": "₹8,500/year"},
+  //   "riders": {
+  //     "heading": "Riders",
+  //     "value": [
+  //       {"name": "Infinite Care", "desc": "Get one-time infinite claim amount for your selected claim.", "include": true},
+  //       {"name": "2-hr Hospitalization", "desc": "Medical expenses covered for hospitalisation of 2 hrs or more, like room rent, practitioner fees, ICU charges.", "include": true},
+  //       {"name": "Claim Protector", "desc": "Non-payable items like gloves, cotton, syringes, and masks are covered up to the sum insured.", "include": true},
+  //       {"name": "Power Booster", "desc": "Get a loyalty bonus of 100% every year irrespective of claim for an indefinite period.", "include": true},
+  //       {"name": "Dependent Accommodation Benefit", "desc": "Will pay 1000 per day for a dependent's accommodation if there is a hospitalisation of a minimum 3 consecutive days.", "include": true},
+  //       {"name": "Annual Health Checkups", "desc": "Predefined health checkup package, up to 0.5% of annual sum insured (max ₹5000) on a cashless basis.", "include": true},
+  //       {"name": "Inflation Protector", "desc": "The annual sum insured will increase at renewal based on the previous year's inflation rate.", "include": true},
+  //       {"name": "Durable Medical Equipment", "desc": "Reimbursement for expenses for renting or purchasing listed durable medical equipment up to Rs 5 lakh annually.", "include": true},
+  //       {"name": "Domestic Air Ambulance Cover", "desc": "Cover Air Ambulance expenses up to the annual sum insured.", "include": true},
+  //       {"name": "Nursing At Home", "desc": "Reimburse up to ₹2000 per day for a maximum of 10 days for post-hospitalisation medical services.", "include": true},
+  //       {"name": "Compassionate Visit", "desc": "If hospitalisation exceeds 5 days, we will cover up to 20k per year for an economy class/rail ticket for an immediate family member.", "include": true},
+  //       {"name": "Personal Accident", "desc": "On occurrence of any insured event, we will pay the Annual Sum Insured, up to a maximum of Rs 50 lakhs.", "include": true},
+  //       {"name": "Critical Illness", "desc": "Cover 20 listed Critical Illnesses up to a maximum of 50 lakhs. For adults aged 18 to 50.", "include": true},
+  //       {"name": "Room Modifier", "desc": "Insured can upgrade or downgrade their room category.", "include": true}
+  //     ]
+  //   },
+  //   "reason": {"heading": "Reason", "value": "Ideal for small families or young professionals starting out."}
+  // },
+  // {
+  //   "planName": {"heading": "Plan Name", "value": "Elite Health Platinum"},
+  //   "sumInsured": {"heading": "Sum Insured", "value": "₹25,00,000"},
+  //   "premium": {"heading": "Premium", "value": "₹22,000/year"},
+  //   "riders": {
+  //     "heading": "Riders",
+  //     "value": [
+  //       {"name": "Infinite Care", "desc": "Get one-time infinite claim amount for your selected claim.", "include": true},
+  //       {"name": "2-hr Hospitalization", "desc": "Medical expenses covered for hospitalisation of 2 hrs or more, like room rent, practitioner fees, ICU charges.", "include": true},
+  //       {"name": "Claim Protector", "desc": "Non-payable items like gloves, cotton, syringes, and masks are covered up to the sum insured.", "include": true},
+  //       {"name": "Power Booster", "desc": "Get a loyalty bonus of 100% every year irrespective of claim for an indefinite period.", "include": true},
+  //       {"name": "Dependent Accommodation Benefit", "desc": "Will pay 1000 per day for a dependent's accommodation if there is a hospitalisation of a minimum 3 consecutive days.", "include": true},
+  //       {"name": "Annual Health Checkups", "desc": "Predefined health checkup package, up to 0.5% of annual sum insured (max ₹5000) on a cashless basis.", "include": true},
+  //       {"name": "Inflation Protector", "desc": "The annual sum insured will increase at renewal based on the previous year's inflation rate.", "include": true},
+  //       {"name": "Durable Medical Equipment", "desc": "Reimbursement for expenses for renting or purchasing listed durable medical equipment up to Rs 5 lakh annually.", "include": true},
+  //       {"name": "Domestic Air Ambulance Cover", "desc": "Cover Air Ambulance expenses up to the annual sum insured.", "include": true},
+  //       {"name": "Nursing At Home", "desc": "Reimburse up to ₹2000 per day for a maximum of 10 days for post-hospitalisation medical services.", "include": true},
+  //       {"name": "Compassionate Visit", "desc": "If hospitalisation exceeds 5 days, we will cover up to 20k per year for an economy class/rail ticket for an immediate family member.", "include": true},
+  //       {"name": "Personal Accident", "desc": "On occurrence of any insured event, we will pay the Annual Sum Insured, up to a maximum of Rs 50 lakhs.", "include": true},
+  //       {"name": "Critical Illness", "desc": "Cover 20 listed Critical Illnesses up to a maximum of 50 lakhs. For adults aged 18 to 50.", "include": true},
+  //       {"name": "Room Modifier", "desc": "Insured can upgrade or downgrade their room category.", "include": true}
+  //     ]
+  //   },
+  //   "reason": {"heading": "Reason", "value": "Best suited for high-income individuals or families looking for maximum coverage benefits."}
+  // }
+  //    ]
      const planSelected=useAppSelector((state)=>state.healthManagmentReducer.planSelected)
+     console.log(planSelected,"plan selected");
+     const mockData=salesData.Recommendations;
+     console.log('mockData', mockData);//currently it is array isliye isme find karna possible nahi hi 
      //isi ke basis pe filter karna hai
 
      //i will filter here which recommendtion to show based on plan name ....and send it to normalize function and hence evrytime someone clicks on any 
      //recommendtion i will capture tht pln name 
-
-    const selectedPlan = mockData.find(
+    console.log("the selected plan is ",planSelected);
+    
+    const selectedPlan = mockData?.find(
             (p: any) => p.planName?.value === planSelected
             );
+            console.log(selectedPlan,"selected plan---");
 
 // then normalize that single plan
      const normalisdSalesData = normalizeRecommendationData(selectedPlan);
@@ -158,7 +163,7 @@ export default function App() {
         case 'Health Profile':
             return <HealthProfile data={salesData.HealthProfile} socketC={socket}/>;
         case 'Recommendations':
-            return <RecommendedHealthPlan planName={normalisdSalesData?.planName} keyFetures={normalisdSalesData?.keyFeatures} sumInsured={normalisdSalesData?.sumInsured} riders={normalisdSalesData?.riders} premium={normalisdSalesData?.premium} reason={normalisdSalesData.reason} />;
+            return <RecommendedHealthPlan context_name={normalisdSalesData?.context_name} planName={normalisdSalesData?.planName} keyFetures={normalisdSalesData?.keyFeatures} sumInsured={normalisdSalesData?.sumInsured} riders={normalisdSalesData?.riders} premium={normalisdSalesData?.premium} reason={normalisdSalesData.reason} />;
         case 'Plan Summary':
             return  <BasicInfoH data={salesData.basicInfo} />;
       
