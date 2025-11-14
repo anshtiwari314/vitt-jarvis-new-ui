@@ -22,7 +22,7 @@ export default function VadWrapper({children}){
 
     const oneWayUrl = ''
     const ngrokServerUrl = ''
-    const {socket,isSocketConnected,setMsgLoading} = useData()
+    const {socket,isSocketConnected,setMsgLoading,agentId} = useData()
     const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
     const agent_name = JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name || ''
     // console.log("agent name is",agent_name);
@@ -43,7 +43,7 @@ export default function VadWrapper({children}){
 
     const initReqStatusRef = useRef(false);
     const isQuestionLoaderRunsFirstTime = useRef(true)
-
+    
     //const {PostReq } = useRequest()
 
     // ort.env.wasm.wasmPaths = {
@@ -150,16 +150,21 @@ async function processAudioToBase64(audio,url,data){
               
               roomid:roomId,
               jobid: 'abcde',
-              agentid: 'bayya-bayya',
+              
               //custemailid: custEmailId,
               //isHost: isHost,
               name: name, 
               agent_name:agent_name,
               //sessionid:usersArrRef.current[0]?.id,
-               
+              //agent_name:JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name || '' ,
               speech_stop_time:`${speechStopDate.toLocaleDateString()} ${speechStopDate.toLocaleTimeString()}:${speechStopDate.getMilliseconds()}`
+            
+              
+             
+
             }
 
+            console.log('just before ai suggestion',data)
           processAudioToBase64(audio,oneWayUrl,data)
         }
       })

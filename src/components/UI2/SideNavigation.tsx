@@ -204,76 +204,31 @@ export default function SideNavigation() {
         <h1 className="text-lg font-bold text-slate-800">{lang.aiCopilot}</h1>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-2 space-y-1">
-        {navItems.map((item) => (
-          <div key={item.id}>
-            <div
-              className={`flex items-center justify-between px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 cursor-pointer ${
-                currentNavigation === item.id ? "bg-slate-100 text-sky-600" : ""
-              }`}
-              onClick={() =>
-                // console.log(item.id,"item id--->"),
-                item.subItems ? setRecommendationsOpen((prev) => !prev) : handleNavigationClick(item.id)
-              }
-            >
-              <div className="flex items-center">
-                {item.icon}
-                {item.label}
-              </div>
-              {item.subItems && (
-                <svg
-                  className={`w-5 h-5 transition-transform ${
-                    recommendationsOpen ? "rotate-90 text-sky-500" : "text-slate-400"
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  
-
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                </svg>
-              )}
-            </div>
-
-            {/* Sub-items (Dynamic Plan List) */}
-            {item.subItems && recommendationsOpen && (
-              <div className="ml-10 mt-1 space-y-1">
-                {item.subItems.map((sub) => (
-                  <div
-                    key={sub.id}
-                    onClick={(e) => {
-  e.stopPropagation();
-  setRecommendationsOpen(true);
-  handleNavigationClick("recommendations");
-  handlePlanClick(sub.planName);
-}}
-                    className={`px-3 py-2 text-sm rounded-md cursor-pointer ${
-                      currentNavigation === "recommendations" &&
-                      planSelected === sub.planName
-                        ? "bg-sky-50 text-sky-700 font-medium"
-                        : "text-slate-500 hover:bg-slate-50"
-                    }`}
-                  >
-                    {sub.label}
-                  </div>
+            {/* Navigation */}
+            <nav className="flex-1 p-2 space-y-1">
+                {navItems.map(item => (
+                    <a
+                        key={item.id}
+                        className={`flex items-center px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 ${currentNavigation === item.id ? 'bg-slate-100 text-sky-600' : ''}`}
+                        onClick={() => handleNavigationClick(item.id)}
+                        style={{cursor:'pointer'}}
+                    >
+                        {item.icon}
+                        {item.label}
+                    </a>
                 ))}
-              </div>
-            )}
-          </div>
-        ))}
-       
-      </nav>
-       {recommendationsGenerated && (
-          <div className="p-4 border-t border-slate-200">
-            <div className="flex items-center text-slate-500 text-sm">
-              <div className="w-2.5 h-2.5 mr-2 rounded-full bg-green-400"></div>
-              Recommendations Generated
-            </div>
-          </div>
-        )}
+            </nav>
 
+            {/* Recommendations Status */}
+            
+            {recommendationsGenerated && (
+                <div className="p-4 border-t border-slate-200">
+                    <div className="flex items-center text-slate-500 text-sm">
+                        <div className="w-2.5 h-2.5 mr-2 rounded-full bg-green-400"></div>
+                        {lang.recGenerated}
+                    </div>
+                </div>
+            )}
 
             {/* System Status */}
             {/* <div className="p-4 border-t border-slate-200">

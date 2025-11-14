@@ -45,6 +45,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
   const healthManageMentState = useAppSelector((state) => state.healthManagmentReducer);
   const [recommendationsGenerated,setRecommendationsGenerated] = useState(false)
+  const agentId = 'anuj'
   //console.log("sales state", navigation)
 
   function updateSalesState(data:any) {
@@ -168,7 +169,8 @@ useEffect(() => {
     const data = {
       roomid: roomId,
       jobid: "abcde",
-      agentid: "1234",
+      agentid: '',
+      agent_name:'',
       name: name,
       selected_topic: navigation,
       agent_name:JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name || ''
@@ -192,7 +194,7 @@ useEffect(() => {
   
     updateNotifications,
     recommendationsGenerated,setRecommendationsGenerated,
-    pref_language,setPref_language
+    pref_language,setPref_language,agentId,
   }
   return <Context.Provider value={values}>{children}</Context.Provider>
 }

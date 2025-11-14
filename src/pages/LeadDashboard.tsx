@@ -4,110 +4,144 @@ import { faCloudUploadAlt, faUser, faChartLine, faUserTie, faEdit, faCopy } from
 import { PostReq } from "../functions/requests"
 import { useAuth } from "../context/AuthContext"
 import { config as AppConfig } from "../configuration.js"
-const MAIN_ROUTER_URL = "https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router"
+import NewLeadPopup from "../components/UI2/NewLeadPopup.js"
+
+
+const MAIN_ROUTER_URL ='https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router'
+
+// --- Placeholder Components (Replace with your actual components) ---
+
+// Mock Data Context for demonstration
 
 const DataContext = createContext(null)
 
 const useData = () => useContext(DataContext)
 
-const Form = ({ submitForm, loading, error }) => {
-  const [fields, setFields] = useState([])
-  const [formState, setFormState] = useState({})
-
-  useEffect(() => {
-    const fetchDynamicFields = async () => {
-      try {
-        const agentData = JSON.parse(localStorage.getItem("agent_name"))
-        const agent_name = agentData?.agent_name || ""
-        const res = await fetch(MAIN_ROUTER_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            trigger_func: "req_lms_field_names",
-            params: { agent_name, type: "HI" },
-          }),
-        })
-
-        const data = await res.json()
-        console.log("Fetched field data:", data)
-        if (data?.field_data) {
-          setFields(data.field_data)
-
-          const initialState = {}
-          data.field_data.forEach((f) => {
-            initialState[f.cell_name] = Array.isArray(f.cell_value) ? f.cell_value[0] : f.cell_value || ""
-          })
-          setFormState(initialState)
-        }
-      } catch (err) {
-        console.error("Error fetching field data:", err)
-      }
-    }
-
-    fetchDynamicFields()
-  }, [])
-
-  const handleChange = (e, name) => {
-    const { value } = e.target
-    setFormState((prev) => ({ ...prev, [name]: value }))
+const Form = ({ state, setState, submitForm, loading, error }) => {
+  //console.log("Form state:", state)
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    console.log('handle change in form ',e.target.name ,e.target.value)
+    setState((prevState) => ({ ...prevState, [name]: value }))
+    
+    //setState(prevState=>)
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    submitForm(formState)
-  }
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm flex-1">
       <h3 className="text-lg font-semibold text-slate-700 mb-4">Add New Lead</h3>
-
-      {fields.length === 0 ? (
-        <p className="text-gray-500 text-sm">Loading form fields...</p>
-      ) : (
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-          {fields.map((field, index) => (
-            <div key={index}>
-              <label className="block text-slate-500 mb-1">{field.cell_name}</label>
-
-              {field.type === "user-input" ? (
-                <input
-                  type="text"
-                  name={field.cell_name}
-                  value={formState[field.cell_name] || ""}
-                  onChange={(e) => handleChange(e, field.cell_name)}
-                  className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-                />
-              ) : field.type === "drop-down" ? (
-                <select
-                  name={field.cell_name}
-                  value={formState[field.cell_name] || ""}
-                  onChange={(e) => handleChange(e, field.cell_name)}
-                  className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-                >
-                  {field.cell_value.map((opt, i) => (
-                    <option key={i} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
-              ) : null}
-            </div>
-          ))}
-
-          <div className="md:col-span-2">
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-200"
-              disabled={loading}
-            >
-              {loading ? "Submitting..." : "Add Lead"}
-            </button>
-            {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-          </div>
-        </form>
-      )}
+      <form onSubmit={submitForm} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+        <div>
+          <label htmlFor="fname" className="block text-slate-500 mb-1">
+            First Name
+          </label>
+          <input
+            type="text"
+            id="fname"
+            name="fname"
+            value={state.fname}
+            onChange={handleChange}
+            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
+          />
+        </div>
+        <div>
+          <label htmlFor="lname" className="block text-slate-500 mb-1">
+            Last Name
+          </label>
+          <input
+            type="text"
+            id="lname"
+            name="lname"
+            value={state.lname}
+            onChange={handleChange}
+            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
+          />
+        </div>
+        <div>
+          <label htmlFor="email" className="block text-slate-500 mb-1">
+            Email
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={state.email}
+            onChange={handleChange}
+            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
+          />
+        </div>
+        <div>
+          <label htmlFor="mob" className="block text-slate-500 mb-1">
+            Mobile Number
+          </label>
+          <input
+            type="text"
+            id="mob"
+            name="mob"
+            value={state.mob}
+            onChange={handleChange}
+            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
+          />
+        </div>
+        <div>
+          <label htmlFor="leadSourceFrom" className="block text-slate-500 mb-1">
+            Lead Source
+          </label>
+          <select
+            id="leadSourceFrom"
+            name="leadSourceFrom"
+            value={state.leadSourceFrom}
+            onChange={handleChange}
+            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
+          >
+            <option value="social-media">Social Media</option>
+            <option value="website">Website</option>
+            <option value="referral">Referral</option>
+          </select>
+        </div>
+        <div>
+          <label htmlFor="priority" className="block text-slate-500 mb-1">
+            Priority
+          </label>
+          <select
+            id="priority"
+            name="priority"
+            value={state.priority}
+            onChange={handleChange}
+            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
+          >
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+        <div>
+          <label htmlFor="priority" className="block text-slate-500 mb-1">
+            Language
+          </label>
+          <select
+            id="Language"
+            name="language"
+            value={state.langauge}
+            onChange={handleChange}
+            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
+          >
+            <option value="Marathi">Marathi</option>
+            <option value="English">English</option>
+          </select>
+        </div>
+        <div className="md:col-span-2">
+          <button
+            type="submit"
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-200"
+            disabled={loading}
+          >
+            {loading ? "Submitting..." : state?.lead_id ? "Upload Lead" : "Add Lead"}
+          </button>
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+        </div>
+      </form>
     </div>
   )
 }
@@ -737,6 +771,8 @@ function LeadDashboard() {
   const pollingRef = useRef(null)
   const pollingRefs = useRef({})
 
+  const [isPopupVisible,setIsPopupVisible] = useState(false)
+
   const getFormData = async (url) => {
     console.log("Mock getFormData:", url)
     const resp = await PostReq(`${base_url}/recent_uploads`, { agent_id: currentUser.userid })
@@ -838,6 +874,7 @@ function LeadDashboard() {
     console.log("before submitting", data)
     try {
       await PostReq(`${base_url}/single_lead_upload`, data)
+      setIsPopupVisible(true)
       setFormState(initialState)
       getFormData(`${base_url}/recent_uploads`)
     } catch (e) {
@@ -859,6 +896,7 @@ function LeadDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <Form state={formState} setState={setFormState} submitForm={submitForm} loading={loading} error={error} />
             <UploadComp />
+            <NewLeadPopup isOpen={isPopupVisible} setIsOpen={setIsPopupVisible}/>
           </div>
 
           <div className="mt-6 pb-8">
