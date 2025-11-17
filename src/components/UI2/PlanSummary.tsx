@@ -20,6 +20,7 @@ interface PlanSummaryProps {
 }
 
 export default function PlanSummary({ data, formatCurrency }: PlanSummaryProps) {
+  console.log("PlanSummary data in its component:", data)
   const [expandedSummary, setExpandedSummary] = React.useState<{ [key: string]: boolean }>({})
 
   const toggleCalculation = (summaryId: string) => {

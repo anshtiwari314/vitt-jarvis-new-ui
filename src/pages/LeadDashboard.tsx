@@ -15,6 +15,7 @@ const useData = () => useContext(DataContext)
 const Form = ({ state, setState, submitForm, loading, error }) => {
   const handleChange = (e) => {
     const { name, value } = e.target
+    console.log("name,value", name, value)
     setState((prevState) => ({ ...prevState, [name]: value }))
   }
 
@@ -105,6 +106,22 @@ const Form = ({ state, setState, submitForm, loading, error }) => {
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
+          </select>
+        </div>
+        <div>
+          <label htmlFor="language" className="block text-slate-500 mb-1">
+            Language
+          </label>
+          <select
+            id="language"
+            name="language"
+            value={state.language}
+            onChange={handleChange}
+            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
+          >
+            <option value="low">English</option>
+            <option value="medium">Marathi</option>
+            {/* <option value="high"></option> */}
           </select>
         </div>
         <div className="md:col-span-2">
@@ -815,6 +832,7 @@ function LeadDashboard() {
     mob: "",
     fileName: "",
     leadSourceFrom: "social-media",
+    language: "English",
     file: null,
     priority: "low",
   }
@@ -872,6 +890,7 @@ function LeadDashboard() {
       priority: formState.priority,
       source: formState.leadSourceFrom,
       agent_id: currentUser.userid,
+      pref_language: formState.language,
       lead_type: "LI",
     }
 

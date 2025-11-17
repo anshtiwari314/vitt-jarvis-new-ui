@@ -25,13 +25,14 @@ interface RecommendationsProps {
   data: Recommendation[]
   formatCurrency: (value: number) => string
 }
+
  
 export default function Recommendations({ data, formatCurrency }: RecommendationsProps) {
   const [expandedRecs, setExpandedRecs] = React.useState<{ [key: string]: boolean }>({})
  
   // console.log(data, "the data i received")   [{...}, {...}, {...}....]  ye hai strcuture baaki we can do like 
-  //[[{},{}],[{},{}]]  something like and i can get recommendation category wise if needed
- 
+  //{"sbi":[{},{}],"icici":[{},{}],"hdfc":[{},{}]}  something like and i can get recommendation category wise if needed
+ console.log("Rendering Recommendations component",data)
   const toggleCalculation = (recId: string) => {
     setExpandedRecs((prevState) => ({
       ...prevState,
@@ -54,7 +55,7 @@ export default function Recommendations({ data, formatCurrency }: Recommendation
   return (
     <div className="space-y-4">
      {data.map((rec, idx) => {
-      const realId = rec.id || `rec-${idx}` //if no id than let be this the id
+      const realId = rec.id || `rec-${idx}`
       return (
         <RecommendationToggleCard
           key={realId}

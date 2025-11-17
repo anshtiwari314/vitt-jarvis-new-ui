@@ -2,12 +2,17 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons"
 import { useRef, useEffect, useState } from "react"
 
+interface ColItem {
+  heading: string
+  value: string | number
+}
+
 interface PlanSummaryItem {
   id?: string
   header: string
   sub_header?: string
-  cols?: { [key: string]: string | null | undefined }
-  calculation?: { [key: string]: string | null | undefined }
+  cols?: ColItem[] | { [key: string]: string | null | undefined }
+  calculation?: any
   text_area_value?: string | null | undefined
   reason?: string | null | undefined
   type?: "lifeCover" | "goalCorpus" | "general"
@@ -26,20 +31,30 @@ export default function PlanSummaryCard({
   isExpanded,
   onToggle,
 }: PlanSummaryCardProps) {
-  const parseCorpusValue = (corpusString: string): number => {
-    if (!corpusString) return 0
-    const cleanString = corpusString.replace(/₹|\s/g, "").replace(/,/g, "")
-    return Number.parseInt(cleanString, 10) || 0
+  
+  // 🟦 Normalize cols (convert array -> object)
+  const getNormalizedCols = () => {
+    if (Array.isArray(summaryItem.cols)) {
+      return summaryItem.cols.reduce((acc: any, item: ColItem) => {
+        acc[item.heading] = item.value
+        return acc
+      }, {})
+    }
+    return summaryItem.cols || {}
   }
 
+  const cols = getNormalizedCols()
+
+  // 🟦 Extract Recommended Cover (from <p> tag)
   const extractTotalCover = (reasonHtml: string | null | undefined) => {
     if (!reasonHtml) return ""
     const match = reasonHtml.match(/<p[^>]*>(.*?)<\/p>/i)
     return match ? match[1] : reasonHtml
   }
 
+  // 🟦 Detect card type based on header
   const getCardType = () => {
-    const header = summaryItem.header ? summaryItem.header?.toLowerCase() : '' 
+    const header = summaryItem.header ? summaryItem.header.toLowerCase() : ""
     if (header.includes("life cover") || header.includes("cover analysis")) {
       return "lifeCover"
     }
@@ -50,8 +65,7 @@ export default function PlanSummaryCard({
   }
 
   const cardType = getCardType()
-  const cols = summaryItem?.cols
-  const calculation = summaryItem?.calculation
+
   const summaryId =
     summaryItem.id || `summary-${summaryItem.header?.replace(/\s+/g, "-").toLowerCase()}`
 
@@ -63,24 +77,28 @@ export default function PlanSummaryCard({
       setHeight(`${contentRef.current.scrollHeight}px`)
 
       setTimeout(() => {
-        contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+        contentRef.current?.scrollIntoView({ behavior: "smooth" })
       }, 200)
     } else {
       setHeight("0px")
     }
   }, [isExpanded])
 
-  const safeValue = (value: string | null | undefined) =>
+  const safeValue = (value: any) =>
     value === null || value === undefined || value === "" ? "" : value
 
+  // 🟥 LIFE COVER CARD (Special Layout)
   if (cardType === "lifeCover") {
     return (
-      <div className="bg-white rounded-xl border-b border-t border-l border-r border-sky-500 p-4 shadow-sm ring-1 ring-sky-300">
-        <h3 className="text-lg font-semibold text-slate-800 mb-3">{summaryItem.header}</h3>
+      <div className="bg-white rounded-xl border border-sky-500 p-4 shadow-sm ring-1 ring-sky-300">
+        <h3 className="text-lg font-semibold text-slate-800 mb-3">
+          {summaryItem.header}
+        </h3>
 
-        {calculation && Object.keys(calculation).length > 0 && (
+        {/* COLS AREA */}
+        {cols && Object.keys(cols).length > 0 && (
           <div className="space-y-3 mb-3">
-            {Object.entries(calculation).map(([key, value]) => (
+            {Object.entries(cols).map(([key, value]) => (
               <div key={key} className="flex justify-between items-center">
                 <span className="text-slate-600">{key}</span>
                 <span
@@ -92,6 +110,7 @@ export default function PlanSummaryCard({
           </div>
         )}
 
+        {/* TOTAL RECOMMENDED COVER */}
         {summaryItem.reason && (
           <div className="flex justify-between items-center pt-3 border-t border-gray-200">
             <span className="text-lg font-semibold text-slate-800">
@@ -99,13 +118,16 @@ export default function PlanSummaryCard({
             </span>
             <span
               className="text-base text-xl font-bold text-sky-600"
-              dangerouslySetInnerHTML={{ __html: extractTotalCover(summaryItem.reason) }}
+              dangerouslySetInnerHTML={{
+                __html: extractTotalCover(summaryItem.reason),
+              }}
             />
           </div>
         )}
 
         <div className="-mx-4 border-t border-gray-200 mt-2 mb-1" />
 
+        {/* EXPANDABLE TEXT AREA */}
         {summaryItem.text_area_value && (
           <div>
             <div className="flex justify-end">
@@ -113,7 +135,9 @@ export default function PlanSummaryCard({
                 onClick={() => onToggle(summaryId)}
                 className="flex items-center gap-2 text-sky-600 hover:text-sky-700 text-sm font-medium"
               >
-                <span className="text-[1.05rem] font-medium tracking-tight">Show calculation</span>
+                <span className="text-[1.05rem] font-medium tracking-tight">
+                  Show calculation
+                </span>
                 <FontAwesomeIcon
                   icon={isExpanded ? faChevronUp : faChevronDown}
                   className={`w-3 h-3 transition-transform duration-500 ${
@@ -139,9 +163,12 @@ export default function PlanSummaryCard({
     )
   }
 
+  // 🟦 OTHER CARD TYPES (Retirement / General)
   return (
-    <div className="bg-white rounded-2xl border-b border-t border-l border-r border-sky-500 p-4 shadow-sm ring-1 ring-sky-300">
-      <h4 className="text-lg font-semibold text-slate-800 mb-3">{summaryItem.header}</h4>
+    <div className="bg-white rounded-2xl border border-sky-500 p-4 shadow-sm ring-1 ring-sky-300">
+      <h4 className="text-lg font-semibold text-slate-800 mb-3">
+        {summaryItem.header}
+      </h4>
 
       {cols && Object.keys(cols).length > 0 && (
         <div className="grid grid-cols-3 gap-6 mb-3">
@@ -162,6 +189,7 @@ export default function PlanSummaryCard({
 
       <div className="-mx-4 border-t border-gray-200 mt-2 mb-1" />
 
+      {/* EXPANDABLE CALCULATION */}
       {summaryItem.text_area_value && (
         <div>
           <div className="flex justify-end">
@@ -169,7 +197,9 @@ export default function PlanSummaryCard({
               onClick={() => onToggle(summaryId)}
               className="flex items-center gap-2 text-sky-600 hover:text-sky-700 text-sm font-medium"
             >
-              <span className="text-[1.05rem] font-medium tracking-tight">Show calculation</span>
+              <span className="text-[1.05rem] font-medium tracking-tight">
+                Show calculation
+              </span>
               <FontAwesomeIcon
                 icon={isExpanded ? faChevronUp : faChevronDown}
                 className={`w-3 h-3 transition-transform duration-500 ${

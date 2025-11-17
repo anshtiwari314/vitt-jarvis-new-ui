@@ -18,8 +18,121 @@ import { useDispatch } from 'react-redux';
 import { setQP } from '../reducers/queryparamReducer';
 
 export default function App() {
-   const { navigation: currentNavigation, salesData } = useAppSelector((state) => state.salesCopilotReducer)
+   const { navigation: currentNavigation, salesData ,RecomendationSelected} = useAppSelector((state) => state.salesCopilotReducer)
+   console.log("Current Navigation:", currentNavigation);
+   console.log("Sales Datain main page:", salesData.recommendations);
+//    [{},{},{}]---->aise me dikha dega lekin kuch select karna padega phir vo dikgeaga                                 
 //   console.log(currentNavigation,"basic sales data is ",salesData.liabilities);
+   const mockData = salesData.recommendations
+
+const mock2=[
+
+    {
+
+        "header": "Immediate Life Cover Analysis",
+
+        "sub_header": "",
+
+        "cols": [
+
+            {
+
+                "heading": "Outstanding Liabilities",
+
+                "value": "10.00 lac"
+
+            },
+
+            {
+
+                "heading": "Annual Expenses",
+
+                "value": "18.00 lac"
+
+            },
+
+            {
+
+                "heading": "Required Corpus",
+
+                "value": "1.90 cr"
+
+            }
+
+        ],
+
+        "calculation": {},
+
+        "text_area_value": "",
+
+        "reason": "<h3 style=\"font-size:3rem\">Total Recommended Cover <p style=\"color:blue\">1.90 cr</p></h3>"
+
+    },
+
+    {
+
+        "header": "Retirement Savings",
+
+        "sub_header": "I want to save and require retirement purpose like 20 crores.",
+
+        "calculation": "",
+
+        "text_area_value": "Inflation rate percent: 6%",
+
+        "cols": [
+
+            {
+
+                "heading": "Time Frame",
+
+                "value": 13
+
+            },
+
+            {
+
+                "heading": "Target Year",
+
+                "value": 2038
+
+            },
+
+            {
+
+                "heading": "Required Corpus",
+
+                "value": "20.00 cr"
+
+            }
+
+        ]
+
+    }
+
+]
+ 
+console.log(salesData.planSummary,"the plan summarey in main page");
+
+ 
+    //based on RecomendationSelected we will filter data
+    // let filteredRecommendations = [];
+    let filteredRecommendations:any = [];
+
+if (RecomendationSelected) {
+  const matched = mockData.find(
+    (item) => item.planName === RecomendationSelected
+  );
+
+  if (matched) {
+    filteredRecommendations = matched.planDetails; 
+  }
+}
+
+console.log("Filtered Recommendations:", filteredRecommendations);
+    
+    console.log(filteredRecommendations,"---------",RecomendationSelected);
+    
+    //yaha pe filter karna padega mock data se ki konsa select hua hai r1,r2  yaa y3 
 
     const qpState = useAppSelector((state) => state.qpReducer);
     const dispatch = useDispatch();
@@ -54,7 +167,7 @@ export default function App() {
         case 'Plan Summary':
             return <PlanSummary data={salesData.planSummary} formatCurrency={formatCurrency} />;
         case 'Recommendations':
-            return <Recommendations data={salesData.recommendations} formatCurrency={formatCurrency} />;
+            return <Recommendations data={filteredRecommendations} formatCurrency={formatCurrency} />;
         default:
             return <BasicInfo data={salesData.basicInfo} />; // Default to Basic Info
     }
