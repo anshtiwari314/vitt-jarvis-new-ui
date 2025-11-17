@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect, useState, createContext, useContext, useRef } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCloudUploadAlt, faUser, faChartLine, faUserTie, faEdit, faCopy } from "@fortawesome/free-solid-svg-icons"
@@ -18,6 +20,9 @@ const DataContext = createContext(null)
 const useData = () => useContext(DataContext)
 
 const Form = ({ state, setState, submitForm, loading, error }) => {
+
+  
+
   //console.log("Form state:", state)
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -142,6 +147,7 @@ const Form = ({ state, setState, submitForm, loading, error }) => {
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         </div>
       </form>
+      
     </div>
   )
 }
@@ -167,20 +173,22 @@ const UploadComp = () => {
 }
 
 export function Table({ setFormState, initialFormState }) {
-  const { formData, base_url, getFormData } = useData()
-  const leads = formData || []
+  const { formData, base_url, getFormData } = useData() // Using mock data from context
+  const leads = formData || [] // Ensure leads is an array
   const hiLeads = Array.isArray(leads) ? leads.filter((l) => String(l?.lead_type || "").toUpperCase() === "HI") : []
 
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
 
+  // Pagination states
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [itemsPerPage, setItemsPerPage] = useState(10) // 10 entries per page as requested
 
-  const [copyFeedback, setCopyFeedback] = useState({})
+  // State to manage copy feedback message
+  const [copyFeedback, setCopyFeedback] = useState({}) // { leadId: 'Copied!' }
 
-  const [insightLoading, setInsightLoading] = useState({})
-  const [insightError, setInsightError] = useState({})
-  const [insightMsg, setInsightMsg] = useState({})
+  const [insightLoading, setInsightLoading] = useState({}) // { leadId: boolean }
+  const [insightError, setInsightError] = useState({}) // { leadId: string }
+  const [insightMsg, setInsightMsg] = useState({}) // { leadId: string }
 
   const pollingTimers = useRef<Record<string, number>>({})
 
@@ -202,8 +210,9 @@ export function Table({ setFormState, initialFormState }) {
   }
 
   const startPolling = (sessionId: string, uniqueLeadId: string) => {
-    if (pollingTimers.current[uniqueLeadId]) return
+    if (pollingTimers.current[uniqueLeadId]) return // already polling
 
+    // keep the current row in loading state while polling
     setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: true }))
     setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "" }))
     setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "Checking dashboard status..." }))
@@ -214,22 +223,26 @@ export function Table({ setFormState, initialFormState }) {
           trigger_func: "ins_postfacto_status_check",
           params: { session_id: sessionId },
         })
-        const status = pollResp?.status
+        const status = pollResp?.status // expects "done" | "pending"
 
         if (status === "done") {
           stopPolling(uniqueLeadId)
           setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "Dashboard is ready" }))
           setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: false }))
 
+          // open the Postfacto dashboard
           window.open(`https://postfacto-health.netlify.app/#/${sessionId}`, "_blank", "noopener,noreferrer")
 
+          // refresh the list so postfacto_status updates to 'done'
           if (typeof getFormData === "function" && base_url) {
             getFormData(`${base_url}/recent_uploads`)
           }
         } else if (status === "pending") {
+          // continue polling; optional micro-feedback
           setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "Preparing dashboard…" }))
         }
       } catch (_e) {
+        // transient errors; keep polling
         setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "Status check failed, retrying..." }))
         setTimeout(() => {
           setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "" }))
@@ -241,7 +254,7 @@ export function Table({ setFormState, initialFormState }) {
   }
 
   function enableEdit(lead) {
-    const { name, mob, email, priority, source, lead_id, link_params, pref_language } = lead
+    const { name, mob, email, priority, source, lead_id, link_params,pref_language } = lead
     const [fname, ...restName] = name.split(" ")
 
     console.log("enable edit", lead)
@@ -255,7 +268,7 @@ export function Table({ setFormState, initialFormState }) {
       email,
       priority,
       leadSourceFrom: source,
-      pref_language,
+      pref_language
     })
   }
 
@@ -283,6 +296,7 @@ export function Table({ setFormState, initialFormState }) {
       const cidMatch = linkParams.match(/cid_\w+/)
       const sessionId = cidMatch ? cidMatch[0] : "cid_8459"
 
+      // Initial trigger
       const response = await PostReq(MAIN_ROUTER_URL, {
         trigger_func: "trigger_metrics_HI",
         params: { session_id: sessionId },
@@ -303,10 +317,12 @@ export function Table({ setFormState, initialFormState }) {
         return
       }
       if (msg === "session not done") {
+        // stop loading; user can try again later
         setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: false }))
         return
       }
 
+      // If backend ever returns immediate done (rare)
       if (response?.status === "done") {
         setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "Dashboard is ready" }))
         setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: false }))
@@ -403,7 +419,7 @@ export function Table({ setFormState, initialFormState }) {
     const textarea = document.createElement("textarea")
     textarea.value = textToCopy
     textarea.style.position = "fixed"
-    textarea.style.opacity = "0"
+    textarea.style.opacity = 0
     document.body.appendChild(textarea)
     textarea.focus()
     textarea.select()
@@ -439,6 +455,7 @@ export function Table({ setFormState, initialFormState }) {
         <p className="text-slate-500 text-center py-4">No HI leads found.</p>
       ) : (
         <>
+          {/* --- This div enables horizontal scrolling --- */}
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200">
               <thead className="bg-slate-50">
@@ -473,6 +490,7 @@ export function Table({ setFormState, initialFormState }) {
                   >
                     Created At
                   </th>
+                  
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -485,6 +503,7 @@ export function Table({ setFormState, initialFormState }) {
                   >
                     Source
                   </th>
+
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
@@ -513,7 +532,7 @@ export function Table({ setFormState, initialFormState }) {
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
                 {currentLeads.map((lead, index) => {
-                  console.log("lead_links", lead.link_params)
+                  console.log('lead_links',lead.link_params)
                   const linkToCopy = lead.link_params
                     ? `${window.location.protocol}//${window.location.host}/#/mainpage/?${lead.link_params}&${lead.pref_language.toLowerCase()}`
                     : "#"
@@ -521,23 +540,14 @@ export function Table({ setFormState, initialFormState }) {
                   const uniqueLeadId = lead.id || lead.lead_id || `lead-${lead.name}-${lead.mob}`
                   return (
                     <tr key={uniqueLeadId}>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm font-medium text-slate-900">
-                        {lead.name}
-                      </td>
+                      {/* --- This is the class you want: text-xs md:text-sm --- */}
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm font-medium text-slate-900">{lead.name}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">{lead.mob}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">{lead.email}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">
-                        {lead.pref_language}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">
-                        {lead.timestamp}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500 capitalize">
-                        {lead.priority}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500 capitalize">
-                        {lead.source}
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">{lead.pref_language}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">{lead.timestamp}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500 capitalize">{lead.priority}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500 capitalize">{lead.source}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500 flex items-center space-x-2">
                         <a href={linkToCopy} className="text-blue-600 hover:underline" rel="noopener noreferrer">
                           Link
@@ -630,6 +640,7 @@ export function Table({ setFormState, initialFormState }) {
             </table>
           </div>
 
+          {/* --- This pagination is responsive --- */}
           <div className="mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="text-sm text-slate-600 text-center md:text-left">
               {totalItems > 0 ? (
@@ -677,7 +688,12 @@ export function Table({ setFormState, initialFormState }) {
                       type="button"
                       onClick={() => paginate(p)}
                       aria-current={currentPage === p ? "page" : undefined}
-                      className={`px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${currentPage === p ? "border-blue-600 bg-blue-50 text-blue-700" : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800"}`}
+                      className={`px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500
+                        ${
+                          currentPage === p
+                            ? "border-blue-600 bg-blue-50 text-blue-700"
+                            : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800"
+                        }`}
                     >
                       {p}
                     </button>
@@ -767,7 +783,7 @@ function LeadDashboard() {
   const [formData, setFormData] = useState([])
   const base_url = AppConfig.serverBaseUrl
   const { currentUser } = useAuth()
-  console.log(currentUser.userid, "the current user is")
+  console.log(currentUser.userid,"the current user is")
   const pollingRef = useRef(null)
   const pollingRefs = useRef({})
 
@@ -809,7 +825,7 @@ function LeadDashboard() {
     leadSourceFrom: "social-media",
     file: null,
     priority: "low",
-    language: "Marathi",
+    language:"Marathi",
   }
 
   const [formState, setFormState] = useState(initialState)
@@ -824,13 +840,14 @@ function LeadDashboard() {
     { name: "Sales Manager Dashboard", icon: faChartLine, redirectTo: "/#/sales-manager-dashboard", isActive: false },
   ]
 
-  useEffect(() => {
-    console.log("form state", formState)
-  }, [formState])
+  useEffect(()=>{
+    console.log('form state',formState)
+  },[formState])
 
   useEffect(() => {
     getFormData(`${base_url}/recent_uploads`)
 
+    // Polling setup
     const interval = setInterval(() => {
       if (!pollingRef.current) return
       getFormData(`${base_url}/recent_uploads`)
@@ -842,32 +859,34 @@ function LeadDashboard() {
     }
   }, [])
 
-  async function submitForm(formDataToSubmit:any) {
+  async function submitForm(e) {
     setLoading(true)
     setError("")
-    console.log("Submitting form data:", formDataToSubmit)
+    e.preventDefault()
 
-    const requiredFields = ["First Name", "Last Name", "Email", "Mobile Number", "Priority", "Lead Source"]
-    const hasEmptyFields = requiredFields.some((field) => {
-      const value = formDataToSubmit[field]
-      return value === "" || value === null || value === undefined
-    })
 
-    if (hasEmptyFields) {
+    if (
+      formState.fname === "" ||
+      formState.lname === "" ||
+      formState.email === "" ||
+      formState.mob === "" ||
+      formState.priority === "" ||
+      formState.leadSourceFrom === ""
+    ) {
       setError("Please fill all fields of form")
       setLoading(false)
       return
     }
 
     const data = {
-      lead_id: formDataToSubmit.lead_id,
-      customer_name: formDataToSubmit["First Name"]+ " " + formDataToSubmit["Last Name"],
-      mobile_num: formDataToSubmit["Mobile Number"],
-      email: formDataToSubmit.Email,
-      priority: formDataToSubmit.Priority,
-      source: formDataToSubmit["Lead Source"],
+      lead_id: formState.lead_id,
+      customer_name: formState.fname + " " + formState.lname,
+      mobile_num: formState.mob,
+      email: formState.email,
+      priority: formState.priority,
+      source: formState.leadSourceFrom,
       agent_id: currentUser.userid,
-      pref_language: formDataToSubmit.Language || "Marathi",
+      pref_language: formState.language,
       lead_type: "HI",
     }
 
@@ -881,6 +900,9 @@ function LeadDashboard() {
       console.error(e)
       setError("Failed to submit lead.")
     }
+
+
+
     setLoading(false)
   }
 
@@ -888,7 +910,7 @@ function LeadDashboard() {
     <DataContext.Provider value={{ base_url, getFormData, formData }}>
       <div className="min-h-screen bg-slate-100 font-sans" style={{}}>
         {/* <Sidebar links={mylink} /> */}
-        <div style={{}} className="mx-0 lg:mx-[8rem]">
+        <div style={{ }} className="mx-0 lg:mx-[8rem]">
           <div className="py-6">
             <Header title="Lead Management" dashboardLink="/#/" />
           </div>
@@ -900,7 +922,7 @@ function LeadDashboard() {
           </div>
 
           <div className="mt-6 pb-8">
-            <Table formState={formState} setFormState={setFormState} initialFormState={initialState} />
+            <Table formState={formState} setFormState={setFormState} />
           </div>
         </div>
       </div>

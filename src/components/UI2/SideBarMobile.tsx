@@ -3,12 +3,15 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 // We will use local state for demonstration.
  import { useAppDispatch, useAppSelector } from '../../store/store';
  import { setNavigation } from '../../reducers/salesCopilotReducer';
-// import { useData } from '../../context/DataWrapper';
+import { useData } from '../../context/DataWrapper';
+import { setPlanSelected } from '../../reducers/healthManagmentReducer';
 
 export default function SideBarMobile() {
   const dispatch = useAppDispatch();
   const [isOpen, setIsOpen] = useState(false); // State to manage open/close
-  
+   const { salesData, planSelected } = useAppSelector(
+      (state) => state.healthManagmentReducer
+    );
   // --- Mocked State (replacing Redux and Context) ---
   const [currentNavigation, setCurrentNavigation] = useState('basicInfo');
   const { recommendationsGenerated } = { recommendationsGenerated: true }; // Mock data from useData
@@ -16,6 +19,7 @@ export default function SideBarMobile() {
   // const currentNavigation = useAppSelector(state => state.healthManagmentReducer.navigation); // Replaced with local state
   // const { recommendationsGenerated } = useData(); // Replaced with mock data
   // --- End of Mocked State ---
+  const [recommendationsOpen, setRecommendationsOpen] = useState(false);
 
   // --- Draggable Button State ---
   const [position, setPosition] = useState({ x: 16, y: window.innerHeight / 2 });
@@ -23,6 +27,7 @@ export default function SideBarMobile() {
   const [hasDragged, setHasDragged] = useState(false);
   const [dragStart, setDragStart] = useState({ pointerX: 0, pointerY: 0, buttonX: 0, buttonY: 0 });
   const buttonRef = useRef(null);
+  const recommendations =salesData.Recommendations;
 
   // Updated handler to close panel on navigation and use local state
   const handleNavigationClick = (page: string) => {
@@ -30,47 +35,98 @@ export default function SideBarMobile() {
     setCurrentNavigation(page); // Use local state
     setIsOpen(false);
   };
+  const {  pref_language } = useData();
+   const labels = {
+    en: {
+      basicInfo: "Basic Info",
+      healthProfile: "Health Profile",
+      recommendations: "Recommendation",
+      planSummary: "Plan Summary",
+      aiCopilot: "AI Copilot",
+      recGenerated: "Recommendations Generated",
+      systemStatus: "System Status",
+      audioStreaming: "Audio Streaming",
+      liveTranscription: "Live Transcription",
+      aiProcessing: "AI Processing",
+    },
+    mr: {
+      basicInfo: "मूलभूत माहिती",
+      healthProfile: "आरोग्य प्रोफाइल",
+      recommendations: "शिफारसी",
+      planSummary: "योजनेचा सारांश",
+      aiCopilot: "एआय सहाय्यक",
+      recGenerated: "शिफारसी तयार झाल्या",
+      systemStatus: "प्रणाली स्थिती",
+      audioStreaming: "ऑडिओ प्रवाह",
+      liveTranscription: "थेट लिप्यंतरण",
+      aiProcessing: "एआय प्रक्रिया",
+    },
+  };
+  const lang = pref_language === "mr" ? labels.mr : labels.en;
 
+    const recommendationSubItems = recommendations?.map((rec: any, index: number) => ({
+    id: `recommendation_${index + 1}`,
+    label: rec.planName?.value || `Recommendation ${index + 1}`,
+    planName: rec.planName?.value || "",
+  }));
+  console.log(recommendationSubItems,"recommendation sub items---");
   const iconClass = "w-6 h-6 mr-3 text-sky-500";
 
-  const navItems = [
+    const navItems = [
     {
-      id: 'basicInfo',
-      label: 'Basic Info',
+      id: "basicInfo",
+      label: lang.basicInfo,
       icon: (
         <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+          />
         </svg>
       ),
     },
     {
-      id: 'healthProfile',
-      label: 'Health Profile',
+      id: "healthProfile",
+      label: lang.healthProfile,
       icon: (
         <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+          />
         </svg>
       ),
     },
     {
-      id: 'recommendations',
-      label: 'Recommendation',
+      id: "recommendations",
+      label: lang.recommendations,
       icon: (
         <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+          />
         </svg>
       ),
+      subItems: recommendationSubItems,
     },
     {
-      id: 'planSummary',
-      label: 'Plan Summary',
+      id: "planSummary",
+      label: lang.planSummary,
       icon: (
         <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
         </svg>
       ),
     },
@@ -130,7 +186,8 @@ export default function SideBarMobile() {
     setIsDragging(false);
   }, []);
 
-
+  const [clientName,qpParams] = useAppSelector((state) => [state.healthManagmentReducer.clientName,state.qpReducer])
+const { socket } = useData()
   // Updated to use mobile-specific IDs
   const updateDateTime = () => {
     const now = new Date();
@@ -139,6 +196,26 @@ export default function SideBarMobile() {
     if (dateEl) dateEl.textContent = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     if (timeEl) timeEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
   };
+  const handlePlanClick = (planName: string) => {
+      //yaha se planNme ke naam se filter karna hai ki konsaplan hai phir uska context_name bhejna hai backned ko 
+     const selectedPlan = recommendations?.find(
+    (p: any) => p.planName?.value === planName
+  );
+              console.log(selectedPlan,"[DEBUG!]---");
+      let context_name = selectedPlan?.context_name || "";
+      console.log("context_name--->",context_name);
+    const pyLoad = {
+      roomid: qpParams.roomId,
+      context_name: context_name
+    }
+    console.log("the pyload is",pyLoad);
+    
+  
+    socket && socket.emit('save_user_context', pyLoad)
+  
+      dispatch(setPlanSelected(planName));
+    };
+  
 
   // Effect for initial centering
   useEffect(() => {
@@ -246,18 +323,70 @@ export default function SideBarMobile() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-          {navItems.map(item => (
-            <a
-              key={item.id}
-              className={`flex items-center px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 ${currentNavigation === item.id ? 'bg-slate-100 text-sky-600' : ''}`}
-              onClick={() => handleNavigationClick(item.id)} // Will close panel
+         <nav className="flex-1 p-2 space-y-1">
+
+    {navItems.map((item) => (
+      <div key={item.id}>
+
+        {/* MAIN NAV ITEM */}
+        <div
+          className={`flex items-center justify-between px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 cursor-pointer ${
+            currentNavigation === item.id ? "bg-slate-100 text-sky-600" : ""
+          }`}
+          onClick={() =>
+            item.subItems
+              ? setRecommendationsOpen((prev) => !prev)
+              : handleNavigationClick(item.id)
+          }
+        >
+          <div className="flex items-center">
+            {item.icon}
+            {item.label}
+          </div>
+
+          {item.subItems && (
+            <svg
+              className={`w-5 h-5 transition-transform ${
+                recommendationsOpen ? "rotate-90 text-sky-500" : "text-slate-400"
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              {item.icon}
-              {item.label}
-            </a>
-          ))}
-        </nav>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+            </svg>
+          )}
+        </div>
+
+        {/* SUB ITEMS */}
+        {item.subItems && recommendationsOpen && (
+          <div className="ml-10 mt-1 space-y-1">
+            {item.subItems.map((sub) => (
+              <div
+                key={sub.id}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setRecommendationsOpen(true);
+                  handleNavigationClick("recommendations");
+                  handlePlanClick(sub.planName);
+                }}
+                className={`px-3 py-2 text-sm rounded-md cursor-pointer ${
+                  currentNavigation === "recommendations" &&
+                  planSelected === sub.planName
+                    ? "bg-sky-50 text-sky-700 font-medium"
+                    : "text-slate-500 hover:bg-slate-50"
+                }`}
+              >
+                {sub.label}
+              </div>
+            ))}
+          </div>
+        )}
+
+      </div>
+    ))}
+
+  </nav>
 
         {/* Recommendations Status */}
         {recommendationsGenerated && (

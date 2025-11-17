@@ -25,8 +25,9 @@ import { normalizeRecommendationData } from '../functions/normalisedRecomendatio
 //import BasicInfoH from '../components/UI2/BasicInfo';
 
 export default function App() {
-    const {socket}=useData()
-     const {salesData,navigation:currentNavigation} = useAppSelector((state) => state.healthManagmentReducer)
+
+     const {socket}=useData()
+     const {salesData,navigation:currentNavigation} =useAppSelector((state) => state.healthManagmentReducer)
      console.log('salesData', salesData.Recommendations)
   //    const mockData=[
   // {
