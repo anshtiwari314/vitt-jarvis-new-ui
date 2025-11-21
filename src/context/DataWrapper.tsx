@@ -170,7 +170,7 @@ useEffect(() => {
       roomid: roomId,
       jobid: "abcde",
       agentid: '',
-      agent_name:'',
+      
       name: name,
       selected_topic: navigation,
       agent_name:JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name || ''
