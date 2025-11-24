@@ -189,7 +189,7 @@ useEffect(() => {
     //ngrokServerUrl: "http://localhost:5000",
     setMsgLoading: (loading: boolean) => console.log("Loading:", loading),
 
-    oneWayUrl: 'wss://recruito.vitti.insure', 
+    oneWayUrl: 'http://localhost:5000', 
 
   
     updateNotifications,

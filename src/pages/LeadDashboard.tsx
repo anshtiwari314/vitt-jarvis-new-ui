@@ -9,7 +9,7 @@ import { config as AppConfig } from "../configuration.js"
 import NewLeadPopup from "../components/UI2/NewLeadPopup.js"
 
 
-const MAIN_ROUTER_URL ='https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router'
+const MAIN_ROUTER_URL ='https://8104cef4eb8a.ngrok-free.app/main_router'
 
 // --- Placeholder Components (Replace with your actual components) ---
 
@@ -236,7 +236,7 @@ export function Table({ setFormState, initialFormState }) {
 
           // refresh the list so postfacto_status updates to 'done'
           if (typeof getFormData === "function" && base_url) {
-            getFormData(`${base_url}/recent_uploads`)
+            getFormData(`https://8104cef4eb8a.ngrok-free.app/recent_uploads`)
           }
         } else if (status === "pending") {
           // continue polling; optional micro-feedback
@@ -826,7 +826,7 @@ function LeadDashboard() {
     leadSourceFrom: "social-media",
     file: null,
     priority: "low",
-    language:"Marathi",
+    language:"English",
   }
 
   const [formState, setFormState] = useState(initialState)
@@ -893,7 +893,7 @@ function LeadDashboard() {
 
     console.log("before submitting", data)
     try {
-      await PostReq(`${base_url}/single_lead_upload`, data)
+      await PostReq(`https://8104cef4eb8a.ngrok-free.app/single_lead_upload`, data)
       setIsPopupVisible(true)
       setFormState(initialState)
       getFormData(`${base_url}/recent_uploads`)
