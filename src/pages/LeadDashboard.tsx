@@ -133,7 +133,7 @@ const Form = ({ state, setState, submitForm, loading, error }) => {
             className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
           >
             <option value="English">English</option>
-            <option value="Hindi">Hindi</option>
+          
             <option value="Marathi">Marathi</option>
           </select>
         </div>
