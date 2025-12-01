@@ -128,22 +128,22 @@ export default function Header() {
   }
 
   // ---------------- FLAG LOGIC -------------------
-  const handleFlag = (flagType: string) => {
-    console.log("Raising flag:", flagType)
-    const pyLoad = {
-      roomid: qpParams.roomId,
-      topic: navigation,
-      report_message: flagType,
-      type: "HI",
-      agent_name: JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name || ''
+    const handleFlag = (flagType: string) => {
+      console.log("Raising flag:", flagType)
+      const pyLoad ={
+        roomid: qpParams.roomId,
+        topic: navigation,
+        report_message: flagType,
+        type: "HI",
+        agent_name:JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name||''
+      }
+      console.log("Flag payload:", pyLoad)
+      socket && socket.emit('save_flags_data', pyLoad)
+      setFlagOpen(false)
+      alert(`Flag raised: ${flagType}`)
     }
-    console.log("Flag payload:", pyLoad)
-    socket && socket.emit('save_flags_data', pyLoad)
-    setFlagOpen(false)
-    alert(`Flag raised: ${flagType}`)
-  }
 
-  const [flagOpen, setFlagOpen] = React.useState(false)
+    const [flagOpen, setFlagOpen] = React.useState(false)
 
   return (
     <>
