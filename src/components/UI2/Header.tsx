@@ -5,6 +5,7 @@ import { TailSpin } from "react-loading-icons"
 import { useAuth } from "../../context/AuthContext"
 import { useData } from "../../context/DataWrapper"
 import { useDispatch } from "react-redux"
+import { updatePrefLanguage } from "../../reducers/salesCopilotReducer"
 
 export default function Header() {
   const { socket } = useData()
@@ -149,7 +150,7 @@ export default function Header() {
     dispatch(updatePrefLanguage(selectedLang))
 
     socket && 
-    socket.emit('switch_pref_language_hi',{"roomid": qpParams.roomId, "pref_language": qpParams.pref_language})
+    socket.emit('switch_pref_language_hi',{"roomid": qpParams.roomId, "pref_language": selectedLang})
     
 
 

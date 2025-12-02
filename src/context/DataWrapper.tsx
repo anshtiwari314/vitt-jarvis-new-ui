@@ -93,7 +93,7 @@ const [pref_language,setPref_language]=useState("English")
         dispatch(updatePlanSummary(data.planSummary))
         break
       case "recommendations":
-        console.log('recommendation data',data)
+        console.log('recommendation data from backend',data)
         dispatch(updateRecommendations(data.recommendations))
         break
       case "follow-up-qn":
