@@ -125,8 +125,10 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
 
   //const socketUrl = 'https://b18e4904236b.ngrok-free.app'
   // 500ms delay before connecting
-  const timer = setTimeout(() => {
-    const tempSocket = io(socketUrl)
+  
+  //const timer = setTimeout(() => {
+  
+  const tempSocket = io(socketUrl)
 
     function connected() {
       tempSocket.emit("connected", tempSocket.id);
@@ -146,7 +148,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
     tempSocket.on('notifications',updateNotifications)
     setSocket(tempSocket)
     return () => {
-      timer && clearTimeout(timer)
+      //timer && clearTimeout(timer)
       if (tempSocket) {
         tempSocket.off("connect1", connected)
         tempSocket.off("disconnect1", disconnect)
@@ -155,7 +157,8 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
         tempSocket.disconnect()
       }
     }
-  }, 500) 
+
+  //}, 500) 
 
 }, [])
 
