@@ -21,7 +21,7 @@ import {
 // }
 
 
-import {config as AppConfig} from '../configuration.js'
+import {config as AppConfig, config} from '../configuration.js'
 
 
 const Context = createContext<any>("")
@@ -45,6 +45,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
   const healthManageMentState = useAppSelector((state) => state.healthManagmentReducer);
   const [recommendationsGenerated,setRecommendationsGenerated] = useState(false)
+  const [lms_data,setLms_data]=useState<any>();
   const agentId = 'anuj'
   //console.log("sales state", navigation)
 
@@ -180,6 +181,9 @@ useEffect(() => {
 }, [socket,navigation])
 
 
+
+
+
   
 
   const values = {
@@ -194,7 +198,7 @@ useEffect(() => {
   
     updateNotifications,
     recommendationsGenerated,setRecommendationsGenerated,
-    pref_language,setPref_language,agentId,
+    pref_language,setPref_language,agentId,lms_data
   }
   return <Context.Provider value={values}>{children}</Context.Provider>
 }

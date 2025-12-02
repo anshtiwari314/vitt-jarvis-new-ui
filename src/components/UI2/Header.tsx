@@ -225,7 +225,7 @@ export default function Header() {
             className="bg-slate-100 border border-slate-300 text-slate-700 rounded-lg px-3 py-2 cursor-pointer hover:bg-slate-200 transition"
           >
             <option value="english">English</option>
-            <option value="hindi">Hindi</option>  
+            {/* <option value="hindi">Hindi</option>   */}
             <option value="marathi">Marathi</option>
           </select>
 
