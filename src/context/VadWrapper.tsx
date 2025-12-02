@@ -299,8 +299,25 @@ async function processAudioToBase64(audio,url,data){
           //console.log('manual vad is paused',VAD2)
           VAD2?.pause()
         }
+
+        
       },[manualVadStatus])
     
+      useEffect(()=>{
+
+        let timeout ;
+        if(!VAD2.loading){
+          console.log('manual-vad-stopping')
+          setManualVadStatus(false)
+          // timeout = setTimeout(()=>{
+            
+          // },3000)
+        }
+
+        return ()=> {
+         timeout && clearTimeout(timeout)
+        }
+      },[VAD2?.loading])
       
     
 
