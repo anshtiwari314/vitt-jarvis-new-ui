@@ -317,7 +317,21 @@ export default function VadWrapper({children}){
         }
       },[manualVadStatus])
     
-      
+      useEffect(()=>{
+
+        let timeout ;
+        if(!VAD2.loading){
+          console.log('manual-vad-stopping')
+          setManualVadStatus(false)
+          // timeout = setTimeout(()=>{
+            
+          // },3000)
+        }
+
+        return ()=> {
+         timeout && clearTimeout(timeout)
+        }
+      },[VAD2?.loading])
     
 
     /* (Automatic vad old ) this logic has time delay bcz of startMediaRecorder function the data only send after when 
