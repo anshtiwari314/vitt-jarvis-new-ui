@@ -216,7 +216,7 @@ useEffect(()=>{
     //socketConnected: socketConnected && socketReady,
     //ngrokServerUrl: "http://localhost:5000",
     setMsgLoading: (loading: boolean) => console.log("Loading:", loading),
-    oneWayUrl: "http://localhost:5000", 
+    oneWayUrl: "wss://recruito.vitti.insure", 
     toggleNotificationModal,setToggleNotificationModal,updateField,
     recommendationsGenerated,setRecommendationsGenerated,
     pref_language,setPref_language

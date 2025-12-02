@@ -6,6 +6,7 @@ import { faCloudUploadAlt, faUser, faChartLine, faUserTie, faEdit, faCopy } from
 import { PostReq } from "../functions/requests"
 import { useAuth } from "../context/AuthContext"
 import NewLeadPopup from "../components/UI2/NewLeadPopup"
+import { config } from "../configuration"
 // --- Placeholder Components (Replace with your actual components) ---
 
 // Mock Data Context for demonstration
@@ -109,32 +110,32 @@ const Form = ({ state, setState, submitForm, loading, error }) => {
           </select>
         </div>
         <div>
-          <label htmlFor="language" className="block text-slate-500 mb-1">
-            Language
-          </label>
-          <select
-            id="language"
-            name="language"
-            value={state.language}
-            onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-          >
-            <option value="low">English</option>
-            <option value="medium">Marathi</option>
-            {/* <option value="high"></option> */}
-          </select>
-        </div>
+      <label htmlFor="priority" className="block text-slate-500 mb-1">
+        Language
+      </label>
+      <select
+        id="Language"
+        name="language"
+        value={state.language}
+        onChange={handleChange}
+        className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
+      >
+        <option value="English">English</option>
+        <option value="Marathi">Marathi</option>
+      </select>
+    </div>
         <div className="md:col-span-2">
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-200"
             disabled={loading}
           >
-            {loading ? "Submitting..." : "Add Lead"}
+            {loading ? "Submitting..." : state?.lead_id ? "Upload Lead" : "Add Lead"}
           </button>
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         </div>
       </form>
+      
     </div>
   )
 }
@@ -227,20 +228,30 @@ export function Table({ setFormState, initialFormState }) {
   }
 
   const startPolling = (sessionId: string, uniqueLeadId: string) => {
-    if (pollingTimers.current[uniqueLeadId]) return // already polling
-
-    // keep the current row in loading state while polling
+    if (pollingTimers.current[uniqueLeadId]) return 
+    
     setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: true }))
     setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "" }))
     setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "Checking dashboard status..." }))
 
     const timerId = window.setInterval(async () => {
       try {
-        const pollResp = await PostReq(MAIN_ROUTER_URL, {
-          trigger_func: "ins_postfacto_status_check",
-          params: { session_id: sessionId },
-        })
-        const status = pollResp?.status // expects "done" | "pending"
+          const pollResp = await fetch(MAIN_ROUTER_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                route_name: "main_router",
+                json_data: {
+                  trigger_func: "ins_postfacto_status_check",
+                  params: { session_id: sessionId }
+                }
+              })
+            });
+
+            const data = await pollResp.json();
+            const status = data?.status; // expects "done" | "pending"
 
         if (status === "done") {
           stopPolling(uniqueLeadId)
@@ -317,13 +328,25 @@ export function Table({ setFormState, initialFormState }) {
       const sessionId = cidMatch ? cidMatch[0] : "cid_8459"
 
       // Initial trigger
-      const response = await PostReq(MAIN_ROUTER_URL, {
-        trigger_func: "trigger_metrics_LI",
-        params: { session_id: sessionId },
-      })
+    const response = await fetch(MAIN_ROUTER_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            route_name: "main_router",
+            json_data: {
+              trigger_func: "trigger_metrics_LI",
+              params: { session_id: sessionId }
+            }
+          })
+        });
 
-      const rawMsg = response?.msg || ""
-      const msg = rawMsg.toLowerCase()
+        const json = await response.json();
+
+        const rawMsg = json?.msg || "";
+        const msg = rawMsg.toLowerCase();
+
 
       if (rawMsg) {
         setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: rawMsg }))
@@ -515,6 +538,12 @@ export function Table({ setFormState, initialFormState }) {
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
                   >
+                    Language
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  >
                     Source
                   </th>
                   <th
@@ -557,6 +586,8 @@ export function Table({ setFormState, initialFormState }) {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.email}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.lead_type}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead.priority}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead?.pref_language}</td>
+                   
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead.source}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 flex items-center space-x-2">
                         <a href={linkToCopy} className="text-blue-600 hover:underline" rel="noopener noreferrer">
@@ -791,17 +822,29 @@ const Header = ({ title, dashboardLink }) => {
 
 function LeadDashboard() {
   const [formData, setFormData] = useState([]) // Mock for useData's formData
-  const base_url = "https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis"
-  const { currentUser } = useAuth()
+  const base_url = config.serverBaseUrl
+  const { currentUser }:any = useAuth()
   const pollingRef = useRef(null)
   const pollingRefs = useRef({})
 
   const [isPopupVisible,setIsPopupVisible] = useState(false)
 
   const getFormData = async (url) => {
-    console.log("Mock getFormData:", url)
-    const resp = await PostReq(`${base_url}/recent_uploads`, { agent_id: currentUser.userid })
-    console.log("resp", resp)
+    let resp = await fetch(`${base_url}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        route_name: "recent_uploads",
+        json_data: {
+          agent_id: currentUser.userid
+        }
+      })
+    });
+
+    resp = await resp.json();
+    console.log("resp", resp);
 
     const mockLeads = [
       {
@@ -821,7 +864,7 @@ function LeadDashboard() {
         lead_type: "NHI",
       },
     ]
-    setFormData(resp.recent_lead_data)
+    setFormData(resp?.recent_lead_data)
   }
 
   const initialState = {
@@ -898,9 +941,23 @@ function LeadDashboard() {
 
 
     try {
-      await PostReq(`${base_url}/single_lead_upload`, data)
-      setIsPopupVisible(true)
-      setFormState(initialState)
+      // upload request
+        await fetch(`${base_url}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            route_name: "single_lead_upload",
+            json_data: {
+              ...data
+            }
+          })
+        });
+
+        // UI changes
+        setIsPopupVisible(true);
+        setFormState(initialState);
       getFormData(`${base_url}/recent_uploads`)
     } catch (e) {
       console.error(e)
