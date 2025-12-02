@@ -71,7 +71,7 @@ export default function Login() {
     setLoading(true)
 
     // const url = `https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router`
-    const url='https://8104cef4eb8a.ngrok-free.app/main_router'
+    const url='https://recruito.vitti.insure/lms_router'
     fetch(url, {
       method: "POST",
       headers: {
@@ -79,12 +79,15 @@ export default function Login() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        trigger_func: "check_agent_login",
-        params: {
-          userid: email,
-          password: pass,
-        },
-      }),
+        route_name:"main_router",
+        json_data:{
+          trigger_func: "check_agent_login",
+          params: {
+            userid: email,
+            password: pass,
+          }
+        }
+        }),
       cache: "default",
     })
       .then((res) => {
