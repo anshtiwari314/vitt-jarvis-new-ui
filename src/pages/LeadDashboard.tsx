@@ -199,7 +199,7 @@ export function Table({ setFormState, initialFormState }) {
   }, [totalPages]) // Added totalPages as a dependency
 
   // Note: The rest of the polling logic (stopPolling, startPolling) remains the same.
-  const MAIN_ROUTER_URL = `${base_url}/insight_generator` // Assuming this is defined or passed down
+  const MAIN_ROUTER_URL = `${base_url}/main_router` // Assuming this is defined or passed down
 
   const stopPolling = (uniqueLeadId: string) => {
     const id = pollingTimers.current[uniqueLeadId]

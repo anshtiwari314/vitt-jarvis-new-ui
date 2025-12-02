@@ -190,6 +190,7 @@ useEffect(()=>{
       agentid: "1234",
       name: name,
       selected_topic: navigation,
+      agent_name:JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name || ''
     }
 
     socket.emit("selected_topic_req_v2", data)

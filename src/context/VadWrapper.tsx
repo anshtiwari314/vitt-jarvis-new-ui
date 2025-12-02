@@ -111,6 +111,7 @@ export default function VadWrapper({children}){
         //custemailid: custEmailId,
         //isHost: isHost,
         name: name, 
+        agent_name:JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name || ''
          //roomid: "abc-123-fgh-456",
         //name:'bayya'
          // jobid: "1",
@@ -174,6 +175,7 @@ export default function VadWrapper({children}){
               //custemailid: custEmailId,
               //isHost: isHost,
               name: name, 
+              agent_name:JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name || '',
               //sessionid:usersArrRef.current[0]?.id,
                
               speech_stop_time:`${speechStopDate.toLocaleDateString()} ${speechStopDate.toLocaleTimeString()}:${speechStopDate.getMilliseconds()}`
@@ -315,7 +317,21 @@ export default function VadWrapper({children}){
         }
       },[manualVadStatus])
     
-      
+      useEffect(()=>{
+
+        let timeout ;
+        if(!VAD2.loading){
+          console.log('manual-vad-stopping')
+          setManualVadStatus(false)
+          // timeout = setTimeout(()=>{
+            
+          // },3000)
+        }
+
+        return ()=> {
+         timeout && clearTimeout(timeout)
+        }
+      },[VAD2?.loading])
     
 
     /* (Automatic vad old ) this logic has time delay bcz of startMediaRecorder function the data only send after when 

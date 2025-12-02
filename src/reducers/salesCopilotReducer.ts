@@ -367,6 +367,7 @@ const initialCopilotLoadState= {
 
 const initialCopilotState = {
   "navigation": "",
+  "RecomendationSelected":"",
   "chat": [],
   "clientName":"",
   "salesData": {
@@ -573,6 +574,9 @@ const salesCopilotSlice = createSlice({
 
       return state 
     },
+    setRecomendationSelected:(state,action)=>{
+      state.RecomendationSelected=action.payload;
+    }
   },
 });
 
