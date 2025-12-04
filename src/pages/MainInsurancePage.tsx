@@ -208,6 +208,53 @@ export default function App() {
     useEffect(()=>{
         console.log('qpState',qpState)
     },[qpState])
+
+
+    useEffect(()=>{
+        let last = Date.now();
+
+        let intervalId 
+        let lock
+
+        intervalId=setInterval(() => {
+            const now = Date.now();
+            if (now - last > 2000) {
+                console.log("System possibly slept or lid closed");
+            }
+            last = now;
+        }, 1000);
+
+        function visibilitychange() {
+            if (document.hidden) {
+                console.log("Page hidden or lid closed");
+            } else {
+            console.log("Page visible");
+            }
+        }
+        document.addEventListener("visibilitychange", visibilitychange);
+
+
+        function release(){
+            console.log("Wake lock released — likely lid closed or screen off");
+        }
+
+        try {
+            //lock = navigator.wakeLock.request("screen");
+            //lock.addEventListener("release", release);
+        } catch (e) {
+           // console.log("Wake lock failed:", e);
+        }
+
+        
+        return ()=>{
+            intervalId && clearInterval(intervalId)
+            document.removeEventListener('visibilitychange',visibilitychange)
+            //lock && lock.removeEventListener("release", release)
+        }
+    },[])
+
+
+
   return (
     
     <div className="bg-slate-50 text-slate-800 antialiased">
