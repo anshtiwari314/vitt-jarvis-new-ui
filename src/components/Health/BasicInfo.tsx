@@ -50,7 +50,7 @@ export default function BasicInfoH({ data }: Props) {
               <label className="block text-slate-500 mb-1">{formatLabel(key)}</label>
               <input
                 type="text"
-                defaultValue={value ?? ''}
+                value={value ?? ''}
                 className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
                 readOnly
               />
