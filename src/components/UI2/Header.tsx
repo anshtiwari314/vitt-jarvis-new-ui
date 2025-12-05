@@ -9,7 +9,7 @@ import { updatePrefLanguage } from '../../reducers/queryparamReducer'
 import { LogOut } from "lucide-react";
 
 export default function Header() {
-  const { socket } = useData()
+  const { socket ,setCircularProgress} = useData()
   const currentNavigation = useAppSelector(
     (state) => state.healthManagmentReducer.navigation
   )
@@ -19,9 +19,9 @@ export default function Header() {
     state.healthManagmentReducer.clientName,
     state.qpReducer
   ])
-  const navigation = useAppSelector((state) => state.healthManagmentReducer.navigation)
+  const navigation = useAppSelector((state) => state.healthManagmentReducer.navigation )
 
-  const { setCurrentUser } = useAuth()
+  const { setCurrentUser }:any = useAuth()
   const dispatch = useDispatch()
 
   function handleLogout() {
@@ -117,7 +117,13 @@ export default function Header() {
     let selectedLang = e.target.value
     dispatch(updatePrefLanguage(selectedLang))
     selectedLang = selectedLang.charAt(0).toUpperCase() + selectedLang.slice(1)
+    //yaha pe kuch mechnism lagana hai taaki kuch ghumne lage upar mein 
+    setCircularProgress(true);
 
+    setTimeout(() => {
+    setCircularProgress(false);
+  }, 4000);
+  
     const pyLoad = {
       roomid: qpParams.roomId,
       pref_language: selectedLang

@@ -507,19 +507,37 @@ const healthReducerSlice = createSlice({
     },
     addCues:(state,action)=>{
       console.log('add cues trigger',action.payload)
+      //is waqt aayega 
+      //{header: "", 
+      // color: "", 
+      // data: [{id: unique_id, text: answer}, {id: "", text: ""}], 
+      // type: "add-cues", 
+      // "card_id": "uniqueid"
+      // }
       state.salesData.cues.cards=[
         {...action.payload},
         ...state.salesData.cues.cards
         
       ]
     },
-    updateCues: (state, action) => {
-      console.log(action.payload)
-      state.salesData.cues = {
-        ...state.salesData.cues,
-        ...action.payload,
-      };
-      console.log(state.salesData.cues,"cues after adding")
+   updateCues: (state, action) => {
+      console.log("update payload", action.payload);
+
+      const { card_id, ...updatedFields } = action.payload;
+
+      // Existing cards
+      const oldCards = state.salesData.cues.cards;
+
+      // New updated list
+      const newCards = oldCards.map((card) =>
+        card.card_id === card_id
+          ? { ...card, ...updatedFields } // update only matched
+          : card // keep original
+      );
+
+      state.salesData.cues.cards = newCards;
+
+      console.log("after update", state.salesData.cues.cards);
     },
     updateAlerts: (state, action) => {
       state.salesData.alert = {

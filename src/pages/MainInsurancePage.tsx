@@ -27,6 +27,10 @@ import { normalizeRecommendationData } from '../functions/normalisedRecomendatio
 export default function App() {
 
      const {socket}=useData()
+       const { circularProgress,setCircularProgress } = useData();
+       useEffect(()=>{
+        console.log('circularProgress in main page',circularProgress)
+       },[circularProgress])
      const {salesData,navigation:currentNavigation} =useAppSelector((state) => state.healthManagmentReducer)
      console.log('salesData', salesData.Recommendations)
   //    const mockData=[
@@ -212,6 +216,7 @@ export default function App() {
     
     <div className="bg-slate-50 text-slate-800 antialiased">
         <div className="flex h-screen overflow-scroll" style={{}}>
+             
             <SideNavigation/>
             <SideBarMobile />
             <div className="flex-1 flex flex-col w-full">
@@ -219,16 +224,18 @@ export default function App() {
                 <Header/>
                 <div className="flex flex-col lg:flex-row flex-1 overflow-y-scroll">
                     {/* <!-- Main Content --> */}
-                    <main 
-        className="flex-1 flex flex-col bg-slate-100 py-1 sm:p-6 pb-5
-                        order-2 lg:order-1 
-                        min-w-0 overflow-y-auto 
-                        
-                        {/* FIX 3: Your 99% width request. */}
-                        w-[94vw] mx-auto    {/* <-- ADDED */}
-                        lg:w-4/6 lg:mx-8 {/* <-- 'lg:mx-8' will override mx-auto on large screens */}
-                    "
-                    >
+                  <main className="relative flex-1 flex flex-col bg-slate-100 py-1 sm:p-6 pb-5
+                            order-2 lg:order-1 
+                            min-w-0 overflow-y-auto 
+                            w-[94vw] mx-auto
+                            lg:w-4/6 lg:mx-8"   
+                            >
+     {circularProgress && (
+        <div className="absolute inset-0 flex justify-center items-center 
+                        bg-white/60 backdrop-blur-sm z-50">
+          <div className="animate-spin rounded-full h-20 w-20 border-t-4 border-blue-500 border-solid"></div>
+        </div>
+      )}
                         {renderContent()}
                     </main>
 

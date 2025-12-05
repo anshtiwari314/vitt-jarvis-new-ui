@@ -406,6 +406,7 @@ const initialCopilotState = {
        },
        "cues": {
            "header": 'User Cues',
+           "card_id":"unque_card_1",
            "data": [
                {
                    "id": 'unique1',

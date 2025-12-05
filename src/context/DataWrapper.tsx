@@ -46,6 +46,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   const healthManageMentState = useAppSelector((state) => state.healthManagmentReducer);
   const [recommendationsGenerated,setRecommendationsGenerated] = useState(false)
   const [lms_data,setLms_data]=useState<any>();
+  const [circularProgress,setCircularProgress]=useState<boolean>(false);
   const agentId = 'anuj'
   //console.log("sales state", navigation)
 
@@ -75,22 +76,37 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
         console.log("add cues", data);
         dispatch(addCues(data))
         const obj = {
-          header: data.header,   
+          header: data.header, 
+          // type: data.type,  
           data: data.data.map((item, index) => ({
             id: `unique${index + 1}`,
             text: `${item.text}`   
-          }))
+          })),
+          card_id:data.card_id,
         };
         
         if(data.header!=='Follow-up Question')
         {
-        console.log(obj);
-        dispatch(updateCues(obj))
+        // console.log(obj,"updated obj for cues");
+        // dispatch(updateCues(obj))
         }
         else
         {
         dispatch(updateFollowUpQn(obj))
         }
+        break
+      case "update-cues":
+         const obj2 = {
+          header: data.header, 
+          // type: data.type,  
+          data: data.data.map((item, index) => ({
+            id: `unique${index + 1}`,
+            text: `${item.text}`   
+          })),
+          card_id:data.card_id,
+        };
+        console.log("update cues", data);
+        dispatch(updateCues(obj2))
         break
       case "alert":
         dispatch(updateAlerts(data.alert))
@@ -201,7 +217,7 @@ useEffect(() => {
   
     updateNotifications,
     recommendationsGenerated,setRecommendationsGenerated,
-    pref_language,setPref_language,agentId,lms_data
+    pref_language,setPref_language,agentId,lms_data,circularProgress,setLms_data,setCircularProgress
   }
   return <Context.Provider value={values}>{children}</Context.Provider>
 }
