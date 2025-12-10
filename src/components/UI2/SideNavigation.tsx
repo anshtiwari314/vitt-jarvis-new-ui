@@ -55,7 +55,7 @@ export default function SideNavigation() {
       healthProfile: "Health Profile",
       recommendations: "Recommendation",
       planSummary: "Plan Summary",
-      aiCopilot: "AI Copilot",
+      aiCopilot: "Health AI Copilot",
       recGenerated: "Recommendations Generated",
       systemStatus: "System Status",
       audioStreaming: "Audio Streaming",
@@ -192,20 +192,32 @@ export default function SideNavigation() {
     </div>
   </div>
 
-  {/* AI Copilot Header */}
-  <div className="flex items-center gap-3 p-4 border-b border-slate-200">
-    <div className="bg-indigo-600 p-2 rounded-lg">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="white" strokeWidth="2"
-        strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shield-half">
-        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
-        <path d="M12 22V2" />
-      </svg>
-    </div>
-
-    <h1 className="text-lg font-bold text-slate-800">
-      {lang.aiCopilot}
-    </h1>
+ <div className="flex items-center gap-3 p-4 border-b border-slate-200">
+  <div className="bg-indigo-600 p-2 rounded-lg flex items-center justify-center">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="white"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="lucide lucide-heart-pulse"
+      style={{ overflow: "visible" }}
+    >
+      <path d="M12 21s-6-4.35-9-8.26C1 10.36 1 7.64 2.91 5.73c1.9-1.9 4.61-1.9 6.52 0L12 8.3l2.57-2.57c1.9-1.9 4.61-1.9 6.52 0C23 7.64 23 10.36 21 12.74 18 16.65 12 21 12 21z" />
+      <path d="M8 13h2l1-3 2 6 1-3h2" />
+    </svg>
   </div>
+
+  <h1 className="text-lg font-bold text-slate-800">
+    {lang.aiCopilot}
+  </h1>
+</div>
+
+
 
   {/* Navigation */}
   <nav className="flex-1 p-2 space-y-1">
