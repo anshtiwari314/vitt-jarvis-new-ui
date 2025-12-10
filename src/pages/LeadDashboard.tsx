@@ -496,6 +496,26 @@ export function Table({ setFormState, initialFormState }) {
     }
   }
 
+  function generateLink(lead){
+    
+    
+    if(lead?.subscription==='base'){
+      
+      let redirectTo= lead.link_params
+                    ? `${window.location.protocol}//${'vitt-health-insurance-base.netlify.app'}/#/mainpage/?${lead.link_params}`
+                    : "#"
+//console.log('redirectTo if', redirectTo)
+      return redirectTo
+    }else{
+      
+    let redirectTo= lead.link_params
+                    ? `${window.location.protocol}//${window.location.host}/#/mainpage/?${lead.link_params}&${lead.pref_language.toLowerCase()}`
+                    : "#"
+      //console.log('redirectTo else', redirectTo)
+      return redirectTo
+    }
+
+  }
   return (
     <div className="bg-white p-2 md:p-6 rounded-xl shadow-sm">
       <h3 className="text-lg font-semibold text-slate-700 mb-4 px-2 md:px-0">Recent Uploaded Leads</h3>
@@ -581,9 +601,7 @@ export function Table({ setFormState, initialFormState }) {
               <tbody className="bg-white divide-y divide-slate-200">
                 {currentLeads.map((lead, index) => {
                   console.log('lead_links',lead.link_params)
-                  const linkToCopy = lead.link_params
-                    ? `${window.location.protocol}//${window.location.host}/#/mainpage/?${lead.link_params}&${lead.pref_language.toLowerCase()}`
-                    : "#"
+                  const linkToCopy = generateLink(lead)
 
                   const uniqueLeadId = lead.id || lead.lead_id || `lead-${lead.name}-${lead.mob}`
                   return (
@@ -951,6 +969,7 @@ function LeadDashboard() {
     agent_id: currentUser.userid,
     pref_language: formState.language,
     lead_type: "HI",
+    subscription_type:'basic'
   };
 
   console.log("📦 Payload before submitting →", data);

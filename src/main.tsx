@@ -14,6 +14,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <ReduxProvider>
       <AuthContext>
         <Routing/>
+        {/* <App/> */}
       </AuthContext>
     </ReduxProvider>
   </React.StrictMode>,
