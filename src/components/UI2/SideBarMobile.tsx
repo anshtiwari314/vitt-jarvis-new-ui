@@ -28,6 +28,7 @@ export default function SideBarMobile() {
   const [dragStart, setDragStart] = useState({ pointerX: 0, pointerY: 0, buttonX: 0, buttonY: 0 });
   const buttonRef = useRef(null);
   const recommendations =salesData.Recommendations;
+let previousWidth = window.innerWidth;
 
   // Updated handler to close panel on navigation and use local state
   const handleNavigationClick = (page: string) => {
@@ -230,6 +231,9 @@ const { socket } = useData()
 
     function updatePosition(){
      // console.log('update-position')
+     const currentWidth = window.innerWidth;
+
+     if (currentWidth !== previousWidth) {
       if (buttonRef.current) {
     const rect = buttonRef.current.getBoundingClientRect();
     // Use the desired logic (Top-Right in this case)
@@ -238,6 +242,8 @@ const { socket } = useData()
       y: window.innerHeight / 3 - rect.height / 2 
     }));
   }
+  previousWidth = currentWidth;
+}
     }
 
   useEffect(() => {
