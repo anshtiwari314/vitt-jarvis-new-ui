@@ -217,13 +217,49 @@ const { socket } = useData()
     };
   
 
-  // Effect for initial centering
-  useEffect(() => {
-    if (buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setPosition(prev => ({ ...prev, y: window.innerHeight / 3 - rect.height / 2 }));
+//     const updatePosition = useCallback(() => {
+//   if (buttonRef.current) {
+//     const rect = buttonRef.current.getBoundingClientRect();
+//     // Use the desired logic (Top-Right in this case)
+//     setPosition(prev=>({
+//       ...prev, 
+//       y: window.innerHeight / 3 - rect.height / 2 
+//     }));
+//   }
+// }, []);
+
+    function updatePosition(){
+      console.log('update-position')
+      if (buttonRef.current) {
+    const rect = buttonRef.current.getBoundingClientRect();
+    // Use the desired logic (Top-Right in this case)
+    setPosition(prev=>({
+      x: window.innerWidth *3/4 - rect.width ,
+      y: window.innerHeight / 3 - rect.height / 2 
+    }));
+  }
     }
-  }, []); // On mount
+
+  useEffect(() => {
+  // 1. Initial Load: Set the position correctly
+  updatePosition(); 
+  
+  // 2. Resize Listener: Recalculate position whenever the window size changes
+  window.addEventListener('resize', updatePosition);
+
+  // 3. Cleanup: Remove the listener when the component unmounts
+  return () => {
+    window.removeEventListener('resize', updatePosition);
+  };
+}, []);
+
+  // Effect for initial centering
+  // useEffect(() => {
+  //   if (buttonRef.current) {
+  //     const rect = buttonRef.current.getBoundingClientRect();
+  //     setPosition(prev => ({ ...prev, y: window.innerHeight / 3 - rect.height / 2 }));
+  //   }
+  // }, []); // On mount
 
   // Effect for adding/removing global listeners
   useEffect(() => {
@@ -260,6 +296,7 @@ const { socket } = useData()
     }
   }, [isOpen]);
 
+  console.log('sidebar mobile rendered')
   return (
     <div>
       {/* --- Hamburger Trigger Button --- */}
