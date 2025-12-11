@@ -229,7 +229,7 @@ const { socket } = useData()
 // }, []);
 
     function updatePosition(){
-      console.log('update-position')
+     // console.log('update-position')
       if (buttonRef.current) {
     const rect = buttonRef.current.getBoundingClientRect();
     // Use the desired logic (Top-Right in this case)
@@ -296,7 +296,7 @@ const { socket } = useData()
     }
   }, [isOpen]);
 
-  console.log('sidebar mobile rendered')
+  //console.log('sidebar mobile rendered')
   return (
     <div>
       {/* --- Hamburger Trigger Button --- */}
