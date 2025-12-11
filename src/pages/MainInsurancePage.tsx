@@ -279,8 +279,8 @@ export default function App() {
                             >
      {circularProgress && (
         <div className="absolute inset-0 flex justify-center items-center 
-                        bg-white/60 backdrop-blur-sm z-50">
-          <div className="animate-spin rounded-full h-20 w-20 border-t-4 border-blue-500 border-solid"></div>
+                        bg-white/60 backdrop-blur-sm z-10">
+          <div className="animate-spin rounded-full h-20 w-20 border-t-4 border-blue-500 border-solid z-10"></div>
         </div>
       )}
                         {renderContent()}

@@ -22,7 +22,7 @@ export default function SideBarMobile() {
   const [recommendationsOpen, setRecommendationsOpen] = useState(false);
 
   // --- Draggable Button State ---
-  const [position, setPosition] = useState({ x: 16, y: window.innerHeight / 2 });
+  const [position, setPosition] = useState({ x: window.innerWidth - window.innerWidth/3, y: window.innerHeight / 2 });
   const [isDragging, setIsDragging] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
   const [dragStart, setDragStart] = useState({ pointerX: 0, pointerY: 0, buttonX: 0, buttonY: 0 });
@@ -69,7 +69,7 @@ export default function SideBarMobile() {
     label: rec.planName?.value || `Recommendation ${index + 1}`,
     planName: rec.planName?.value || "",
   }));
-  console.log(recommendationSubItems,"recommendation sub items---");
+  //console.log(recommendationSubItems,"recommendation sub items---");
   const iconClass = "w-6 h-6 mr-3 text-sky-500";
 
     const navItems = [
@@ -221,7 +221,7 @@ const { socket } = useData()
   useEffect(() => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      setPosition(prev => ({ ...prev, y: window.innerHeight / 2 - rect.height / 2 }));
+      setPosition(prev => ({ ...prev, y: window.innerHeight / 3 - rect.height / 2 }));
     }
   }, []); // On mount
 
@@ -272,7 +272,7 @@ const { socket } = useData()
             setIsOpen(true);
           }
         }}
-        className={`lg:hidden fixed z-60 bg-white p-2 rounded-lg shadow-lg border border-slate-200 transition-opacity duration-300 ${isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+        className={`lg:hidden fixed z-[99] bg-white p-2 rounded-lg shadow-lg border border-slate-200 transition-opacity duration-300 ${isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
         aria-label="Open navigation"
         style={{
           left: `${position.x}px`,
