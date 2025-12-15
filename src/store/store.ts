@@ -1,21 +1,21 @@
 //import {createStore } from 'redux';
 import { configureStore } from "@reduxjs/toolkit";
-import cuesReducer from "@/reducers/cuesReducer";
-import queryparamReducer from "@/reducers/queryparamReducer";
+import cuesReducer from "../reducers/cuesReducer";
+import queryparamReducer from "../reducers/queryparamReducer";
 import { TypedUseSelectorHook, useSelector } from "react-redux";
-import transcriptionReducer from "@/reducers/transcriptionReducer";
-import usersReducer from "@/reducers/usersReducer";
-import navigationparamReducer from "@/reducers/navigationparamReducer";
-import chatReducer from "@/reducers/chatReducer";
+import transcriptionReducer from "../reducers/transcriptionReducer";
+import usersReducer from "../reducers/usersReducer";
+import navigationparamReducer from "../reducers/navigationparamReducer";
+import chatReducer from "../reducers/chatReducer";
 import notificationsReducer from "../reducers/notificationsReducer";
 
 // Create and configure the Redux store
 export const store = configureStore({
   reducer: {
-    cuesReducer: cuesReducer.cuesReducer,
+    //cuesReducer: cuesReducer.cuesReducer,
     qpReducer: queryparamReducer.qpReducer,
     trcpReducer:transcriptionReducer.transcriptionReducer,
-    usersReducer:usersReducer.usersReducer,
+    //usersReducer:usersReducer.usersReducer,
     nvReducer: navigationparamReducer.nvReducer,
     chatReducer:chatReducer.chatReducer,
     notificationsReducer:notificationsReducer.notificationReducer

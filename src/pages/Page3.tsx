@@ -28,10 +28,13 @@ import Analytics from "../assets/Analytics.svg";
 import Schedule from "../assets/Schedule.svg";
 import Feedback from "../assets/Feedback.svg";
 import ErrorPage from "./ErrorPage";
+import { useDispatch } from 'react-redux';
+import { setQP } from "../reducers/queryparamReducer";
 
 export default function Page3() {
   //@ts-ignore
   const { tabs, activeTab, setActiveTab } = useData();
+  const dispatch = useDispatch()
   //@ts-ignore
   const { currentUser } = useAuth();
   const ref = useRef(null);
@@ -71,6 +74,36 @@ export default function Page3() {
       window.removeEventListener("resize", handleResize);
     };
   }, []);
+
+
+  useEffect(()=>{
+              function getMeetingInfo(){
+              const query = window.location.href?.split('?')[1];
+              const parts = query?.split("&");
+              const customer_id = parts?.[0] || "";
+              //const candidParam = parts[1] || "";
+              const name = parts?.[1] || "";
+             
+              //language = language.charAt(0).toUpperCase() + language.slice(1)
+
+              //http://localhost:5173/?anuj-anuj-anuj&cid_7761
+              //new URLSearchParams(window.location.href)[1]
+              console.log('query params',customer_id,name)
+              const qParams = {
+              customer_id,
+             // candid: candidParam,
+             // agentId,
+              //isHost: login.isAuthenticated,
+              name,
+              //pref_language:language
+              //meetingIsLegit: true,
+            };
+      
+              dispatch(setQP(qParams))
+              //setPref_language(language)
+          } 
+              getMeetingInfo()
+          },[])
 
   return (
     <div

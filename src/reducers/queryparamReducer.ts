@@ -9,6 +9,8 @@ type QPState = {
   name:string
   isHost: boolean,
   meetingIsLegit: boolean,
+  customer_id:string,
+
 };
 
 const initialQPState = {
@@ -20,6 +22,8 @@ const initialQPState = {
   name:"",
   isHost: false,
   meetingIsLegit: false,
+  customer_id: ""
+
 } as QPState;
 
 // Create a slice for "queryparams"
@@ -32,6 +36,7 @@ const qpSlice = createSlice({
       return initialQPState;
     },
     setQP: (_, action: PayloadAction<QPState>) => {
+      console.log('qp params reducer receiving', action)
       return action.payload;
     }
   },

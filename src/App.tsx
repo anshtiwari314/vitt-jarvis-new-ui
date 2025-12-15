@@ -2,8 +2,8 @@ import React from 'react'
 import DataWrapper, { useData } from './context/DataWrapper'
 
 //import './chat-window.css
-import './css/All.css'
-import './css/msg.css'
+//import './css/All.css'
+//import './css/msg.css'
 
 import AuthContext from './context/AuthContext'
 import PrivateRoute from './components/PrivateRoute'

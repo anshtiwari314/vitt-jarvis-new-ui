@@ -1,5 +1,5 @@
 import React, { useState,useEffect } from 'react'
-import '../css/error-page.css'
+//import '../css/error-page.css'
 
 export default function ErrorPage() {
 

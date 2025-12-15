@@ -10,6 +10,8 @@ import { PostReq } from '../functions/requests';
 //import useRequest from '../hooks/requests';
 import { addTranscription } from '../reducers/transcriptionReducer';
 import { utils } from "@ricky0123/vad-react"
+import { useDispatch, useSelector } from 'react-redux';
+import { UseSelector } from 'react-redux';
 
 const VadContext = createContext('vadContext')
 
@@ -20,9 +22,10 @@ export function useVad(){
 export function VadWrapper({children}){
 
 
-    const {ngrokServerUrl,setMsgLoading,oneWayUrl,audioQueueRef,audioRef,isAudioStillPlaying} = useData()
+    const {ngrokServerUrl,setMsgLoading,oneWayUrl,audioQueueRef,audioRef,isAudioStillPlaying,socket,aiState, setAiState} = useData()
     const {currentUser} = useAuth()
     const [vadRecordingOn,setVadRecordingOn] = useState<boolean>(false);
+    const qpParams = useSelector((state)=>state.qpReducer)
     let recordingStatus = useRef(false);
 
     const [vadInstance,setVadInstance] = useState(null)
@@ -32,6 +35,8 @@ export function VadWrapper({children}){
     const [manualVadStatus,setManualVadStatus] = useState(true)
 
     const initReqStatusRef = useRef(false)
+    //const [aiState, setAiState] = useState("idle");
+
     //const {PostReq } = useRequest()
 
     // ort.env.wasm.wasmPaths = {
@@ -81,9 +86,9 @@ export function VadWrapper({children}){
         timeStamp:getTimeStamp()
       }
 
-
-      let resp = await PostReq(url,data)
-      console.log('resp',resp)
+      socket.emit('base_user_hi_req',data)
+      //let resp = await PostReq(url,data)
+      //console.log('resp',resp)
       //console.log('resp2',resp.audiobase64)
 
       // let tempTranscription = {
@@ -95,7 +100,7 @@ export function VadWrapper({children}){
       // }
 
       //addTranscription(tempTranscription)
-      return resp
+      //return resp
 }
 
 
@@ -110,13 +115,16 @@ export function VadWrapper({children}){
         onSpeechStart: () => {
           console.log("Speech start")
 
-          audioRef.current.pause()
+          //audioRef.current.pause()
           isAudioStillPlaying.current = false
           
           audioQueueRef.current = []
           //console.log(audioQueueRef.current)
         },
         onSpeechEnd:(audio)=>{
+            console.log("vad ended")
+            setManualVadStatus(false)
+            setAiState("thinking");
             let data = {
               // this one is for jarvis-in-person
               //sessionid:currentUser?.userid,
@@ -126,7 +134,10 @@ export function VadWrapper({children}){
                sessionid:currentUser?.sessionuid,
                mob:currentUser.userid,
                 userid:currentUser?.userid,
-                req_timestamp:getTimeStamp()
+                req_timestamp:getTimeStamp(),
+                agent_name: "planner9",
+                roomid: qpParams.customer_id,
+                name: qpParams.name
             }
             processAudioToBase64(audio,`${ngrokServerUrl}/vad_stream`,data)
             //setMsgLoading(true)
@@ -197,22 +208,24 @@ export function VadWrapper({children}){
     }
     /** automatic vad new  */
 
-    useEffect(()=>{
-      if(vadInstance!==null)
-        return ;
+    // useEffect(()=>{
+    //   if(vadInstance!==null)
+    //     return ;
 
-      let intervalId = setInterval(()=>{
-        VAD(start,stop).then((myVad)=>{
-          if(myVad===null)
-            return ;
-          vadRef.current.myVad = myVad
-          setVadInstance(myVad)
-          clearInterval(intervalId)
-        })
-      },1000)
+    //   let intervalId = setInterval(()=>{
+    //     //console.log("automatic vad init")
+    //     VAD(start,stop).then((myVad)=>{
+    //       //console.log("automatic vad init",myVad)
+    //       if(myVad===null)
+    //         return ;
+    //       vadRef.current.myVad = myVad
+    //       setVadInstance(myVad)
+    //       clearInterval(intervalId)
+    //     })
+    //   },1000)
 
-      return ()=>{clearInterval(intervalId)}
-    },[])
+    //   return ()=>{clearInterval(intervalId)}
+    // },[])
 
     useEffect(()=>{
       if(vadInstance===null)
@@ -278,8 +291,8 @@ export function VadWrapper({children}){
 
         
         
-        if (typeof VAD2 !== "object" )
-        return ;
+        // if (typeof VAD2 !== "object" )
+        // return ;
 
         if(manualVadStatus===true){
             console.log('vad2',VAD2)
@@ -401,11 +414,15 @@ export function VadWrapper({children}){
           },[vadRecordingOn])
 
     let values = {
+      socket,
         vadRecordingOn,
     setVadRecordingOn,
         manualVadStatus,setManualVadStatus,
-        vadStatus,setVadStatus,vadInstance,VAD2,userSpeaking
+        vadStatus,setVadStatus,vadInstance,VAD2,userSpeaking,
+        aiState, setAiState
     }
+
+    
     return (
         //@ts-ignore
         <VadContext.Provider value={values}>

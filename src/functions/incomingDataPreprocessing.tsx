@@ -86,16 +86,16 @@ export function handleData(data:any){
             //@ts-ignore
             obj["id"]= uuidv4()
             obj["type"]="TextMsg"
-            obj["content"] = e 
-            obj["is_outgoing"] = false
+            obj["content"] = e.similarity_query
+            obj["is_outgoing"] = e.is_outgoing
             obj["iconName"] = 'fa-solid fa-circle-question'
-            obj["color"]= data.color 
-            obj["iconColor"] = data.iconColor
-            obj["similarity_query"] = data.similarity_query;
-            obj["sessionid"] = data.sessionid
-            obj["audiofiletimestamp"]=data.audiofiletimestamp
-            obj["istranscription"] = data.istranscription
-            obj["msg_receiving_timestamp"] = data.msg_receiving_timestamp
+            obj["color"]= data?.color 
+            obj["iconColor"] = data?.iconColor
+            obj["similarity_query"] = e.similarity_query;
+            obj["sessionid"] = e.sessionid
+            obj["audiofiletimestamp"]=data?.audiofiletimestamp
+            obj["istranscription"] = data?.istranscription
+            obj["msg_receiving_timestamp"] = data?.msg_receiving_timestamp
             //arr.push(obj)
             arr = [...arr,obj]
             //@ts-ignore

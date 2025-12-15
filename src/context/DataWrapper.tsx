@@ -22,6 +22,8 @@ import Feedback from '../assets/Feedback.svg'
 
 import useAutoResetState from '../hooks/useAutoResetState';
 import useWasmLoader from '../hooks/useWasmLoader'
+import { useSelector } from 'react-redux';
+import { generateBase64 } from '../functions/generalFn';
 
 const Context = createContext('')
 type Data = {
@@ -51,12 +53,38 @@ export function useData(){
  
 export default function DataWrapper({children}:{children:React.ReactNode}) {
     
+    let initState = [
+      {
+            "is_outgoing": true,
+            "similarity_query": "What is the Eligibility under SBI SUPER?",
+            "sessionid": "16cd04a6-fbab-4a36-b09a-89aa64ecf811",
+            "roomid": "cid_8961",
+            "name": "ajay"
+        },
+        {
+            "is_outgoing": false,
+            "similarity_query": "Adult - Min Age 18 Years, Max Age - No Limit;  Dependent Children - Min Age is 91 Days, Max Age - 30 years",
+            "sessionid": "16cd04a6-fbab-4a36-b09a-89aa64ecf811",
+            "roomid": "cid_8961",
+            "name": "ajay"
+        },
+        {
+            "is_outgoing": false,
+            "similarity_query": "(Floater Basis)",
+            "sessionid": "16cd04a6-fbab-4a36-b09a-89aa64ecf811",
+            "roomid": "cid_8961",
+            "name": "ajay"
+        }
+    ]
+
+    const qpParams = useSelector((state)=> state.qpReducer)
+
     const [data,setData] = useState<Object[]>([])
     const dataArrRef = useRef<any>([])
     let audioServerUrl =`https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-clientaudio`
     //let url1 = 'http://localhost:3008/'
-    let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
-    //let socketUrl = 'http://localhost:5000'
+    //let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
+    let socketUrl = 'https://recruito.vitti.insure'
     const globalStreamRef = useRef<any>(null)
     const [recordingActive,setRecordingActive] = useState(false)
     const recordingActiveStatus = useRef(false)
@@ -105,10 +133,13 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     const [ngrokServerUrl,setNgrokServerUrl]= useState(ngrokUrl)
     //https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis
     const [recordingServerUrl,setRecordingServerUrl] = useState('https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis')
+    //const [recordingServerUrl,setRecordingServerUrl] = useState('wss://2c9d8dc8ef6d.ngrok-free.app/')
     const audioRef = useRef(null);
     const [activeTab,setActiveTab ] = useState(0)
 
     const[msgLoading,setMsgLoading]= useAutoResetState(false,10000)
+    
+    const [aiState, setAiState] = useState("idle");
 
     const wasmUrls = [
       'ort-wasm-simd-threaded.jsep.wasm',
@@ -172,9 +203,6 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             //this one is for vitt-sales-copilot
             sessionid:currentUser?.sessionuid,
             mob: SESSION_ID,
-            
-           
-            
             userid:SESSION_ID
         }
         //socket.emit("messagefromclient",tempObj)
@@ -470,12 +498,13 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
 
             if(result.sessionid === currentUser.sessionuid){
               console.log(`%c just after filter data for this session id ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+              setAiState("idle")
               setMsgLoading(false)
               const {arr,audiourl}=handleData(result)
               //console.log('i am audiourl',audiourl)
               //setAudioUrl(audiourl)
               //console.log(audiourl)
-              console.log(`%c audioRef paused ${audioRef.current.paused} ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+              //console.log(`%c audioRef paused ${audioRef.current.paused} ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
              
               // if()
               // if(audiourl!==null)
@@ -483,37 +512,121 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
               
                //let isPlaying = isAudioPlaying(audioRef.current)
               //console.log('isAudioPlaying',isPlaying)
-              console.log(`%c audioRef paused ${audioRef.current.paused} ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+              //console.log(`%c audioRef paused ${audioRef.current.paused} ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
               
-              setData(prev=>[...prev,...arr])
+              setData(prev=>[...arr,...prev])
               //setAudioArr(prev=>[...prev,audiourl])
               
 
-              if(isAudioStillPlaying.current===false){
-              setAudioUrl(audiourl)
-              }else {
-               audioQueueRef.current = [...audioQueueRef.current,audiourl]
+              // if(isAudioStillPlaying.current===false){
+              // setAudioUrl(audiourl)
+              // }else {
+              //  audioQueueRef.current = [...audioQueueRef.current,audiourl]
                 
-              }
+              // }
               
             }
     }
        socket.on("connect",onConnect)
        socket.on("disconnect",onDisconnect)
-       socket.on("receive-data",receiveData)
+       socket.on("base_user_hi_res",receiveData)
 
        return ()=>{
            socket.off("connect",onConnect)
            socket.off('disconnect',onDisconnect)
-           socket.off("receive-data",receiveData)
+           socket.off("base_user_hi_res",receiveData)
        }
     },[SESSION_ID,socket,msgId])
 
     
+      async function startMediaRecorder2(args){
+          //let url = 'https://f6p70odi12.execute-api.ap-south-1.amazonaws.com'
       
+          const {stream,url,time,recordingStatus,sessionid,userid,fileid,filename,timeStamp} =args
+      
+          console.log('startMediaRecorder triggered')
+      
+          //let url = audioServerUrl
+           let arrayofChunks:any = []
+             let mediaRecorder = new MediaRecorder(stream,{
+               audioBitsPerSecond:32000
+               })
+           
+           mediaRecorder.ondataavailable = (e)=>{ 
+             arrayofChunks.push(e.data)
+           }
+           
+           mediaRecorder.onstop = async ()=>{
+            //setMsgLoading(true)
+           
+            //let url = `https://asia-south1-utility-range-375005.cloudfunctions.net/save_b64_1`
+           //let url = `https://0455-182-72-76-34.ngrok.io`
+           console.log(`%c just before wav to mp3 ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+           let mp3Blob = await WavToMp3(new Blob(arrayofChunks,{type:'audio/wav'}))
+           //console.log(mp3Blob)
+           console.log(`%c just after wav to mp3 ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+           
+           let base64 = await generateBase64(mp3Blob)
+           // console.log('base64',base64)
+           let data = {
+            
+            //mob:'vois',
+           // uid:myId,
+            userid,
+            sessionid,
+            url:window.location.href,
+            date: '13.3.2025',
+            time: '11.51.0.57',
+            fileid,
+            filename,
+            timeStamp,
+            audiomessage:base64.split(',')[1],
+            ...args
+          }
+      
+           //sendToServer( mp3Blob,url,sessionid,data)
+          
+
+           socket.emit('save_recording_req',data)
+            arrayofChunks = []
+           }
+      
+           //setTimeout(()=>mediaRecorder.stop(),time)
+       
+           //if recording true stop after 30 sec
+           let timeOutId = setTimeout(()=>{
+            if(mediaRecorder.state==='recording')
+            mediaRecorder.stop()
+           },time)
+           //chk every second 
+      
+           
+      
+           let timeOutId2 =setTimeout(()=>requestAnimationFrame(()=>{
+      
+            if(recordingStatus.current ===false){
+              //clearInterval(intervalId) 
+              clearTimeout(timeOutId)
+              clearTimeout(timeOutId2)
+             if(mediaRecorder.state==='recording')
+              mediaRecorder.stop()
+              
+            }
+           }),1000)
+           
+      
+          //  let intervalId = setInterval(
+             
+          //  },1000)
+           mediaRecorder.start()
+           
+         }
+
       
 
     useEffect(()=>{
+      if(socket===null)
+        return ;
       recordingActiveStatus.current = recordingActive
       let url = 'http://35.200.139.251'
       let url2 = `https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis`
@@ -525,7 +638,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
 
           let startMediaRecorderArgs = {
             stream,
-            time:4000,
+            time:10000,
             recordingStatus:recordingActiveStatus,
             url:`${recordingServerUrl}/save_audio_chunk`,
             mob:currentUser.userid,
@@ -534,7 +647,11 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             
             fileid:currentUser.sessionuid,
             filename:`${currentUser.sessionuid}.mp3`,
-            timeStamp:getTimeStamp()
+            timeStamp:getTimeStamp(),
+
+            agent_name: "planner9",
+            roomid: qpParams.customer_id,
+            name: qpParams.name
           } 
 
           console.log('navigator')
@@ -542,7 +659,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
           
           intervalId =setInterval(()=>{
             startMediaRecorder2(startMediaRecorderArgs)
-          },4000)
+          },10000)
           //timeOutId=setTimeout(()=>requestAnimationFrame(()=>startMediaRecorder(startMediaRecorderArgs)),4000)
         })
         
@@ -551,7 +668,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
       return ()=> { timeOutId && clearTimeout(timeOutId);
         intervalId && clearInterval(intervalId)
       }
-    },[recordingActive,recordingServerUrl])
+    },[recordingActive,recordingServerUrl,socket])
 
     
     useEffect(()=>{
@@ -603,8 +720,12 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         audioUrl,setAudioUrl,
         recordingActive,setRecordingActive,tabs,activeTab,setActiveTab,
         ngrokServerUrl,setNgrokServerUrl,oneWayUrl,isFilesLoaded,recordingServerUrl,setRecordingServerUrl,
-        toggleChunking,setToggleChunking,toggleContinuousChunking,setToggleContinuousChunking,audioQueueRef,isAudioStillPlaying
+        toggleChunking,setToggleChunking,toggleContinuousChunking,setToggleContinuousChunking,audioQueueRef,isAudioStillPlaying,
+        socket,setSocket,
+        aiState, setAiState
     }
+
+
   return (
       //@ts-ignore
     <Context.Provider value={values}>
