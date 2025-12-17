@@ -8,5 +8,5 @@ export const config =  {
 
     //serverBaseUrl:'https://recruito.vitti.insure',
 
-    postfactoUrl : 'https://postfacto.netlify.app'
+    postfactoUrl : 'https://vitt-performance-hi.netlify.app/'
 }

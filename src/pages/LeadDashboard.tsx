@@ -1,4 +1,4 @@
-"use client"
+
 
 import { useEffect, useState, createContext, useContext, useRef } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -266,7 +266,7 @@ export function Table({ setFormState, initialFormState }) {
           setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: false }))
 
           // open the Postfacto dashboard
-          window.open(`https://postfacto-health.netlify.app/#/${sessionId}`, "_blank", "noopener,noreferrer")
+          window.open(`https://vitt-performance-hi.netlify.app/#/${sessionId}`, "_blank", "noopener,noreferrer")
 
           // refresh the list so postfacto_status updates to 'done'
           if (typeof getFormData === "function" && base_url) {
@@ -288,24 +288,36 @@ export function Table({ setFormState, initialFormState }) {
     pollingTimers.current[uniqueLeadId] = timerId
   }
 
-  function enableEdit(lead) {
-    const { name, mob, email, priority, source, lead_id, link_params,pref_language } = lead
-    const [fname, ...restName] = name.split(" ")
+ function enableEdit(lead) {
+        console.log("lead to edit", lead)
 
-    console.log("enable edit", lead)
-    setFormState({
-      ...initialFormState,
-      lead_id: link_params.split("&")[0],
-      link_params,
-      fname,
-      lname: restName.join(" "),
-      mob,
-      email,
-      priority,
-      leadSourceFrom: source,
-      pref_language
-    })
-  }
+        const {
+          name,
+          mob,
+          email,
+          priority,
+          source,
+          lead_id,
+          link_params,
+          pref_language
+        } = lead
+
+        const [fname = "", ...restName] = (name || "").split(" ")
+
+      setFormState({
+        ...initialFormState,
+        first_name: fname,
+        last_name: restName.join(" "),
+        mobile_number: mob,
+        email,
+        lead_source: source,
+        language: pref_language,
+        priority,
+        lead_id,
+        link_params
+      })
+}
+
 
   const generateInsight = async (lead) => {
     const uniqueLeadId = lead.id || lead.lead_id || `lead-${lead.name}-${lead.mob}`
@@ -314,7 +326,7 @@ export function Table({ setFormState, initialFormState }) {
       const linkParams = lead.link_params || ""
       const cidMatch = linkParams.match(/cid_\w+/)
       const idOf = cidMatch ? cidMatch[0] : "cid_8459"
-      window.open(`https://postfacto-health.netlify.app/#/${idOf}`, "_blank", "noopener,noreferrer")
+      window.open(`https://vitt-performance-hi.netlify.app/#/${idOf}`, "_blank", "noopener,noreferrer")
       return
     }
 
@@ -374,7 +386,7 @@ export function Table({ setFormState, initialFormState }) {
       if (response?.status === "done") {
         setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "Dashboard is ready" }))
         setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: false }))
-        window.open(`https://postfacto-health.netlify.app/#/${sessionId}`, "_blank", "noopener,noreferrer")
+        window.open(`https://vitt-performance-hi.netlify.app/#/${sessionId}`, "_blank", "noopener,noreferrer")
         if (typeof getFormData === "function" && base_url) {
           getFormData(`${base_url}/recent_uploads`)
         }
@@ -516,6 +528,9 @@ export function Table({ setFormState, initialFormState }) {
     }
 
   }
+  const showPremiumColumns = currentLeads.some(
+  (lead) => lead.subscription !== "base"
+)
   return (
     <div className="bg-white p-2 md:p-6 rounded-xl shadow-sm">
       <h3 className="text-lg font-semibold text-slate-700 mb-4 px-2 md:px-0">Recent Uploaded Leads</h3>
@@ -584,18 +599,18 @@ export function Table({ setFormState, initialFormState }) {
                   >
                     Edit
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-                  >
-                    Insights
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-                  >
-                    Plan Summary
-                  </th>
+                  {showPremiumColumns && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      Insights
+                    </th>
+                  )}
+
+                  {showPremiumColumns && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                      Plan Summary
+                    </th>
+                  )}
+
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
@@ -638,67 +653,30 @@ export function Table({ setFormState, initialFormState }) {
                           <FontAwesomeIcon icon={faEdit} className="w-4 h-4" />
                         </button>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">
-                        <div className="flex flex-col items-start space-y-1">
-                          <button
-                            onClick={() => generateInsight(lead)}
-                            disabled={insightLoading[uniqueLeadId] || lead.postfacto_status === "N/A"}
-                            className={getInsightButtonStyle(lead, insightLoading[uniqueLeadId])}
-                            title={
-                              lead.postfacto_status === "done"
-                                ? "Open Insight Link"
-                                : lead.postfacto_status === "N/A"
-                                  ? "No insights available"
-                                  : "Generate Insight"
-                            }
-                            aria-busy={!!insightLoading[uniqueLeadId]}
-                          >
-                            <span className="inline-flex items-center gap-2">
-                              {insightLoading[uniqueLeadId] && (
-                                <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" aria-hidden="true">
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                    fill="none"
-                                  />
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                  />
-                                </svg>
-                              )}
-                              {getInsightButtonText(lead, insightLoading[uniqueLeadId])}
-                            </span>
-                          </button>
-                          {insightMsg[uniqueLeadId] && (
-                            <span className="text-xs text-slate-600" aria-live="polite">
-                              {insightMsg[uniqueLeadId]}
-                            </span>
-                          )}
-                          {insightError[uniqueLeadId] && (
-                            <span className="text-xs text-red-600 font-medium">{insightError[uniqueLeadId]}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">
-                        {lead.plan_summary !== "N/A" ? (
-                          <a
-                            href={lead.plan_summary}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
-                          >
-                            View Summary
-                          </a>
-                        ) : (
-                          "N/A"
+                      {lead.subscription !== "base" && (
+                          <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">
+                            <div className="flex flex-col items-start space-y-1">
+                              <button
+                                onClick={() => generateInsight(lead)}
+                                disabled={insightLoading[uniqueLeadId]}
+                                className={getInsightButtonStyle(lead, insightLoading[uniqueLeadId])}
+                              >
+                                {getInsightButtonText(lead, insightLoading[uniqueLeadId])}
+                              </button>
+                            </div>
+                          </td>
                         )}
-                      </td>
+                      {lead.subscription !== "base" && (
+                          <td className="px-6 py-4 whitespace-nowrap text-xs md:text-sm text-slate-500">
+                            {lead.plan_summary !== "N/A" ? (
+                              <a href={lead.plan_summary} className="text-blue-600 hover:underline">
+                                View Summary
+                              </a>
+                            ) : (
+                              "N/A"
+                            )}
+                          </td>
+                        )}
                     </tr>
                   )
                 })}
