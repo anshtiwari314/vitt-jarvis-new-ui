@@ -310,6 +310,8 @@ const initialCopilotLoadState= {
 const initialCopilotState = {
   "navigation": "",
   "planSelected":"",
+  "pref_language":"",
+  "language_ids":["English","Hindi","Marathi"],
   "chat": [],
   "clientName":"",
   "salesData": {
@@ -459,6 +461,11 @@ const healthReducerSlice = createSlice({
       //state.
       return state;
     },
+    updatePref_language:(state,action)=>{
+      state.pref_language=action.payload;
+    },
+
+    
     // initSalesState:(state,action)=>{
     //   console.log('action payload',action.payload)
     //   //state = {...state,...action.payload};
@@ -567,7 +574,7 @@ export const { initSalesState,
   updateFollowUpQn,
   addCues,updateCues,updateAlerts,updateHeathProfile,
   updatePlanSummary,updateRecommendation,
-  setNavigation,setPlanSelected } = healthReducerSlice.actions;
+  setNavigation,setPlanSelected,updatePref_language } = healthReducerSlice.actions;
 
 export default {
   healthReducerSlice: healthReducerSlice.reducer,

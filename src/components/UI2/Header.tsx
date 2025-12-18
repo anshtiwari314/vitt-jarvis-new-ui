@@ -1,25 +1,28 @@
-import React, { useEffect, useState } from "react"
+import type React from "react"
+import { useEffect, useState } from "react"
 import { useAppSelector } from "../../store/store"
 import { useVad } from "../../context/VadWrapper"
 import { TailSpin } from "react-loading-icons"
 import { useDispatch } from "react-redux"
+import { X } from "lucide-react"
 import { useAuth } from "../../context/AuthContext"
 import { useData } from "../../context/DataWrapper"
-import { updatePrefLanguage } from '../../reducers/queryparamReducer'
+import { updatePrefLanguage } from "../../reducers/queryparamReducer"
 import { LogOut } from "lucide-react"
-import playSound from '../../assets/sound-play.gif'
+import playSound from "../../assets/sound-play.gif"
+import { updatePref_language } from "../../reducers/healthManagmentReducer"
 
 export default function Header() {
-  const { socket, setCircularProgress } = useData()
+  const { socket, setCircularProgress}=useData()
   const navigation = useAppSelector((state) => state.healthManagmentReducer.navigation)
-  
+  const pref_language = useAppSelector((state) => state.healthManagmentReducer.pref_language)
+  const allLanguageOptions = useAppSelector((state) => state.healthManagmentReducer.language_ids)
+  console.log("preferred language in header",pref_language,allLanguageOptions)
+
   // @ts-ignore
   const { manualVadStatus, setManualVadStatus, VAD2 } = useVad()
-  
-  const [clientName, qpParams] = useAppSelector((state) => [
-    state.healthManagmentReducer.clientName,
-    state.qpReducer
-  ])
+
+  const [clientName, qpParams] = useAppSelector((state) => [state.healthManagmentReducer.clientName, state.qpReducer])
 
   const { setCurrentUser }: any = useAuth()
   const dispatch = useDispatch()
@@ -40,9 +43,11 @@ export default function Header() {
       }, 1000)
     }
     return () => clearInterval(interval)
-  }, [VAD2?.listening])
+  }, [VAD2])
 
-  const minutes = Math.floor(timerSeconds / 60).toString().padStart(2, "0")
+  const minutes = Math.floor(timerSeconds / 60)
+    .toString()
+    .padStart(2, "0")
   const seconds = (timerSeconds % 60).toString().padStart(2, "0")
 
   // ---------------- CLIENT NAME VISIBILITY -------------------
@@ -59,9 +64,9 @@ export default function Header() {
   // ---------------- LANGUAGE CHANGE -------------------
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     let selectedLang = e.target.value
-    dispatch(updatePrefLanguage(selectedLang))
+    dispatch(updatePref_language(selectedLang))
     selectedLang = selectedLang.charAt(0).toUpperCase() + selectedLang.slice(1)
-    
+
     setCircularProgress(true)
     setTimeout(() => {
       setCircularProgress(false)
@@ -69,9 +74,9 @@ export default function Header() {
 
     const pyLoad = {
       roomid: qpParams.roomId,
-      pref_language: selectedLang
+      pref_language: selectedLang,
     }
-    socket && socket.emit('switch_pref_language_hi', pyLoad)
+    socket && socket.emit("switch_pref_language_hi", pyLoad)
   }
 
   // ---------------- FLAG LOGIC -------------------
@@ -82,9 +87,9 @@ export default function Header() {
       topic: navigation,
       report_message: flagType,
       type: "HI",
-      agent_name: JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name || ''
+      agent_name: JSON.parse(localStorage.getItem("agent_name") || "{}")?.agent_name || "",
     }
-    socket && socket.emit('save_flags_data', pyLoad)
+    socket && socket.emit("save_flags_data", pyLoad)
     setFlagOpen(false)
     alert(`Flag raised: ${flagType}`)
   }
@@ -98,7 +103,6 @@ export default function Header() {
         - gap-y-3: Adds vertical spacing only when the items wrap to a new line.
       */}
       <header className="bg-white p-4 border-b border-slate-200 flex flex-wrap justify-between items-center sticky top-0 z-10 gap-y-3">
-        
         {/* --- DIV 1: Name & Visualizer --- */}
         <div className="flex items-center gap-3">
           <div>
@@ -110,22 +114,17 @@ export default function Header() {
 
           {/* Audio Visualizer: w-16 on mobile, w-32 on desktop */}
           <div className="w-16 h-8">
-          {VAD2?.userSpeaking && (
-            <img 
-              src={playSound} 
-              alt="User Speaking" 
-              className="w-16 h-8 object-contain" 
-            />
-          )}
+            {VAD2?.userSpeaking && (
+              <img src={playSound || "/placeholder.svg"} alt="User Speaking" className="w-16 h-8 object-contain" />
+            )}
           </div>
         </div>
 
         {/* --- DIV 2: Control Icons --- */}
-        {/* - ml-auto: Pushes this group to the right. 
-           - If it wraps, it will drop to the next line but keep aligned.
+        {/* - ml-auto:Pushes this group to the right. 
+           - If it wraps,it_will_drop_to_the_next_line_but_keep_aligned.
         */}
         <div className="flex items-center gap-2 sm:gap-4 ml-auto sm:ml-0">
-
           {/* Flag Button */}
           <button
             onClick={() => setFlagOpen(true)}
@@ -138,9 +137,7 @@ export default function Header() {
           <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg flex-shrink-0">
             {VAD2 !== undefined && !VAD2.loading ? (
               <button
-                className={`p-2 rounded-md hover:bg-slate-200 ${
-                  VAD2.listening ? "text-sky-600" : "text-slate-600"
-                }`}
+                className={`p-2 rounded-md hover:bg-slate-200 ${VAD2.listening ? "text-sky-600" : "text-slate-600"}`}
                 onClick={() => setManualVadStatus(!VAD2.listening)}
               >
                 {VAD2.listening ? (
@@ -161,42 +158,47 @@ export default function Header() {
           </div>
 
           {/* Timer */}
-          <div className={`text-lg font-mono font-semibold px-3 py-2 rounded-lg whitespace-nowrap ${VAD2?.listening ? 'text-green-700 bg-green-50' : 'text-slate-700 bg-slate-100'}`}>
+          <div
+            className={`text-lg font-mono font-semibold px-3 py-2 rounded-lg whitespace-nowrap ${VAD2?.listening ? "text-green-700 bg-green-50" : "text-slate-700 bg-slate-100"}`}
+          >
             {minutes}:{seconds}
           </div>
 
           {/* Language Selector */}
           <select
-            value={qpParams.pref_language}
-            onChange={handleLanguageChange}
-            className="bg-slate-100 border border-slate-300 text-slate-700 text-base rounded-lg px-2 py-2 cursor-pointer hover:bg-slate-200 transition outline-none"
-          >
-            <option value="english">English</option>
-            <option value="marathi">Marathi</option>
-          </select>
+              value={pref_language}
+              onChange={handleLanguageChange}
+              className="bg-slate-100 border border-slate-300 text-slate-700 text-base rounded-lg px-2 py-2 cursor-pointer hover:bg-slate-200 transition outline-none"
+            >
+              {allLanguageOptions?.map((lang: string) => (
+                <option key={lang} value={lang}>
+                  {lang.charAt(0).toUpperCase() + lang.slice(1)}
+                </option>
+              ))}
+            </select>
 
           {/* Logout */}
-          <button
-            onClick={handleLogout}
-            className="relative group text-red-600 hover:text-red-700 p-1 flex-shrink-0"
-          >
+          <button onClick={handleLogout} className="relative group text-red-600 hover:text-red-700 p-1 flex-shrink-0">
             <LogOut className="w-6 h-6" />
           </button>
         </div>
       </header>
 
       {/* ------------------ FLAG POPUP MODAL ------------------ */}
-      {flagOpen && (
+     {flagOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-sm shadow-xl text-slate-800">
-            <h3 className="text-lg font-bold mb-4">Raise a Flag</h3>
-            <FlagOptions handleFlag={handleFlag} />
+          <div className="relative bg-white rounded-xl p-6 w-full max-w-sm shadow-xl text-slate-800">
+            
+            {/* Close Icon */}
             <button
               onClick={() => setFlagOpen(false)}
-              className="mt-4 w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-md"
+              className="absolute top-3 right-3 text-slate-500 hover:text-slate-800 transition"
             >
-              Close
+              <X size={20} />
             </button>
+
+            <h3 className="text-lg font-bold mb-4">Raise a Flag</h3>
+            <FlagOptions handleFlag={handleFlag} />
           </div>
         </div>
       )}
@@ -205,47 +207,65 @@ export default function Header() {
 }
 
 function FlagOptions({ handleFlag }: { handleFlag: (msg: string) => void }) {
-  const [showInput, setShowInput] = useState(false)
-  const [otherText, setOtherText] = useState("")
-  const options = ["System Not Responding", "Incorrect Data Captured", "Incorrect Q/A", "Latency is High"]
+  const [selectedOption, setSelectedOption] = useState<string | null>(null)
+  const [inputText, setInputText] = useState("")
+
+  const options = ["System Not Responding", "Incorrect Data Captured", "Incorrect Q/A", "Latency is High", "Others"]
+
+  const handleOptionClick = (option: string) => {
+    setSelectedOption(option)
+    setInputText("")
+  }
+
+  const handleSubmit = () => {
+    if (!inputText.trim()) return
+    const flagMessage = selectedOption === "Others" ? inputText.trim() : `${selectedOption}: ${inputText.trim()}`
+    handleFlag(flagMessage)
+  }
+
+  if (selectedOption) {
+    return (
+      <div className="space-y-3">
+        <div className="bg-slate-100 px-3 py-2 rounded-md">
+          <p className="text-sm text-slate-600 font-medium">{selectedOption}</p>
+        </div>
+        <textarea
+          placeholder="Add your comment here..."
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+          className="w-full border border-slate-300 rounded-md px-3 py-3 focus:outline-none focus:ring-2 focus:ring-slate-400 text-base resize-none min-h-[120px]"
+          rows={5}
+          autoFocus
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={() => setSelectedOption(null)}
+            className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-3 rounded-md text-base"
+          >
+            Back
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-md text-base"
+          >
+            Submit
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-3">
       {options.map((item) => (
         <button
           key={item}
-          onClick={() => handleFlag(item)}
+          onClick={() => handleOptionClick(item)}
           className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-md text-base"
         >
           {item}
         </button>
       ))}
-      <button
-        onClick={() => setShowInput(!showInput)}
-        className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2 px-3 rounded-md text-base"
-      >
-        Others
-      </button>
-      {showInput && (
-        <div className="mt-2 space-y-2">
-          <input
-            type="text"
-            placeholder="Type your issue..."
-            value={otherText}
-            onChange={(e) => setOtherText(e.target.value)}
-            className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400 text-base"
-          />
-          <button
-            onClick={() => {
-              if (!otherText.trim()) return
-              handleFlag(otherText.trim())
-            }}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-md text-base"
-          >
-            Submit
-          </button>
-        </div>
-      )}
     </div>
   )
 }

@@ -807,6 +807,8 @@ export function Sidebar({ links }) {
 
 const Header = ({ title, dashboardLink }) => {
   const { setCurrentUser } = useAuth()
+const agentName =
+  JSON.parse(localStorage.getItem("agent_name"))?.agent_name || "Agent";
 
   function handleLogout() {
     localStorage.removeItem("insurance-auth")
@@ -815,7 +817,7 @@ const Header = ({ title, dashboardLink }) => {
 
   return (
     <header className="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center">
-      <h1 className="text-2xl font-bold text-slate-800">{title}</h1>
+      <h1 className="text-2xl font-bold text-slate-800">{title} | {agentName}</h1>
       <a onClick={handleLogout} style={{ cursor: "pointer" }} className="text-blue-600 hover:underline">
         Logout
       </a>
