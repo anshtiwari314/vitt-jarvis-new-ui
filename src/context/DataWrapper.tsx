@@ -85,6 +85,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     //let url1 = 'http://localhost:3008/'
     //let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
     let socketUrl = 'https://recruito.vitti.insure'
+    //let socketUrl = 'https://169f8456a069.ngrok-free.app'
+
     const globalStreamRef = useRef<any>(null)
     const [recordingActive,setRecordingActive] = useState(false)
     const recordingActiveStatus = useRef(false)
@@ -140,6 +142,12 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     const[msgLoading,setMsgLoading]= useAutoResetState(false,10000)
     
     const [aiState, setAiState] = useState("idle");
+
+    const [askAiStatus,setAskAiStatus] = useState(false);
+    // these below states used in MobileMeetingPage 
+    const [showAiModal, setShowAiModal] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
 
     const wasmUrls = [
       'ort-wasm-simd-threaded.jsep.wasm',
@@ -497,9 +505,12 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             console.log(result.sessionid ===SESSION_ID,result.sessionid,result,SESSION_ID,currentUser)
 
             if(result.sessionid === currentUser.sessionuid){
+              console.log('result',result)
               console.log(`%c just after filter data for this session id ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
               setAiState("idle")
-              setMsgLoading(false)
+              //setAskAiStatus(true);
+              setMsgLoading(false);
+
               const {arr,audiourl}=handleData(result)
               //console.log('i am audiourl',audiourl)
               //setAudioUrl(audiourl)
@@ -722,7 +733,12 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         ngrokServerUrl,setNgrokServerUrl,oneWayUrl,isFilesLoaded,recordingServerUrl,setRecordingServerUrl,
         toggleChunking,setToggleChunking,toggleContinuousChunking,setToggleContinuousChunking,audioQueueRef,isAudioStillPlaying,
         socket,setSocket,
-        aiState, setAiState
+        aiState, setAiState,
+        askAiStatus,setAskAiStatus
+        //showAiModal, setShowAiModal,
+       // isRecording, setIsRecording,
+       // isPaused, setIsPaused
+         
     }
 
 

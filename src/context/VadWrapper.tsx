@@ -22,7 +22,7 @@ export function useVad(){
 export function VadWrapper({children}){
 
 
-    const {ngrokServerUrl,setMsgLoading,oneWayUrl,audioQueueRef,audioRef,isAudioStillPlaying,socket,aiState, setAiState} = useData()
+    const {ngrokServerUrl,setMsgLoading,oneWayUrl,audioQueueRef,audioRef,isAudioStillPlaying,socket,aiState, setAiState,askAiStatus,setAskAiStatus} = useData()
     const {currentUser} = useAuth()
     const [vadRecordingOn,setVadRecordingOn] = useState<boolean>(false);
     const qpParams = useSelector((state)=>state.qpReducer)
@@ -101,6 +101,7 @@ export function VadWrapper({children}){
 
       //addTranscription(tempTranscription)
       //return resp
+      setAskAiStatus(false)
 }
 
 
@@ -123,8 +124,9 @@ export function VadWrapper({children}){
         },
         onSpeechEnd:(audio)=>{
             console.log("vad ended")
-            setManualVadStatus(false)
+            //setManualVadStatus(false)
             setAiState("thinking");
+            
             let data = {
               // this one is for jarvis-in-person
               //sessionid:currentUser?.userid,
@@ -137,8 +139,10 @@ export function VadWrapper({children}){
                 req_timestamp:getTimeStamp(),
                 agent_name: "planner9",
                 roomid: qpParams.customer_id,
-                name: qpParams.name
+                name: qpParams.name,
+                ask_vitt:askAiStatus
             }
+            console.log('just before ai suggestion',data)
             processAudioToBase64(audio,`${ngrokServerUrl}/vad_stream`,data)
             //setMsgLoading(true)
         }
@@ -309,6 +313,21 @@ export function VadWrapper({children}){
       },[manualVadStatus])
     
     
+      useEffect(()=>{
+
+        let timeout ;
+        if(!VAD2.loading){
+          console.log('manual-vad-stopping')
+          setManualVadStatus(false)
+          // timeout = setTimeout(()=>{
+            
+          // },3000)
+        }
+
+        return ()=> {
+         timeout && clearTimeout(timeout)
+        }
+      },[VAD2?.loading])
 
     /* (Automatic vad old ) this logic has time delay bcz of startMediaRecorder function the data only send after when 
      startMediaRecorder2 has finished execution of 10sec 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Play, Pause, Mic, Square, ChevronDown, FileText } from "lucide-react";
-import { useDispatch } from 'react-redux';
+import { Play, Pause, Mic, Square, ChevronDown, FileText,X } from "lucide-react";
+import { useDispatch,useSelector } from 'react-redux';
 import { setQP } from "../reducers/queryparamReducer";
 import Parser from 'html-react-parser'
 import { useData } from "../context/DataWrapper";
@@ -9,6 +9,7 @@ import LoadingIcons, {
   Audio, BallTriangle, Bars, Circles, Grid, Hearts, Oval, 
   Puff, Rings, SpinningCircles, TailSpin, ThreeDots 
 } from 'react-loading-icons';
+import AppPromoPopup from "../components/AppPromoPopup";
 
 const MobileMeetingApp = () => {
 
@@ -27,13 +28,15 @@ const MobileMeetingApp = () => {
       setRecordingActive,
       sessionUid ,ngrokServerUrl,setNgrokServerUrl,audioRef,isFilesLoaded,
       recordingServerUrl,setRecordingServerUrl,toggleChunking,setToggleChunking,
-      toggleContinuousChunking,setToggleContinuousChunking,aiState, setAiState
+      toggleContinuousChunking,setToggleContinuousChunking,aiState, setAiState,
+      askAiStatus,setAskAiStatus
     }:void = useData();
     
     const {manualVadStatus,setManualVadStatus,vadRecordingOn,
       setVadRecordingOn,vadStatus,setVadStatus,vadInstance,VAD2,userSpeaking} = useVad()
   
 
+      const qpParams = useSelector((state: any) => state.qpReducer);
   // --- States ---
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -91,6 +94,12 @@ const MobileMeetingApp = () => {
     return () => clearInterval(timerRef.current);
   }, [isRecording, isPaused]);
 
+
+
+  
+
+
+
   // --- Helpers ---
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -102,15 +111,21 @@ const MobileMeetingApp = () => {
 
   const toggleRecord = () => {
     if (!isRecording) {
-      setRecordingActive(true)
+      //setRecordingActive(true)
+      setManualVadStatus(true)
       setIsRecording(true);
       setIsPaused(false);
       
     } else {
-      setRecordingActive(false)
+      //setRecordingActive(false)
+      setManualVadStatus(!manualVadStatus)
       setIsPaused(!isPaused);
+      
     }
   };
+
+  
+
 
   const endMeeting = () => {
     if (
@@ -125,7 +140,11 @@ const MobileMeetingApp = () => {
   };
 
   const startAiQuery = () => {
+    
     setManualVadStatus(true)
+    setIsRecording(true);
+    setIsPaused(false);
+    setAskAiStatus(true);  
     setShowAiModal(true);
     setAiState("listening");
 
@@ -150,6 +169,7 @@ const MobileMeetingApp = () => {
 
   const closeAiModal = () => {
     setShowAiModal(false);
+    setAskAiStatus(false);
     setAiState("idle");
   };
 
@@ -159,6 +179,7 @@ const MobileMeetingApp = () => {
   return (
     <div className="flex flex-col h-screen bg-slate-50 text-slate-900 font-sans overflow-hidden relative">
       {/* --- Top Space --- */}
+      {qpParams.customer_id !=="" && <AppPromoPopup />}
       <div className="flex justify-center pt-10 pb-4 z-10">
         <h2 className="text-xs font-bold text-slate-300 uppercase tracking-widest">
           Vitt AI
@@ -209,7 +230,11 @@ const MobileMeetingApp = () => {
 
           {/* 2. CENTER: Play / Pause (HERO BUTTON) */}
           <div className="flex flex-col items-center gap-3 -mt-6">
-            <button
+
+            {
+              !VAD2.loading ?
+
+              <button
               onClick={toggleRecord}
               className={`w-28 h-28 rounded-[2.5rem] flex items-center justify-center shadow-2xl transition-all duration-300 active:scale-95 ${
                 isRecording && !isPaused
@@ -223,6 +248,13 @@ const MobileMeetingApp = () => {
                 <Play size={48} fill="currentColor" className="ml-2" />
               )}
             </button>
+            :
+            <div style={{}}>
+              <TailSpin stroke="red" strokeOpacity={1} speed={.95} style={{margin:'2rem'}}/>
+            </div>
+            }
+
+            
             {/* Enlarged Status Text */}
             <span className="text-sm font-extrabold text-slate-500 uppercase tracking-wider">
               {isRecording && !isPaused ? "Pause" : "Start"}
@@ -295,7 +327,7 @@ const MobileMeetingApp = () => {
               onClick={closeAiModal}
               className="p-2 bg-slate-50 rounded-full text-slate-500 hover:bg-slate-100"
             >
-              <ChevronDown size={20} />
+              <X size={20} />
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-5 bg-slate-50">
@@ -310,11 +342,34 @@ const MobileMeetingApp = () => {
             )}
             {aiState === "thinking" && (
               <div className="flex flex-col items-center justify-center h-64 space-y-4">
-                <div className="flex gap-2">
-                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce delay-75"></div>
-                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce delay-150"></div>
-                </div>
+  <div className="relative w-12 h-12">
+    {/* Large Gear - Spinning Clockwise */}
+    <svg 
+      className="absolute top-0 left-0 w-8 h-8 text-indigo-500 animate-spin" 
+      xmlns="http://www.w3.org/2000/svg" 
+      fill="none" 
+      viewBox="0 0 24 24" 
+      stroke="currentColor"
+      style={{ animationDuration: '3s' }} // Slow down the spin slightly
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+
+    {/* Small Gear - Spinning Counter-Clockwise */}
+    <svg 
+      className="absolute bottom-0 right-0 w-6 h-6 text-indigo-400 animate-spin" 
+      xmlns="http://www.w3.org/2000/svg" 
+      fill="none" 
+      viewBox="0 0 24 24" 
+      stroke="currentColor"
+      style={{ animationDirection: 'reverse', animationDuration: '2s' }}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  </div>
+  <p className="text-sm font-medium text-gray-500">Processing data...</p>
               </div>
             )}
               {data &&

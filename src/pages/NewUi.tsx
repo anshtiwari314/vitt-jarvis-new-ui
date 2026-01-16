@@ -63,7 +63,8 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
     setRecordingActive,
     sessionUid ,ngrokServerUrl,setNgrokServerUrl,audioRef,isFilesLoaded,
     recordingServerUrl,setRecordingServerUrl,toggleChunking,setToggleChunking,
-    toggleContinuousChunking,setToggleContinuousChunking
+    toggleContinuousChunking,setToggleContinuousChunking,
+    
   }:void = useData();
   
   const {manualVadStatus,setManualVadStatus,vadRecordingOn,
