@@ -11,6 +11,7 @@ import {
   updateRecommendations,
   updateFollowUpQn,
   updateCues,
+  updatePref_language,
   updateAlerts,
   addCues
 } from "../reducers/salesCopilotReducer"
@@ -178,6 +179,11 @@ useEffect(()=>{
       tempSocket.disconnect()
     }
   }, [])
+  // useEffect(()=>{
+  //   const urlParams = new URLSearchParams(window.location.search);
+  //   const lang = urlParams.get('lang') || 'English'
+  //   dispatch(updatePref_language(lang))
+  // },[socket])
 
   useEffect(() => {
     if (!socket) {

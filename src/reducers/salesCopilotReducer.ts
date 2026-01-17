@@ -367,7 +367,8 @@ const initialCopilotLoadState= {
 
 const initialCopilotState = {
   "navigation": "",
-  "pref_lang":"English",
+  "pref_language":"English",
+  "language_ids":["English","Hindi","Marathi"],
   "RecomendationSelected":"",
   "chat": [],
   "clientName":"",
@@ -467,6 +468,9 @@ const salesCopilotSlice = createSlice({
       //state = {...state,...action.payload};
       //state.
       return action.payload;
+    },
+     updatePref_language:(state,action)=>{
+      state.pref_language=action.payload;
     },
     updateSalesCopilotState:(state,action)=>{
       console.log('update sales copilot state',action.payload)
@@ -579,9 +583,9 @@ const salesCopilotSlice = createSlice({
     setRecomendationSelected:(state,action)=>{
       state.RecomendationSelected=action.payload;
     },
-    updatePrefLanguage:(state,action)=>{
-      state.pref_lang=action.payload;
-    }
+    // updatePrefLanguage:(state,action)=>{
+    //   state.pref_lang=action.payload;
+    // }
   },
 });
 
@@ -591,7 +595,7 @@ export const { initSalesState,
   updateLiabilities,updateFinancialGoals,
   updatePlanSummary,updateRecommendations,
   updateFollowUpQn,addCues,updateCues,updateAlerts,
-  setNavigation ,updatePrefLanguage,setRecomendationSelected} = salesCopilotSlice.actions;
+  setNavigation ,updatePrefLanguage,setRecomendationSelected,updatePref_language} = salesCopilotSlice.actions;
 
 export default {
   salesCopilotReducer: salesCopilotSlice.reducer,

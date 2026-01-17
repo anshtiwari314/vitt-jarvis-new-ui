@@ -6,9 +6,11 @@ import queryparamReducer from '../reducers/queryparamReducer';
 
 export const store = configureStore({
   reducer: {
+
     salesCopilotReducer: salesCopilotReducer.salesCopilotReducer,
     qpReducer: queryparamReducer.qpReducer,
     // Add other reducers here if any
+    
   },
 });
 

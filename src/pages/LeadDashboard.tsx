@@ -14,131 +14,155 @@ const DataContext = createContext(null)
 const useData = () => useContext(DataContext)
 
 const Form = ({ state, setState, submitForm, loading, error }) => {
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    console.log("name,value", name, value)
-    setState((prevState) => ({ ...prevState, [name]: value }))
-  }
+  const [lmsData, setLmsData] = useState<any>([]);
 
-  console.log(loading,state,loading ? "Submitting..." : state?.lead_id ? "Upload Lead" : "Add Lead")
+  useEffect(() => {
+    const getLmsData = async () => {
+      console.log("📡 Fetching LMS Data…");
+
+      const res = await fetch(config.serverBaseUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          route_name: "main_router",
+          json_data: {
+            trigger_func: "req_lms_field_names",
+            params: {
+              agent_name:
+                JSON.parse(localStorage.getItem("agent_name") || "{}")?.agent_name || "",
+              type: "HI",
+            },
+          },
+        }),
+      });
+
+      const json = await res.json();
+
+      console.log("✅ RAW LMS RESPONSE:", json);
+
+      // 🟢 Set LMS data
+      setLmsData(json.field_data);
+      console.log("📌 State setLmsData called with:", json.field_data);
+
+      // 🟡 But note: This log runs BEFORE state updates
+      setTimeout(() => console.log("📌 lmsData AFTER SET:", lmsData), 0);
+
+      // -------------------------
+      // BUILD INITIAL STATE
+      // -------------------------
+      const defaultState: any = {};
+      console.log("🔧 Building Initial State…");
+
+      json.field_data.forEach((field) => {
+        const key = field.cell_name.replace(/\s+/g, "_").toLowerCase();
+        const isUserInput = field.type === "user-input";
+
+        defaultState[key] = isUserInput ? field.cell_value || "" : "";
+
+        console.log(
+          `🧩 Field: ${field.cell_name} | key: ${key} | type: ${field.type} | default: ${defaultState[key]}`
+        );
+      });
+
+      setState(defaultState);
+      console.log("🔥 FINAL FORM INITIAL STATE SET:", defaultState);
+    };
+
+    getLmsData();
+  }, []);
+
+  // ------------------------
+  // HANDLE INPUT CHANGE
+  // ------------------------
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    console.log(`✏️ handleChange → field: ${name} | value: ${value}`);
+
+    setState((prev) => {
+      const newState = { ...prev, [name]: value };
+      console.log("🆕 Updated state:", newState);
+      return newState;
+    });
+  };
+
+  // ------------------------
+  // RENDER FIELDS
+  // ------------------------
+  const renderField = (field) => {
+    const key = field.cell_name.replace(/\s+/g, "_").toLowerCase();
+
+    console.log("🎨 Rendering field:", field.cell_name, "| key:", key);
+
+    if (field.type === "user-input") {
+      return (
+        <div key={key}>
+          <label className="block text-slate-500 mb-1">{field.cell_name}</label>
+          <input
+            type="text"
+            name={key}
+            value={state[key] || ""}
+            onChange={handleChange}
+            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
+          />
+        </div>
+      );
+    }
+
+    if (field.type === "drop-down") {
+      console.log(`🔽 Dropdown options for ${key}:`, field.cell_value);
+      return (
+        <div key={key}>
+          <label className="block text-slate-500 mb-1">{field.cell_name}</label>
+          <select
+            name={key}
+            value={state[key] || ""}
+            onChange={handleChange}
+            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
+          >
+            <option value="">Select {field.cell_name}</option>
+            {field.cell_value.map((item, i) => (
+              <option key={i} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm flex-1">
       <h3 className="text-lg font-semibold text-slate-700 mb-4">Add New Lead</h3>
-      <form onSubmit={submitForm} className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-        <div>
-          <label htmlFor="fname" className="block text-slate-500 mb-1">
-            First Name
-          </label>
-          <input
-            type="text"
-            id="fname"
-            name="fname"
-            value={state.fname}
-            onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-          />
-        </div>
-        <div>
-          <label htmlFor="lname" className="block text-slate-500 mb-1">
-            Last Name
-          </label>
-          <input
-            type="text"
-            id="lname"
-            name="lname"
-            value={state.lname}
-            onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-          />
-        </div>
-        <div>
-          <label htmlFor="email" className="block text-slate-500 mb-1">
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={state.email}
-            onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-          />
-        </div>
-        <div>
-          <label htmlFor="mob" className="block text-slate-500 mb-1">
-            Mobile Number
-          </label>
-          <input
-            type="text"
-            id="mob"
-            name="mob"
-            value={state.mob}
-            onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-          />
-        </div>
-        <div>
-          <label htmlFor="leadSourceFrom" className="block text-slate-500 mb-1">
-            Lead Source
-          </label>
-          <select
-            id="leadSourceFrom"
-            name="leadSourceFrom"
-            value={state.leadSourceFrom}
-            onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-          >
-            <option value="social-media">Social Media</option>
-            <option value="website">Website</option>
-            <option value="referral">Referral</option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor="priority" className="block text-slate-500 mb-1">
-            Priority
-          </label>
-          <select
-            id="priority"
-            name="priority"
-            value={state.priority}
-            onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-        </div>
-        <div>
-      <label htmlFor="priority" className="block text-slate-500 mb-1">
-        Language
-      </label>
-      <select
-        id="Language"
-        name="language"
-        value={state.language}
-        onChange={handleChange}
-        className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
+
+      <form
+        onSubmit={submitForm}
+        className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm"
       >
-        <option value="English">English</option>
-        <option value="Marathi">Marathi</option>
-      </select>
-    </div>
+        {lmsData.length === 0 ? (
+          <p className="text-slate-500">Loading fields...</p>
+        ) : (
+          lmsData.map((field) => renderField(field))
+        )}
+
         <div className="md:col-span-2">
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-200"
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
             disabled={loading}
           >
-            {loading ? "Submitting..." : state?.lead_id ? "Upload Lead" : "Add Lead"}
+            {loading ? "Submitting..." : "Add Lead"}
           </button>
-          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+
+          {error && <p className="text-red-500 mt-2">{error}</p>}
         </div>
       </form>
-      
     </div>
-  )
-}
+  );
+};
 
 const UploadComp = () => {
   return (
@@ -286,20 +310,31 @@ export function Table({ setFormState, initialFormState }) {
   // and made it run on unmount.
 
   function enableEdit(lead) {
-    const { name, mob, email, priority, source, lead_id } = lead
-    const [fname, ...restName] = name.split(" ")
+     const {
+          name,
+          mob,
+          email,
+          priority,
+          source,
+          lead_id,
+          link_params,
+          pref_language
+        } = lead
 
-    console.log("enable edit", lead)
-    setFormState({
-      ...initialFormState,
-      lead_id,
-      fname,
-      lname: restName.join(" "),
-      mob,
-      email,
-      priority,
-      leadSourceFrom: source,
-    })
+        const [fname = "", ...restName] = (name || "").split(" ")
+
+      setFormState({
+        ...initialFormState,
+        first_name: fname,
+        last_name: restName.join(" "),
+        mobile_number: mob,
+        email,
+        lead_source: source,
+        language: pref_language,
+        priority,
+        lead_id,
+        link_params
+      })
   }
 
   const generateInsight = async (lead) => {
@@ -913,12 +948,12 @@ function LeadDashboard() {
     e.preventDefault()
 
     if (
-      formState.fname === "" ||
-      formState.lname === "" ||
-      formState.email === "" ||
-      formState.mob === "" ||
-      formState.priority === "" ||
-      formState.leadSourceFrom === ""
+      !formState.first_name ||
+    !formState.last_name ||
+    !formState.email ||
+    !formState.mobile_number ||
+    !formState.priority ||
+    !formState.lead_source
     ) {
       setError("Please fill all fields of form")
       setLoading(false)
@@ -926,14 +961,14 @@ function LeadDashboard() {
     }
 
     const data = {
-      lead_id: formState.lead_id,
-      customer_name: formState.fname + " " + formState.lname,
-      mobile_num: formState.mob,
-      email: formState.email,
-      priority: formState.priority,
-      source: formState.leadSourceFrom,
-      agent_id: currentUser.userid,
-      pref_language: formState.language,
+       lead_id: formState.lead_id,
+    customer_name: formState.first_name + " " + formState.last_name,
+    mobile_num: formState.mobile_number,
+    email: formState.email,
+    priority: formState.priority,
+    source: formState.lead_source,
+    agent_id: currentUser.userid,
+    pref_language: formState.language,
       lead_type: "LI",
     }
 
