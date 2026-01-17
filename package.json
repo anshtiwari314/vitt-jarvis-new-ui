@@ -27,6 +27,7 @@
     "@ricky0123/vad-web": "^0.0.12",
     "@types/voice-activity-detection": "^0.0.2",
     "convert-audio": "^1.0.1",
+    "dompurify": "^3.3.1",
     "html-react-parser": "^3.0.16",
     "lamejs": "^1.2.1",
     "lucide-react": "^0.545.0",

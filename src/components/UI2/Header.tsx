@@ -17,7 +17,7 @@ export default function Header() {
   const navigation = useAppSelector((state) => state.healthManagmentReducer.navigation)
   const pref_language = useAppSelector((state) => state.healthManagmentReducer.pref_language)
   const allLanguageOptions = useAppSelector((state) => state.healthManagmentReducer.language_ids)
-  console.log("preferred language in header",pref_language,allLanguageOptions)
+  // console.log("preferred language in header",pref_language,allLanguageOptions)
 
   // @ts-ignore
   const { manualVadStatus, setManualVadStatus, VAD2 } = useVad()

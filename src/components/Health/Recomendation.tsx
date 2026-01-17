@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-
+import DOMPurify from "dompurify"
 interface Rider {
   name: string;
   desc: string;
@@ -213,24 +213,44 @@ export default function RecommendedHealthPlan({
   </button>
 
   {keyFeatures?.open && (
-    <div className="px-6 pb-4 space-y-2">
-      {keyFeatures.value?.length > 0 ? (
-        keyFeatures?.value?.map((feature, idx) => (
-          <div key={idx} className="flex items-start gap-2">
-            <span className="text-blue-600 text-lg">•</span>
-            <div className="flex flex-wrap gap-1 text-slate-700">
-              <span className="font-medium">{feature?.name}</span>
-              <span>— {feature?.desc}</span>
-            </div>
+  <div className="px-6 pb-4 space-y-2">
+    {keyFeatures?.value?.length > 0 ? (
+      keyFeatures.value.map((feature, idx) => (
+        <div key={idx} className="flex items-start gap-2">
+          {/* Bullet */}
+          <span className="text-blue-600 text-lg leading-6">•</span>
+
+          {/* Content */}
+          <div className="text-slate-700 text-md leading-6">
+            {/* Feature name */}
+            <span className="font-medium mr-1" 
+            dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(feature?.name || "", {
+                  ALLOWED_TAGS: ["b", "strong"],
+                }),
+              }}
+            />
+              
+
+            {/* Feature description (HTML from backend) */}
+            <span
+              className="[&_b]:font-semibold [&_strong]:font-semibold"
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize(feature?.desc || "", {
+                  ALLOWED_TAGS: ["b", "strong"],
+                }),
+              }}
+            />
           </div>
-        ))
-      ) : (
-        <p className="text-slate-500 text-sm">
-          No key features available for this plan.
-        </p>
-      )}
-    </div>
-  )}
+        </div>
+      ))
+    ) : (
+      <p className="text-slate-500 text-sm">
+        No key features available for this plan.
+      </p>
+    )}
+  </div>
+)}
 </div>
 
 

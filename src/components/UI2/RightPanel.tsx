@@ -1,7 +1,7 @@
 import React from "react"
 import { useAppSelector } from "../../store/store"
-
-
+import DOMPurify from "dompurify"
+const isHtml = (str = "") => /<\/?[a-z][\s\S]*>/i.test(str)
 export default function RightPanel(){
     
     const [cues] = useAppSelector(state => [state.healthManagmentReducer.salesData.cues])
@@ -13,7 +13,7 @@ export default function RightPanel(){
 
     // console.log('right panel state',salesState)
     // console.log('alert',alert,myAlert)
-     console.log('cues',cues)
+     console.log('cues in right panel',cues)
     // console.log('followUpQn',followUpQn,myFollowUp)
 
     return (
@@ -49,7 +49,19 @@ export default function RightPanel(){
             </h4>
             <ul className={`list-disc list-inside space-y-1 text-${colorClass}-700 text-sm`}>
               {card.data?.map((item, subIndex) => (
-                <li key={subIndex}>{item.text}</li>
+               (
+                                         <li key={index}>
+                    {isHtml(item.text) ? (
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: DOMPurify.sanitize(item.text),
+                        }}
+                      />
+                    ) : (
+                      item.text
+                    )}
+                  </li>
+                                        )
               ))}
             </ul>
           </div>
@@ -113,7 +125,19 @@ export function RightPanelOld(){
                             <ul className="list-disc list-inside space-y-1 text-green-700 text-sm">
                                 {
                                     cues?.data?.map((item,index)=>{
-                                        return <li key={index}>{item.text}</li>
+                                        return (
+                                         <li key={index}>
+                    {isHtml(item.text) ? (
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: DOMPurify.sanitize(item.text),
+                        }}
+                      />
+                    ) : (
+                      item.text
+                    )}
+                  </li>
+                                        )
                                     })
                                 }
                                 {/* <li>Financial safety net.</li>

@@ -26,7 +26,7 @@ import { normalizeRecommendationData } from '../functions/normalisedRecomendatio
 
 export default function App() {
 
-     const {socket}=useData()
+     const {socket,trans}=useData()
        const { circularProgress,setCircularProgress } = useData();
        useEffect(()=>{
         console.log('circularProgress in main page',circularProgress)
@@ -301,6 +301,27 @@ export default function App() {
                 </div>
             </div>
         </div>
+        {/* YouTube-style Transcript Bar */}
+        {trans && (
+        <div className="
+            fixed bottom-0 left-0 right-0
+            bg-black text-white
+            px-6 py-4
+            z-50
+            border-t border-white/10
+        ">
+            <div className="
+            max-w-6xl mx-auto
+            text-lg sm:text-xl lg:text-2xl
+            font-medium
+            leading-relaxed
+            max-h-32
+            overflow-y-auto
+            ">
+            {trans}
+            </div>
+        </div>
+        )}
     </div>
     
   )

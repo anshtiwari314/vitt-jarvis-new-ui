@@ -19,7 +19,7 @@ export function useVad()
 }
 
 export default function VadWrapper({children}){
-
+// const ws = new WebSocket("ws://localhost:5000/ws/health-ins")
     const oneWayUrl = ''
     const ngrokServerUrl = ''
     const {socket,isSocketConnected,setMsgLoading,agentId} = useData()
@@ -56,32 +56,51 @@ export default function VadWrapper({children}){
     //console.log('vad wrapper',roomId)
 
 async function processAudioToBase64(audio,url,data){
-    //console.log("vad stopped")
-    const wavBuffer = utils.encodeWAV(audio)
-      // const base64 = utils.arrayBufferToBase64(wavBuffer)
-      // console.log("hello world",base64)
+    // vad stopped
+const wavBuffer = utils.encodeWAV(audio);
+let wavBlob = new Blob([wavBuffer], { type: "audio/wav" });
+let mp3Blob = await WavToMp3(wavBlob);
 
-         // let wavBlob =processingToWav(audio)
-      let wavBlob = new Blob([wavBuffer], { type: 'audio/wav' })
-      let mp3Blob = await WavToMp3(wavBlob)
-      
-      //generate base64 of that blob 
-      let base64data = await generateBase64(mp3Blob)
+// generate base64
+let base64data = await generateBase64(mp3Blob);
+let b64 = base64data?.split(",")[1];
 
+// -------- CONFIG --------
+const MAX_CHUNK_BYTES = 150 * 1024; // 150KB safe for socket
+const MAX_CHUNK_LEN = Math.floor((MAX_CHUNK_BYTES * 4) / 3); // base64 length
+let seq = 0;
 
-      data = {
-        ...data,
-        selected_topic:navigation,
-        audiomessage:base64data.split(',')[1],
-        timeStamp:getTimeStamp()
-      }
+// -------- SPLIT BASE64 --------
+for (let i = 0; i < b64.length; i += MAX_CHUNK_LEN) {
+  const part = b64.slice(i, i + MAX_CHUNK_LEN);
+  console.log("Part length:", part.length,part);
+  const payload = {
+    ...data,
+    selected_topic: navigation,
+    audiomessage: part,
+    seq_no: seq,
+    is_last: false,
+    timeStamp: getTimeStamp()
+  };
+  console.log("[SEND PART]", seq, "size:", part.length);
+  socket.emit("ai_suggestion_req_health_ins", payload);
 
+  seq++;
+}
 
-      //let resp = await PostReq(url,data)
-      //console.log('resp',resp)
-      //return resp
-      console.log("from inside send to server[DEBUGGGG]", data);
-      socket.emit("ai_suggestion_req_health_ins", data);
+// -------- FINAL MARKER --------
+socket.emit("ai_suggestion_req_health_ins", {
+  ...data,
+  selected_topic: navigation,
+  audiomessage: null,
+  seq_no: seq,
+  is_last: true,
+  timeStamp: getTimeStamp()
+});
+
+console.log("✅ ALL CHUNKS SENT, total parts:", seq);
+
+      // ws.send(JSON.stringify({ event: "ai_suggestion_req_health_ins",...data}) );
 }
 
     // useEffect(()=>{

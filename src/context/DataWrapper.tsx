@@ -48,10 +48,18 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   const [lms_data,setLms_data]=useState<any>();
   const [circularProgress,setCircularProgress]=useState<boolean>(false);
   const agentId = 'anuj'
+  const [trans,setTrans]=useState<string>("");
   //console.log("sales state", navigation)
 
   function updateSalesState(data:any) {
-    console.log("handle incoming data", data, " the data type", data.type)
+    console.log(
+  "%chandle incoming data",
+  "color: yellow; font-weight: bold;",
+  data,
+  "the data type",
+  data.type
+)
+
     switch (data.type) {
       case "basic-info":
         console.log(data,"int the basic section info");
@@ -121,6 +129,11 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
     dispatch(initSalesState(data))
   }
 
+  function aiTranscriptionResponse(data:any){
+    console.log("ai transcription response",data)
+    setTrans(data.text)
+  }
+
 
   useEffect(()=>{
     console.log("health state",healthManageMentState)
@@ -159,7 +172,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
 
     tempSocket.on("connect1", connected)  
     tempSocket.on("disconnect1", disconnect)
-
+    tempSocket.on('ai_transcription_response',aiTranscriptionResponse)
     tempSocket.on('questions_loader_res', initialisationSalesState)
     tempSocket.on('ai_suggestion_res', updateSalesState)
     tempSocket.on('notifications',updateNotifications)
@@ -218,7 +231,7 @@ useEffect(() => {
   
     updateNotifications,
     recommendationsGenerated,setRecommendationsGenerated,
-    pref_language,setPref_language,agentId,lms_data,circularProgress,setLms_data,setCircularProgress
+    pref_language,setPref_language,agentId,lms_data,circularProgress,setLms_data,setCircularProgress,trans
   }
   return <Context.Provider value={values}>{children}</Context.Provider>
 }
