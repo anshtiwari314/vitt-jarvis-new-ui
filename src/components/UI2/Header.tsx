@@ -1,18 +1,21 @@
+'use client';
+
 import type React from "react"
-import { useEffect, useState, useRef, useCallback } from "react"
-import { useAppSelector } from "../../store/store";
+import { useEffect, useState } from "react"
+import { useAppSelector, useAppDispatch } from "../../store/store"
 import { useVad } from "../../context/VadWrapper"
 import { useAuth } from "../../context/AuthContext"
 import { useData } from "../../context/DataWrapper"
-import { useDispatch } from "react-redux"
-import { updatePref_language, updatePrefLanguage } from "../../reducers/salesCopilotReducer"
+import playSound from "../../assets/sound-play.gif"
+import { updatePref_language } from "../../reducers/salesCopilotReducer"
 import { X } from "lucide-react"
 import { TailSpin } from "react-loading-icons"
-   import { Flag } from "lucide-react";
+import { Flag } from "lucide-react"
+import { useDispatch } from "react-redux";
 
 export default function Header() {
   const { socket } = useData()
-  const dispatch = useDispatch()
+  const dispatch = useAppDispatch()
   //@ts-ignore
   const { setCurrentUser } = useAuth()
   //@ts-ignore
@@ -34,26 +37,32 @@ export default function Header() {
   // Timer state
   const [timerSeconds, setTimerSeconds] = useState(0)
   const [timerState, setTimerState] = useState<"stopped" | "running" | "paused">("stopped")
-  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Flag modal state
   const [flagOpen, setFlagOpen] = useState(false)
 
-  // Timer update callback
-  const updateTimer = useCallback(() => {
-    setTimerSeconds((prev) => prev + 1)
-  }, [])
-
-  // Auto-start timer on mount
+  // Timer - runs ONLY when VAD2.listening is true
   useEffect(() => {
-    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
-    timerIntervalRef.current = setInterval(updateTimer, 1000)
-    setTimerState("running")
-
-    return () => {
-      if (timerIntervalRef.current) clearInterval(timerIntervalRef.current)
+    let interval: NodeJS.Timeout | null = null
+    
+    if (VAD2 && VAD2.listening) {
+      setTimerState("running")
+      interval = setInterval(() => {
+        setTimerSeconds((prev) => prev + 1)
+      }, 1000)
+    } else {
+      setTimerState("stopped")
     }
-  }, [updateTimer])
+    
+    return () => {
+      if (interval) clearInterval(interval)
+    }
+  }, [VAD2])
+
+  const minutes = Math.floor(timerSeconds / 60)
+    .toString()
+    .padStart(2, "0")
+  const seconds = (timerSeconds % 60).toString().padStart(2, "0")
 
   // Handle logout
   const handleLogout = () => {
@@ -74,6 +83,7 @@ export default function Header() {
 
   // Handle flag submission
   const handleFlag = (flagType: string) => {
+    console.log("Flag submitted:", flagType)
     const payload = {
       roomid: qpParams.roomId,
       topic: currentNavigation,
@@ -87,10 +97,10 @@ export default function Header() {
   }
 
   // Format timer display
-  const minutes = Math.floor(timerSeconds / 60)
-    .toString()
-    .padStart(2, "0")
-  const seconds = (timerSeconds % 60).toString().padStart(2, "0")
+  // const minutes = Math.floor(timerSeconds / 60)
+    // .toString()
+    // .padStart(2, "0")
+  // const seconds = (timerSeconds % 60).toString().padStart(2, "0")
 
   // Page title mapping
   const pageDetails: Record<string, string> = {
@@ -106,13 +116,27 @@ export default function Header() {
     <>
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white p-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          {/* Left: Title */}
-          <div>
-            <h2 className="text-xl font-bold text-slate-800 md:text-2xl">
-              {pageDetails[currentNavigation] || "Dashboard"}
-            </h2>
-            {clientName && <p className="mt-1 text-base text-slate-500 md:text-lg">| Client: {clientName}</p>}
-          </div>
+          {/* Left: Title  name vad play logo*/}
+          <div className="flex items-center gap-3">
+                  <h2 className="text-xl font-bold text-slate-800 md:text-2xl">
+                    {pageDetails[currentNavigation] || "Dashboard"}
+                  </h2>
+
+                  {clientName && (
+                    <p className="text-base text-slate-500 md:text-lg">
+                      | Client: {clientName}
+                    </p>
+                  )}
+
+                  {VAD2?.userSpeaking && (
+                    <img
+                      src={playSound || "/placeholder.svg"}
+                      alt="User Speaking"
+                      className="w-16 h-8 object-contain"
+                    />
+                  )}
+                </div>
+
 
           {/* Right: Controls */}
           <div className="flex flex-wrap items-center gap-2 md:gap-4">
@@ -121,39 +145,33 @@ export default function Header() {
             </button>
 
             {/* VAD Controls */}
-            <div className="flex items-center gap-2 rounded-lg bg-slate-100 p-1">
+            <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg flex-shrink-0">
               {VAD2 !== undefined && !VAD2.loading ? (
-                VAD2.listening ? (
-                  <button
-                    onClick={() => setManualVadStatus(false)}
-                    className="rounded-md p-2 text-slate-600 hover:bg-slate-200"
-                    aria-label="Pause recording"
-                  >
-                    <PauseIcon />
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setManualVadStatus(true)}
-                    className="rounded-md p-2 text-slate-600 hover:bg-slate-200"
-                    aria-label="Start recording"
-                  >
-                    <PlayIcon />
-                  </button>
-                )
+                <button
+                  className={`p-2 rounded-md hover:bg-slate-200 ${VAD2.listening ? "text-sky-600" : "text-slate-600"}`}
+                  onClick={() => setManualVadStatus(!VAD2.listening)}
+                >
+                  {VAD2.listening ? (
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M5.75 4.5a.75.75 0 00-.75.75v10.5a.75.75 0 001.5 0V5.25A.75.75 0 005.75 4.5zm8.5 0a.75.75 0 00-.75.75v10.5a.75.75 0 001.5 0V5.25a.75.75 0 00-.75-.75z"></path>
+                    </svg>
+                  ) : (
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path>
+                    </svg>
+                  )}
+                </button>
               ) : (
-                <div className="flex items-center justify-center">
-                  <TailSpin
-                    stroke="red"
-                    strokeOpacity={1}
-                    speed={0.95}
-                    style={{ margin: "0.5rem", width: "1rem", height: "1rem" }}
-                  />
+                <div className="p-2 flex justify-center items-center">
+                  <TailSpin stroke="red" speed={0.95} className="w-4 h-4 m-1" />
                 </div>
               )}
             </div>
 
             {/* Timer */}
-            <div className="rounded-lg bg-slate-100 px-3 py-2 font-mono text-base font-semibold text-slate-700 md:text-lg">
+            <div
+              className={`text-lg font-mono font-semibold px-3 py-2 rounded-lg whitespace-nowrap ${VAD2?.listening ? "text-green-700 bg-green-50" : "text-slate-700 bg-slate-100"}`}
+            >
               {minutes}:{seconds}
             </div>
 
@@ -172,19 +190,15 @@ export default function Header() {
             </select>
 
             {/* Flag Button */}
-         
-
-<button
-  onClick={() => setFlagOpen(true)}
-  className="p-2 rounded-md hover:bg-gray-100 transition"
->
- <Flag
-  size={18}
-  className="text-gray-700 hover:text-red-500 transition"
-/>
-
-</button>
-
+            <button
+              onClick={() => setFlagOpen(true)}
+              className="p-2 rounded-md hover:bg-gray-100 transition"
+            >
+              <Flag
+                size={18}
+                className="text-gray-700 hover:text-red-500 transition"
+              />
+            </button>
 
             {/* Logout Button */}
             <button
@@ -202,7 +216,6 @@ export default function Header() {
     </>
   )
 }
-
 
 interface FlagModalProps {
   onClose: () => void
