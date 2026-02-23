@@ -33,7 +33,8 @@ import {
   faShare,
   faTimes,
   faBars,
-  faMicrophone
+  faMicrophone,
+  faChevronDown
 } from "@fortawesome/free-solid-svg-icons";
 // import {} from "@fortawesome/free-regular-svg-icons";
 import LoadingIcons, { 
@@ -70,7 +71,10 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
 
   const [query, setQuery] = useState<string>("");
   const [state, setState] = useState({ date: "", time: "" });
-  const cuesContainerRef = useRef(null) 
+  const cuesContainerRef = useRef<HTMLDivElement | null>(null)
+  const isAtBottomRef = useRef(true)
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false)
+  const scrollThreshold = 80 
 
   //const transcriptionState = useAppSelector(state => state.trcpReducer);
     const transcriptionState = []
@@ -94,6 +98,30 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
     navigator.clipboard.writeText(data[data.length - 1].content);
     window.alert("Content copied");
   }
+
+  function scrollToBottom() {
+    const el = cuesContainerRef.current
+    if (el) {
+      el.scrollTop = el.scrollHeight - el.clientHeight
+      isAtBottomRef.current = true
+      setShowScrollToBottom(false)
+    }
+  }
+
+  function handleCuesScroll() {
+    const el = cuesContainerRef.current
+    if (!el) return
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= scrollThreshold
+    isAtBottomRef.current = atBottom
+    setShowScrollToBottom(!atBottom)
+  }
+
+  useEffect(() => {
+    if (!isAtBottomRef.current) return
+    const el = cuesContainerRef.current
+    if (el) el.scrollTop = el.scrollHeight - el.clientHeight
+  }, [data])
+
    const [microPhonesHide,setMicroPhonesHide]=useState(false);
     const onClickOfHamburger=()=>{
         if(sidebarRef.current){
@@ -122,7 +150,8 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
 
   useEffect(()=>{
     if (cuesContainerRef.current) {
-      cuesContainerRef.current.scrollTop = cuesContainerRef.current.scrollHeight;
+      //cuesContainerRef.current.scrollHeight
+      cuesContainerRef.current.scrollTop = 0;
     }
   },[data])
 
@@ -217,7 +246,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
       {/* <LoadingIconsComp/> */}
       <audio style={{ display: "none" }} ref={audioRef}></audio>
 
-      <div>
+      {/* <div>
         <input
           type="text"
           value={ngrokServerUrl}
@@ -237,7 +266,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
             //...(inputValue && inputFocusStyle),
           }}
         />
-        </div>
+        </div> */}
         
       <div>
       {/* <input
@@ -352,18 +381,20 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
             />
         </h3>
       )}
+      <div style={{ position: 'relative', width: '100%' }}>
       <div
 
         className="cues-container"
         style={{
           width: "100%",
-          height:'70vh',
+          height:'80vh',
           backgroundColor: "#F7F7FB",
           overflowY: "scroll",
           //border:'0.1rem solid blue'
 
         }}
-        ref= {cuesContainerRef}
+        ref={cuesContainerRef}
+        onScroll={handleCuesScroll}
       >
        
         {/* {data && data.map((e:any,i:number)=>{
@@ -402,6 +433,32 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
             />
           </div>
         ) : null}
+      </div>
+      {showScrollToBottom && (
+        <button
+          type="button"
+          onClick={scrollToBottom}
+          aria-label="Scroll to bottom"
+          style={{
+            position: 'absolute',
+            bottom: '1rem',
+            right: '1rem',
+            width: '2.5rem',
+            height: '2.5rem',
+            borderRadius: '50%',
+            border: 'none',
+            backgroundColor: '#7D11E9',
+            color: 'white',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          }}
+        >
+          <FontAwesomeIcon icon={faChevronDown} style={{ fontSize: '1.2rem' }} />
+        </button>
+      )}
       </div>
       <div
         style={{
@@ -551,7 +608,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
         } */}
         
 
-        {
+        {/* {
           !VAD2.loading ? 
          <CustomFillButtonWithIcon 
           color="#8236f5" 
@@ -569,9 +626,9 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
         <div style={{}}>
             <TailSpin stroke="red"  strokeOpacity={1} speed={.95} style={{margin:'2rem'}}/>
         </div>
-        }
+        } */}
 
-        <div style={{height:'4.5rem',width:'8rem',backgroundColor:'white',display:'flex',alignItems:'center',justifyContent:'center'}}>
+        {/* <div style={{height:'4.5rem',width:'8rem',backgroundColor:'white',display:'flex',alignItems:'center',justifyContent:'center'}}>
           {
             userSpeaking ? 
             <img src={playSound} style={{width:'8rem',height:'4.5rem'}}/>:
@@ -582,9 +639,9 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
             <img src={playSound} style={{width:'8rem',height:'4.5rem'}}/>:
             null
           }
-            {/* <img src={playSound} style={{width:'8rem',height:'4.5rem'}}/> */}
+            {/* <img src={playSound} style={{width:'8rem',height:'4.5rem'}}/> 
 
-        </div>
+        </div> */}
           
         {/* <div>
           
@@ -637,7 +694,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
       
        
         
-        <CustomFillButtonWithIcon 
+      {/*  <CustomFillButtonWithIcon 
         color="#8236f5" 
         text="" 
         icon={faRecordVinyl}
@@ -646,10 +703,10 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
         iconComp = {<FontAwesomeIcon icon={faRecordVinyl} style={{fontSize:'2rem'}}/>} 
         onClick={() => setRecordingActive((p) => !p)}
         />
-
+        */}
       
 
-        <CustomFillButtonWithIcon 
+        {/* <CustomFillButtonWithIcon 
         color="#8236f5"
         text=""
         icon={faTimes} 
@@ -658,7 +715,8 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
         iconStyle={{fontSize:'2rem'}}
         iconComp = {<FontAwesomeIcon icon={faTimes} style={{fontSize:'2rem'}}/>}
          onClick={()=>endCall()}
-        />
+        /> */}
+
       </div>
       <div style={{textAlign:'center'}}>
         

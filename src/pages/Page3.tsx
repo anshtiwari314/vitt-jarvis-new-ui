@@ -77,7 +77,7 @@ export default function Page3() {
       style={{
         //border:'0.51rem solid red',
         display: "flex",
-        height: "fit-content",
+        minHeight: "100vh",
         position: "relative",
         overflow:"hidden"
       }}
@@ -91,7 +91,7 @@ export default function Page3() {
         height:'max-content',
         //border:'0.2rem solid blue',
       }}>
-        <button onClick={onClickCloseHamburger} className="close">
+        <button onClick={onClickCloseHamburger} className="close" aria-label="Close sidebar">
           <FontAwesomeIcon className="close-icon" icon={faXmark} />
         </button>
         <div
@@ -109,7 +109,8 @@ export default function Page3() {
             <img
               src={Logo}
               className="logo-img"
-              style={{ width: "14rem", height: "8rem", objectFit: "contain" }}
+              style={{ maxWidth: "14rem", width: "100%", height: "auto", objectFit: "contain" }}
+              alt="Logo"
             />
           </div>
           <div
@@ -141,7 +142,8 @@ export default function Page3() {
               >
                 <img
                   src={Search}
-                  style={{ width: "2.1rem", height: "2.1rem" }}
+                  style={{ width: "var(--icon-size-lg)", height: "var(--icon-size-lg)" }}
+                  alt="Search"
                 />
               </div>
 
@@ -164,6 +166,7 @@ export default function Page3() {
                     border: "none",
                     fontSize: "1.5rem",
                   }}
+                  aria-label="Search"
                 />
               </div>
               {/* <img src={Search} style={{width:'2rem',height:'2rem',margin:'0 0.5rem'}}/> */}
@@ -182,6 +185,7 @@ export default function Page3() {
           {tabs.map((e: any, i: any) => {
             return (
               <div
+                key={i}
                 style={{
                   display: "flex",
                   //alignItems:'center',
@@ -192,6 +196,9 @@ export default function Page3() {
                   cursor: "pointer",
                 }}
                 onClick={() => setActiveTab(i)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(ev) => { if(ev.key === 'Enter') setActiveTab(i) }}
               >
                 <span
                   style={{
@@ -200,7 +207,7 @@ export default function Page3() {
                     justifyContent: "center",
                   }}
                 >
-                  <img src={e.icon} />
+                  <img src={e.icon} style={{ width: "var(--icon-size-lg)", height: "var(--icon-size-lg)" }} alt="" />
                 </span>
                 <span style={{ flex: "0.8" }}>
                   <p
@@ -216,111 +223,6 @@ export default function Page3() {
               </div>
             );
           })}
-          {/* <div style={{
-                        display:'flex',
-                        //alignItems:'center',
-                        justifyContent:'center',
-                        margin:'1.5rem 0',
-                        border:'0.1rem solid blue',
-                        padding:'1.5rem 0'
-                        }}>
-                        <span style={{flex:'0.2',display:'flex',justifyContent:'center'}}>
-                            <img src={Home}/>
-                        </span>
-                        <span style={{flex:'0.8'}}>
-                            <p style={{fontSize:'1.5rem',fontFamily: "'Open Sans', sans-serif",fontWeight:700}}>Dashboard</p>
-                        </span>
-                    </div>
-                    <div style={{
-                        display:'flex',
-                        alignItems:'center',
-                        justifyContent:'center',
-                        margin:'1.5rem 0',
-                        //border:'0.1rem solid blue',
-                        padding:'1.5rem 0'
-                        }}>
-                        <span style={{flex:'0.2',display:'flex',justifyContent:'center'}}>
-                            <img src={Meeting}/>
-                        </span>
-                        <span style={{flex:'0.8',display:'flex',alignItems:'center'}}>
-                            <p style={{fontSize:'1.5rem',fontFamily: "'Open Sans', sans-serif",fontWeight:400}}>Recordings</p>
-                        </span>
-                    </div>
-                    <div style={{
-                        display:'flex',
-                        alignItems:'center',
-                        justifyContent:'center',
-                        margin:'1.5rem 0',
-                       // border:'0.1rem solid blue',
-                        padding:'1.5rem 0'
-                        }}>
-                        <span style={{flex:'0.2',display:'flex',justifyContent:'center'}}>
-                            <img src={Setting}/>
-                        </span>
-                        <span style={{flex:'0.8'}}>
-                            <p style={{fontSize:'1.5rem',fontFamily: "'Open Sans', sans-serif",fontWeight:400}}>Language Setting</p>
-                        </span>
-                    </div>
-                    <div style={{
-                        display:'flex',
-                        alignItems:'center',
-                        justifyContent:'center',
-                        margin:'1.5rem 0',
-                       // border:'0.1rem solid blue',
-                        padding:'1.5rem 0'
-                        }}>
-                        <span style={{flex:'0.2',display:'flex',justifyContent:'center'}}>
-                            <img src={Analytics}/>
-                        </span>
-                        <span style={{flex:'0.8'}}>
-                            <p style={{fontSize:'1.5rem',fontFamily: "'Open Sans', sans-serif",fontWeight:400}}>Advanced Analytics</p>
-                        </span>
-                    </div>
-                    <div style={{
-                        display:'flex',
-                        alignItems:'center',
-                        justifyContent:'center',
-                        margin:'1.5rem 0',
-                      //  border:'0.1rem solid blue',
-                        padding:'1.5rem 0'
-                        }}>
-                        <span style={{flex:'0.2',display:'flex',justifyContent:'center'}}>
-                            <img src={Schedule}/>
-                        </span>
-                        <span style={{flex:'0.8'}}>
-                            <p style={{fontSize:'1.5rem',fontFamily: "'Open Sans', sans-serif",fontWeight:400}}>Schedule</p>
-                        </span>
-                    </div>
-                    <div style={{
-                        display:'flex',
-                        alignItems:'center',
-                        justifyContent:'center',
-                        margin:'1.5rem 0',
-                      //  border:'0.1rem solid blue',
-                        padding:'1.5rem 0'
-                        }}>
-                        <span style={{flex:'0.2',display:'flex',justifyContent:'center'}}>
-                            <img src={Library}/>
-                        </span>
-                        <span style={{flex:'0.8'}}>
-                            <p style={{fontSize:'1.5rem',fontFamily: "'Open Sans', sans-serif",fontWeight:400}}>Library</p>
-                        </span>
-                    </div>
-                    <div style={{
-                        display:'flex',
-                        alignItems:'center',
-                        justifyContent:'center',
-                        margin:'1.5rem 0',
-                      //  border:'0.1rem solid blue',
-                        padding:'1.5rem 0'
-                        }}>
-                        <span style={{flex:'0.2',display:'flex',justifyContent:'center'}}>
-                            <img src={Feedback}/>
-                        </span>
-                        <span style={{flex:'0.8'}}>
-                            <p style={{fontSize:'1.5rem',fontFamily: "'Open Sans', sans-serif",fontWeight:400}}>Your Feedback</p>
-                        </span>
-                    </div> */}
         </div>
       </div>
     <div
@@ -333,17 +235,6 @@ export default function Page3() {
   className={`main-content ${isHamburgerClosed ? "override" : ""}`}
 >
         {activeTab === 0 ? <NewUi sidebarRef={ref} btnRef={btnRef} wasClosedByUserRef={wasClosedByUserRef}  /> : null}
-        {/* {
-                activeTab === 1? <div style={{//border:'0.1rem solid black',
-                    width:'100%',height:'100%'}}>
-                        <iframe
-                        src={`https://vitt-pcvc-audit.netlify.app/#/analytics/${currentUser.sessionid}`}
-                        title="Analytics page"
-                        width="100%"
-                        height="100%">
-                        </iframe>
-                    </div>:null
-            } */}
         {activeTab > 0 ? <ErrorPage /> : null}
       </div>
     </div>

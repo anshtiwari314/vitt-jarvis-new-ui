@@ -1,14 +1,14 @@
-import React, { useState,createContext, useContext, useEffect, useRef } from 'react'
+import React, { useState,createContext, useContext, useEffect, useRef, useMemo } from 'react'
 import AddOnlySuggestiveMsg from '../components/AddOnlySuggestiveMsg'
 import AddTextMsg from '../components/AddTextMsg'
-import {connect, io} from 'socket.io-client';
+// import {connect, io} from 'socket.io-client'; // Removed socket.io
 import {v4 as uuidv4} from 'uuid'
 import WavToMp3 from '../functions/wavToMp3';
 import { useAuth } from './AuthContext';
 import { xhrUploadFile } from '../functions/requests';
 
 import { startMediaRecorder,startMediaRecorder2 } from '../functions/mediaRecorder';
-import { getTimeStamp,getOldTimeStamp } from '../functions/generalFn';
+import { getTimeStamp,getOldTimeStamp, getCurrentFormattedTime } from '../functions/generalFn';
 import {handleData } from '../functions/incomingDataPreprocessing'
 
 import Meeting from '../assets/Meeting.svg'
@@ -22,8 +22,9 @@ import Feedback from '../assets/Feedback.svg'
 
 import useAutoResetState from '../hooks/useAutoResetState';
 import useWasmLoader from '../hooks/useWasmLoader'
+import { WsClient } from '../lib/wsClient';
 
-const Context = createContext('')
+const Context = createContext<any>(null) // Typed as any for now to match usage
 type Data = {
         type:string,
         query: string, 
@@ -55,8 +56,19 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     const dataArrRef = useRef<any>([])
     let audioServerUrl =`https://tso4smyf1j.execute-api.ap-south-1.amazonaws.com/test/transcription-clientaudio`
     //let url1 = 'http://localhost:3008/'
-    let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
-    //let socketUrl = 'http://localhost:5000'
+    //let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
+    
+    //let socketUrl = 'https://recruito.vitti.insure/'
+    //let socketUrl = 'wss://recruito.vitti.insure/register_client'
+
+    let socketUrl = 'wss://2bac-2406-b400-b1-c846-9c02-ed8e-e94f-e1bf.ngrok-free.app/register_client'
+    
+    // Convert to wss if needed, assuming the server supports wss on the same domain
+    // const wsUrl = socketUrl.replace('https', 'wss'); 
+    // Using the original url for now, WsClient can handle it if we pass the right protocol
+    // But standard WebSocket needs ws:// or wss://
+    const wsUrl = socketUrl.startsWith('http') ? socketUrl.replace(/^http/, 'ws') : socketUrl;
+
     const globalStreamRef = useRef<any>(null)
     const [recordingActive,setRecordingActive] = useState(false)
     const recordingActiveStatus = useRef(false)
@@ -84,7 +96,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     // without processing it to mp3  
     const [toggleContinuousChunking,setToggleContinuousChunking] = useState(false)  
 
-    const [socket,setSocket] = useState<any>(null)
+    // const [socket,setSocket] = useState<any>(null) // Removed state socket
+    const wsClientRef = useRef<WsClient | null>(null);
     const [msgId,setMsgId] = useState(uuidv4())
 
     
@@ -426,27 +439,36 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         console.log('i am session id at data-wrapper',SESSION_ID)
     },[SESSION_ID])
 
+    // Initialize WsClient
     useEffect(()=>{
-        const tempSocket = io(socketUrl)
-        console.log(tempSocket)
-        setSocket(tempSocket)
-    },[])
+        const client = new WsClient({ url: wsUrl });
+        wsClientRef.current = client;
+        client.connect();
 
-   
+        return () => {
+          client.disconnect();
+          wsClientRef.current = null;
+        }
+    },[wsUrl])
+
+    // State refs for event listener
+    const currentUserRef = useRef(currentUser);
+    const sessionIdRef = useRef(SESSION_ID);
+    
+    useEffect(() => {
+      currentUserRef.current = currentUser;
+    }, [currentUser]);
+
+    useEffect(() => {
+      sessionIdRef.current = SESSION_ID;
+    }, [SESSION_ID]);
 
     useEffect(()=>{
-        if(SESSION_ID==='' || socket===null )
-        return;
-        //handleData(Data)
-        //handleData(Data)
-
-        // if(socket.id===undefined)
-        // return ;
-        //console.log(socket,socket.connected,socket.id)
+       const wsClient = wsClientRef.current;
+       if(!wsClient) return;
 
         function onConnect(){
                 console.log("connection established");
-                console.log("socket.id",socket.id)
              //socket.emit('join-room',SESSION_ID,socket.id)
         }
 
@@ -454,60 +476,91 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
             console.log("disconnected")
         }
 
-        function isAudioPlaying(audioElement) {
-  return !audioElement.paused;
-}
-
         function receiveData(result:any){
           console.log(`%c just after receiveing data ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
           console.log(result.text,result.messageid,result);
-            // if(tempRef.current ===data){
-            //     //console.log("tempRef current",tempRef.current)
-            //     return ;
-            // }
             
-            console.log(result.sessionid ===SESSION_ID,result.sessionid,result,SESSION_ID,currentUser)
+            const currentSessionId = sessionIdRef.current;
+            const currentUsr = currentUserRef.current;
 
-            if(result.sessionid === currentUser.sessionuid){
+            console.log(result.sessionid ===currentSessionId,result.sessionid,result,currentSessionId,currentUsr)
+
+            //if(result.sessionid === currentUsr?.sessionuid){
               console.log(`%c just after filter data for this session id ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+
+              if(result.type === 'cues'){
+                const newCuesItem = {
+                  id: result.message_id,
+                  type: 'cues',
+                  message_id: result.message_id,
+                  content: result.content ?? '',
+                  audiofiletimestamp: result.audiofiletimestamp ?? '',
+                  match_score: result.match_score ?? '',
+                  similarity_query: result.similarity_query ?? '',
+                  sessionid: result.sessionid ?? '',
+                  topic_id: result.topic_id ?? '',
+                  isanswered: result.isanswered ?? false,
+                  is_outgoing: false,
+                  msg_receiving_timestamp: getCurrentFormattedTime(),
+                }
+                setData(prev => [...prev, newCuesItem])
+                return
+              }
+
+              if(result.type === 'cues-update'){
+                setData(prev => {
+                  const idx = prev.findIndex((e: any) => (e.message_id ?? e.id) === result.message_id)
+                  if (idx === -1) return prev
+                  const next = [...prev]
+                  const item = { ...next[idx], content: (next[idx].content ?? '') + (result.content ?? '') }
+                  next[idx] = item
+                  return next
+                })
+                return
+              }
+
               setMsgLoading(false)
               const {arr,audiourl}=handleData(result)
-              //console.log('i am audiourl',audiourl)
-              //setAudioUrl(audiourl)
-              //console.log(audiourl)
-              console.log(`%c audioRef paused ${audioRef.current.paused} ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
-             
-              // if()
-              // if(audiourl!==null)
-              //   playAudio(audiourl)
               
-               //let isPlaying = isAudioPlaying(audioRef.current)
-              //console.log('isAudioPlaying',isPlaying)
               console.log(`%c audioRef paused ${audioRef.current.paused} ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
               
-              setData(prev=>[...prev,...arr])
-              //setAudioArr(prev=>[...prev,audiourl])
+              setData(prev=>[...arr,...prev])
               
-
               if(isAudioStillPlaying.current===false){
-              setAudioUrl(audiourl)
+                setAudioUrl(audiourl)
               }else {
                audioQueueRef.current = [...audioQueueRef.current,audiourl]
-                
               }
-              
-            }
-    }
-       socket.on("connect",onConnect)
-       socket.on("disconnect",onDisconnect)
-       socket.on("receive-data",receiveData)
-
+            //}
+        }
+       wsClient.on('message',(result)=>{
+          console.log("message from server",result);
+          receiveData(result)
+       }) 
+       wsClient.on("connect",onConnect)
+       wsClient.on("disconnect",onDisconnect)
+       wsClient.on('transcribe_audio_res',receiveData)
+       
        return ()=>{
-           socket.off("connect",onConnect)
-           socket.off('disconnect',onDisconnect)
-           socket.off("receive-data",receiveData)
+           wsClient.off("connect",onConnect)
+           wsClient.off('disconnect',onDisconnect)
+           wsClient.off('transcribe_audio_res',receiveData)
        }
-    },[SESSION_ID,socket,msgId])
+    },[msgId]) // Dependency msgId was in original code, keeping it or should check if needed. 
+    // Actually [SESSION_ID, socket, msgId] was the original dep array. 
+    // socket is now wsClientRef (stable-ish, but effect runs on mount).
+    // SESSION_ID is handled via ref. msgId is state. 
+    // Since we attach listener to wsClientRef.current, and wsClientRef.current is set in another effect, 
+    // we need to make sure this effect runs after wsClient is set.
+    // Ideally we should depend on wsClientRef.current but refs don't trigger effects.
+    // However, wsUrl is stable. 
+    // Let's add a small polling or check if wsClient is ready? 
+    // Or better, just rely on the fact that the first effect runs first synchronously (or close enough) in the same render cycle?
+    // No, effects run in order. The first effect sets the ref. The second effect reads it.
+    // But since `wsClientRef` mutation doesn't trigger re-render, the second effect might run with null if it runs before the first effect? 
+    // React runs effects in order of declaration. So first effect runs, sets ref. Second effect runs, sees ref.
+    // WAIT: Effects run after render. The ref is mutated in the first effect. The second effect reads it. 
+    // This is fine.
 
     
       
@@ -583,13 +636,15 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     },[toggleChunking,ngrokServerUrl])
         
 
-    
+    const send = (type: string, data: any) => {
+        wsClientRef.current?.send(type, data);
+    }
 
-    
-
-    let values = {
+    let values = useMemo(() => ({
         data,
         setData,
+        // socket,setSocket, // Removed
+        send, // Added
         SESSION_ID,setSessionId,
         msgLoading,
         setMsgLoading,
@@ -604,7 +659,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         recordingActive,setRecordingActive,tabs,activeTab,setActiveTab,
         ngrokServerUrl,setNgrokServerUrl,oneWayUrl,isFilesLoaded,recordingServerUrl,setRecordingServerUrl,
         toggleChunking,setToggleChunking,toggleContinuousChunking,setToggleContinuousChunking,audioQueueRef,isAudioStillPlaying
-    }
+    }), [data, SESSION_ID, msgLoading, audioArr, audioUrlFlag, audioUrl, recordingActive, activeTab, ngrokServerUrl, oneWayUrl, recordingServerUrl, toggleChunking, toggleContinuousChunking, manualVadRecordingOn]) // Added dependencies for useMemo
+    
   return (
       //@ts-ignore
     <Context.Provider value={values}>

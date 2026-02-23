@@ -8,15 +8,7 @@
   box-sizing: border-box;
 }
 
-html {
-  font-size: 100%;
-}
-
-@media screen and (min-width: 1284px) {
-  html {
-    font-size: 70%;
-  }
-}
+/* html font-size managed in All.css */
 
 /* doubt  */
 
@@ -69,17 +61,6 @@ html {
   }
 }
 
-@media screen and (max-width: 1283px) and (min-width: 1126px) {
-  html {
-    font-size: 65%;
-  }
-}
-
-@media screen and (max-width: 1125px) {
-  html {
-    font-size: 60%;
-  }
-}
 
 /* big tablet (partial->ht problem)  */
 @media screen and (min-width: 861px) and (max-width: 1029px) {

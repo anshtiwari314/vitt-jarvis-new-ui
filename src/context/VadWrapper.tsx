@@ -20,7 +20,8 @@ export function useVad(){
 export function VadWrapper({children}){
 
 
-    const {ngrokServerUrl,setMsgLoading,oneWayUrl,audioQueueRef,audioRef,isAudioStillPlaying} = useData()
+    // Removed socket, setSocket, added send
+    const {ngrokServerUrl,setMsgLoading,oneWayUrl,audioQueueRef,audioRef,isAudioStillPlaying,send} = useData()
     const {currentUser} = useAuth()
     const [vadRecordingOn,setVadRecordingOn] = useState<boolean>(false);
     let recordingStatus = useRef(false);
@@ -82,8 +83,11 @@ export function VadWrapper({children}){
       }
 
 
-      let resp = await PostReq(url,data)
-      console.log('resp',resp)
+      // socket.emit('transcribe_audio_req',data) // Replaced
+      //send('transcribe_audio_req', data);
+
+      //let resp = await PostReq(url,data)
+      //console.log('resp',resp)
       //console.log('resp2',resp.audiobase64)
 
       // let tempTranscription = {
@@ -95,7 +99,7 @@ export function VadWrapper({children}){
       // }
 
       //addTranscription(tempTranscription)
-      return resp
+     // return resp
 }
 
 
@@ -105,10 +109,10 @@ export function VadWrapper({children}){
         //@ts-ignore
         modelURL:`./silero_vad.onnx`,
         onVADMisfire: () => {
-          console.log("Vad misfire")
+          //console.log("Vad misfire")
         },
         onSpeechStart: () => {
-          console.log("Speech start")
+         // console.log("Speech start")
 
           audioRef.current.pause()
           isAudioStillPlaying.current = false
@@ -128,7 +132,7 @@ export function VadWrapper({children}){
                 userid:currentUser?.userid,
                 req_timestamp:getTimeStamp()
             }
-            processAudioToBase64(audio,`${ngrokServerUrl}/vad_stream`,data)
+            //processAudioToBase64(audio,`${ngrokServerUrl}/vad_stream`,data)
             //setMsgLoading(true)
         }
       })
@@ -245,8 +249,7 @@ export function VadWrapper({children}){
 
     //                 // vadRef.current.myVad.options.positiveSpeechThreshold=0.9 
     //                 // vadRef.current.myVad.options.negativeSpeechThreshold=0.85
-                    
-
+    //                 
     //                 console.log(vadRef.current.myVad)
     //              })
                 

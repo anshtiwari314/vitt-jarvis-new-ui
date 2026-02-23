@@ -62,16 +62,17 @@ function TokenMsg({e}:{e:any}) {
             //minWidth:'60%',
             minWidth:'30%',
             width:e.is_outgoing=== true ? 'fit-content':'85%',
+            maxWidth: '100%',
             //border:'0.1rem solid tomato',
             display:'flex',
             backgroundColor:'white',
-            margin:'2rem 2rem',
-            padding:e.is_outgoing=== true ? 0 :'2rem 1rem',
+            margin:'var(--spacing-lg) var(--spacing-lg)',
+            padding:e.is_outgoing=== true ? 0 :'var(--spacing-lg) var(--spacing-sm)',
             borderRadius:'2rem'
             //border:'0.1rem solid red'
             }}>
-        <div style={{width:'100%',height:'fit-content',flex:e.is_outgoing?1: 0.8,margin:'1rem 0'}}>
-            <h5 style={{
+        <div style={{width:'100%',height:'fit-content',flex:e.is_outgoing?1: 0.8,margin:'var(--spacing-sm) 0'}}>
+            {/* <h5 style={{
                 fontFamily: '"DM Sans", sans-serif',
                 //fontWeight:700,
                 padding:'1rem 2rem',
@@ -81,20 +82,22 @@ function TokenMsg({e}:{e:any}) {
                 }}>
                 {e.similarity_query}    
                 
-            </h5>
+            </h5> */}
             <p style={{
                 fontSize:'1.6rem',
-                padding:'1rem 2rem',
+                padding:'var(--spacing-sm) var(--spacing-lg)',
                 fontFamily: '"DM Sans", sans-serif',
                 fontWeight:400,
                 color:'#343541',
                 lineHeight:'2.8rem'
                 }}>
-                    {Parser(e.content)}
+                    {e?.type === 'cues'
+                      ? Parser(e?.content ?? '')
+                      : Parser(e?.similarity_query ?? '')}
                 </p>
         </div>
 
-        {e.is_outgoing===false &&
+        {e?.is_outgoing===false &&
         <div style={{
             flex:0.2,
             //border:'0.1rem solid tomato',
@@ -112,21 +115,21 @@ function TokenMsg({e}:{e:any}) {
                 
                     <>
                     { feedback===true ? 
-                        <img src={LikeFilled} style={{fontSize:'1rem',cursor:'pointer'}} />
+                        <img src={LikeFilled} style={{width:'var(--icon-size-sm)',height:'var(--icon-size-sm)',cursor:'pointer'}} aria-label="Like" />
                         :
-                        <img src={Like} style={{fontSize:'1rem',cursor:'pointer'}}  onClick={()=>{setFeedback(true);handleFeedback(e,passFeedbackUrl)}}/>
+                        <img src={Like} style={{width:'var(--icon-size-sm)',height:'var(--icon-size-sm)',cursor:'pointer'}}  onClick={()=>{setFeedback(true);handleFeedback(e,passFeedbackUrl)}} aria-label="Like"/>
                         }
                         {
                         feedback===false ?
-                        <img src={DislikeFiLLed} style={{fontSize:'1rem',cursor:'pointer'}} />
+                        <img src={DislikeFiLLed} style={{width:'var(--icon-size-sm)',height:'var(--icon-size-sm)',cursor:'pointer'}} aria-label="Dislike" />
                         :
-                        <img src={Dislike} style={{fontSize:'1rem',cursor:'pointer'}} onClick={()=>{setFeedback(false);handleFeedback(e,failFeedbackUrl)}}/>
+                        <img src={Dislike} style={{width:'var(--icon-size-sm)',height:'var(--icon-size-sm)',cursor:'pointer'}} onClick={()=>{setFeedback(false);handleFeedback(e,failFeedbackUrl)}} aria-label="Dislike"/>
                         }
                         {
                         togglePinBtn===false ?
-                        <img src={Pin} style={{fontSize:'1rem',cursor:'pointer'}}  onClick={()=>setTogglePinBtn(p=>!p)}/>
+                        <img src={Pin} style={{width:'var(--icon-size-sm)',height:'var(--icon-size-sm)',cursor:'pointer'}}  onClick={()=>setTogglePinBtn(p=>!p)} aria-label="Pin"/>
                         :
-                        <img src={PinFilled} style={{fontSize:'1rem',cursor:'pointer'}} onClick={()=>setTogglePinBtn(p=>!p)}/>
+                        <img src={PinFilled} style={{width:'var(--icon-size-sm)',height:'var(--icon-size-sm)',cursor:'pointer'}} onClick={()=>setTogglePinBtn(p=>!p)} aria-label="Pin"/>
                         }
                     </>
 
@@ -145,7 +148,7 @@ function TokenMsg({e}:{e:any}) {
                     fontFamily: '"Inter", sans-serif',
                     fontWeight:400,
                     color:'#343541'
-                    }}>{e.msg_receiving_timestamp}</p>
+                    }}>{e?.msg_receiving_timestamp}</p>
             </div>
         </div>
 }
