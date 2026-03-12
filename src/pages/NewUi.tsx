@@ -119,7 +119,11 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
   useEffect(() => {
     if (!isAtBottomRef.current) return
     const el = cuesContainerRef.current
-    if (el) el.scrollTop = el.scrollHeight - el.clientHeight
+    if (!el) return
+    requestAnimationFrame(() => {
+      const container = cuesContainerRef.current
+      if (container) container.scrollTop = container.scrollHeight - container.clientHeight
+    })
   }, [data])
 
    const [microPhonesHide,setMicroPhonesHide]=useState(false);
@@ -148,12 +152,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
     });
   }, [audioUrl]);
 
-  useEffect(()=>{
-    if (cuesContainerRef.current) {
-      //cuesContainerRef.current.scrollHeight
-      cuesContainerRef.current.scrollTop = 0;
-    }
-  },[data])
+  // Removed: was forcing scroll to top on every data change. Sticky scroll (below) handles scroll: to bottom only when user is at bottom.
 
   //console.log('i am transcriptuon',transcriptionState)
   // useEffect(()=>{
@@ -371,7 +370,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
         </div>
       </div>
       {/* <FileLoadChecker/> */}
-      {vadInstance !==null && !VAD2.loading ? (
+      {/* {vadInstance !==null && !VAD2.loading ? (
         <h3 style={{ color: "green",margin:'0.5rem 0',fontWeight:700,textTransform:'capitalize'}}>All files are loaded ✅</h3>
       ) : (
         <h3 style={{ color: "red",margin:'0.5rem 0',fontWeight:700,textTransform:'capitalize' }}>Loading files Wait...
@@ -380,7 +379,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
               style={{height:'4rem',width:'4rem'}}
             />
         </h3>
-      )}
+      )} */}
       <div style={{ position: 'relative', width: '100%' }}>
       <div
 

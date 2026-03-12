@@ -59,9 +59,9 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     //let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
     
     //let socketUrl = 'https://recruito.vitti.insure/'
-    //let socketUrl = 'wss://recruito.vitti.insure/register_client'
+    let socketUrl = 'wss://recruito.vitti.insure/register_client'
 
-    let socketUrl = 'wss://2bac-2406-b400-b1-c846-9c02-ed8e-e94f-e1bf.ngrok-free.app/register_client'
+    //let socketUrl = 'wss://2bac-2406-b400-b1-c846-9c02-ed8e-e94f-e1bf.ngrok-free.app/register_client'
     
     // Convert to wss if needed, assuming the server supports wss on the same domain
     // const wsUrl = socketUrl.replace('https', 'wss'); 
@@ -536,7 +536,9 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
        wsClient.on('message',(result)=>{
           console.log("message from server",result);
           receiveData(result)
-       }) 
+       })
+       wsClient.on('cues', receiveData)
+       wsClient.on('cues-update', receiveData)
        wsClient.on("connect",onConnect)
        wsClient.on("disconnect",onDisconnect)
        wsClient.on('transcribe_audio_res',receiveData)
@@ -545,6 +547,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
            wsClient.off("connect",onConnect)
            wsClient.off('disconnect',onDisconnect)
            wsClient.off('transcribe_audio_res',receiveData)
+           wsClient.off('cues', receiveData)
+           wsClient.off('cues-update', receiveData)
        }
     },[msgId]) // Dependency msgId was in original code, keeping it or should check if needed. 
     // Actually [SESSION_ID, socket, msgId] was the original dep array. 
