@@ -33,7 +33,15 @@ export class WsClient {
     }
 
     console.log(`Connecting to ${this.url}...`);
-    this.ws = new WebSocket(this.url);
+    try {
+      this.ws = new WebSocket(this.url);
+    } catch (err) {
+      console.error('WebSocket connection failed (invalid URL?):', err);
+      this.emit('disconnect', null);
+      // Schedule reconnect with backoff (if configured)
+      this.scheduleReconnect();
+      return;
+    }
 
     this.ws.onopen = () => {
       console.log('WebSocket connected');

@@ -77,14 +77,16 @@ export function VadWrapper({children}){
       let base64data = await generateBase64(mp3Blob)
 
 
+      const base64Payload = base64data.split(',')[1];
       data = {...data,
-        audiomessage:base64data.split(',')[1],
+        audiomessage: base64Payload,
+        audiobase64: base64Payload,
         timeStamp:getTimeStamp()
       }
 
 
       // socket.emit('transcribe_audio_req',data) // Replaced
-      //send('transcribe_audio_req', data);
+      send('transcribe_audio_req', data);
 
       //let resp = await PostReq(url,data)
       //console.log('resp',resp)
@@ -132,8 +134,9 @@ export function VadWrapper({children}){
                 userid:currentUser?.userid,
                 req_timestamp:getTimeStamp()
             }
-            //processAudioToBase64(audio,`${ngrokServerUrl}/vad_stream`,data)
-            //setMsgLoading(true)
+            // send audio to backend via websocket
+            setMsgLoading(true)
+            processAudioToBase64(audio, oneWayUrl, data)
         }
       })
 

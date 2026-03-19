@@ -59,15 +59,28 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     //let socketUrl = 'https://vitt-ai-request-broadcaster-production.up.railway.app'
     
     //let socketUrl = 'https://recruito.vitti.insure/'
-    let socketUrl = 'wss://recruito.vitti.insure/register_client'
+    const [socketUrl, setSocketUrl] = useState('ws://localhost:5000/register_client');
 
     //let socketUrl = 'wss://2bac-2406-b400-b1-c846-9c02-ed8e-e94f-e1bf.ngrok-free.app/register_client'
     
     // Convert to wss if needed, assuming the server supports wss on the same domain
     // const wsUrl = socketUrl.replace('https', 'wss'); 
-    // Using the original url for now, WsClient can handle it if we pass the right protocol
-    // But standard WebSocket needs ws:// or wss://
-    const wsUrl = socketUrl.startsWith('http') ? socketUrl.replace(/^http/, 'ws') : socketUrl;
+    // Normalize user input into a valid WebSocket URL (ws:// or wss://)
+    // This prevents crashes if user pastes something like "localhost:5000" or "http://...".
+    const normalizeWsUrl = (input: string) => {
+      if (!input) return 'ws://localhost:5000/register_client';
+      let u = input.trim();
+      if (u.startsWith('http://')) u = 'ws://' + u.slice('http://'.length);
+      if (u.startsWith('https://')) u = 'wss://' + u.slice('https://'.length);
+      if (!u.startsWith('ws://') && !u.startsWith('wss://')) {
+        u = 'ws://' + u;
+      }
+      return u;
+    };
+
+    const [pendingSocketUrl, setPendingSocketUrl] = useState(socketUrl);
+
+    const wsUrl = normalizeWsUrl(socketUrl);
 
     const globalStreamRef = useRef<any>(null)
     const [recordingActive,setRecordingActive] = useState(false)
@@ -87,6 +100,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     let audioUrlRef = useRef(null)
     const [audioUrlFlag,setAudioUrlFlag] = useState<boolean>(false)
     const [audioUrl,setAudioUrl] = useState('')
+    const audioUnlockedRef = useRef(false)
+    const pendingAutoplayRef = useRef(false)
 
     //  this state is used for stt record (media recorder start & stop several times)
     const [toggleChunking,setToggleChunking] = useState(false)
@@ -318,12 +333,13 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
       //console.log(`%c audio ended ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
       //chk if audioArr has more than one element
       
-      if(audioQueueRef.current.length>0){
-        setAudioUrl(audioQueueRef.current.shift())
-       // setAudioQueue(audioQueueRef.current)
+      const nextAudio = audioQueueRef.current.shift();
+      if(nextAudio){
+        setAudioUrl(nextAudio)
         setResetAudioPlayerState(uuidv4())
-      }else {
+      } else {
         isAudioStillPlaying.current = false
+        setAudioUrl('')
       }
       
     
@@ -369,20 +385,67 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     
     function handleCanPlayThough(){
       console.log(`%c audio started ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
-      audioElem.play();
+      const playPromise = audioElem.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch((err: any) => {
+          console.warn('Auto-play failed:', err);
+          pendingAutoplayRef.current = true;
+        });
+      }
     }
 
     
     audioElem.addEventListener("canplaythrough",handleCanPlayThough);
 
     console.log('just before changing audio url')
+    audioElem.autoplay = true;
+    audioElem.preload = 'auto';
     audioElem.src = audioUrl;
+    const playPromise = audioElem.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch((err: any) => {
+        console.warn('Auto-play failed:', err);
+        pendingAutoplayRef.current = true;
+      });
+    }
 
     return ()=>{
       audioElem.removeEventListener("canplaythrough",handleCanPlayThough);
     }
 
   },[audioUrl,resetAudioPlayerState])
+
+  useEffect(() => {
+    function unlockAudio() {
+      if (audioUnlockedRef.current) return;
+      audioUnlockedRef.current = true;
+      const audioElem = audioRef.current;
+      if (!audioElem) return;
+      audioElem.muted = false;
+      if (pendingAutoplayRef.current || audioUrl) {
+        const playPromise = audioElem.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch((err: any) => {
+            console.warn('Auto-play retry failed:', err);
+          });
+        }
+        pendingAutoplayRef.current = false;
+      }
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+    }
+
+    document.addEventListener('click', unlockAudio, { once: true });
+    document.addEventListener('touchstart', unlockAudio, { once: true });
+    document.addEventListener('keydown', unlockAudio, { once: true });
+
+    return () => {
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+    };
+  }, [audioUrl])
 
     function playAudio(audiourl){
       //console.log('audiourl',audiourl)
@@ -463,12 +526,22 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
       sessionIdRef.current = SESSION_ID;
     }, [SESSION_ID]);
 
+    const greetingSentRef = useRef(false);
+
     useEffect(()=>{
        const wsClient = wsClientRef.current;
        if(!wsClient) return;
 
         function onConnect(){
                 console.log("connection established");
+                if (!greetingSentRef.current) {
+                  greetingSentRef.current = true;
+                  wsClient.send('greeting', {
+                    sessionid: currentUserRef.current?.sessionuid,
+                    userid: currentUserRef.current?.userid,
+                    message: 'hello',
+                  });
+                }
              //socket.emit('join-room',SESSION_ID,socket.id)
         }
 
@@ -526,10 +599,14 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
               
               setData(prev=>[...arr,...prev])
               
-              if(isAudioStillPlaying.current===false){
-                setAudioUrl(audiourl)
-              }else {
-               audioQueueRef.current = [...audioQueueRef.current,audiourl]
+              if (audiourl) {
+                if (isAudioStillPlaying.current) {
+                  audioQueueRef.current = [...audioQueueRef.current, audiourl]
+                } else {
+                  isAudioStillPlaying.current = true
+                  setAudioUrl(audiourl)
+                  setResetAudioPlayerState(uuidv4())
+                }
               }
             //}
         }
@@ -537,6 +614,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
           console.log("message from server",result);
           receiveData(result)
        })
+       wsClient.on('greeting_audio', receiveData)
        wsClient.on('cues', receiveData)
        wsClient.on('cues-update', receiveData)
        wsClient.on("connect",onConnect)
@@ -546,6 +624,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
        return ()=>{
            wsClient.off("connect",onConnect)
            wsClient.off('disconnect',onDisconnect)
+           wsClient.off('greeting_audio', receiveData)
            wsClient.off('transcribe_audio_res',receiveData)
            wsClient.off('cues', receiveData)
            wsClient.off('cues-update', receiveData)
@@ -644,11 +723,17 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         wsClientRef.current?.send(type, data);
     }
 
+    const handleSaveSocketUrl = () => {
+      setSocketUrl(pendingSocketUrl);
+    }
+
     let values = useMemo(() => ({
         data,
         setData,
         // socket,setSocket, // Removed
         send, // Added
+        socketUrl,
+        setSocketUrl,
         SESSION_ID,setSessionId,
         msgLoading,
         setMsgLoading,
@@ -663,12 +748,42 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         recordingActive,setRecordingActive,tabs,activeTab,setActiveTab,
         ngrokServerUrl,setNgrokServerUrl,oneWayUrl,isFilesLoaded,recordingServerUrl,setRecordingServerUrl,
         toggleChunking,setToggleChunking,toggleContinuousChunking,setToggleContinuousChunking,audioQueueRef,isAudioStillPlaying
-    }), [data, SESSION_ID, msgLoading, audioArr, audioUrlFlag, audioUrl, recordingActive, activeTab, ngrokServerUrl, oneWayUrl, recordingServerUrl, toggleChunking, toggleContinuousChunking, manualVadRecordingOn]) // Added dependencies for useMemo
+    }), [data, SESSION_ID, msgLoading, audioArr, audioUrlFlag, audioUrl, recordingActive, activeTab, ngrokServerUrl, oneWayUrl, recordingServerUrl, toggleChunking, toggleContinuousChunking, manualVadRecordingOn, socketUrl]) // Added dependencies for useMemo
     
   return (
-      //@ts-ignore
+    //@ts-ignore
     <Context.Provider value={values}>
-        {children}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          padding: '0.75rem 1rem',
+          background: 'rgba(255,255,255,0.85)',
+          borderBottom: '1px solid rgba(0,0,0,0.12)',
+        }}
+      >
+        <span style={{ fontWeight: 600, fontSize: '1rem' }}>WS URL:</span>
+        <input
+          value={pendingSocketUrl}
+          onChange={(e) => setPendingSocketUrl(e.target.value)}
+          placeholder="ws://localhost:5000/register_client"
+          style={{ flex: 1, padding: '0.45rem 0.75rem', fontSize: '0.95rem' }}
+        />
+        <button
+          onClick={handleSaveSocketUrl}
+          style={{
+            cursor: 'pointer',
+            padding: '0.45rem 0.75rem',
+            borderRadius: '0.45rem',
+            border: '1px solid rgba(0,0,0,0.2)',
+            background: '#fff',
+          }}
+        >
+          Save
+        </button>
+      </div>
+      {children}
     </Context.Provider>
   )
 }

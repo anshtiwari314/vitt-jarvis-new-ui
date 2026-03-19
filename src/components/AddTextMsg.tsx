@@ -29,6 +29,18 @@ export default function AddTextMsg({e}:{e:any}) {
         <a onClick={()=>setToggle(p=>!p)} style={{display:e.content.split(" ").length < 100 ? "none":""}}>
           {toggle===false  ? "Read more" : "Read less"}
         </a>
+        {e.audio_url ? (
+          <audio
+            controls
+            src={e.audio_url}
+            style={{
+              width: "100%",
+              marginTop: "0.75rem",
+              borderRadius: "0.6rem",
+              background: "rgba(255,255,255,0.05)",
+            }}
+          />
+        ) : null}
     </div>
   )
 }

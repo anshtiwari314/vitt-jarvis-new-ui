@@ -85,6 +85,31 @@ export function handleData(data:any){
         //@ts-ignore
         obj={}
     }
+    if(data?.text){
+        //@ts-ignore
+        obj["id"] = uuidv4()
+        obj["type"] = "TextMsg"
+        obj["content"] = data.text
+        obj["is_outgoing"] = false
+        obj["iconName"] = 'fa-solid fa-circle-question'
+        obj["color"] = data?.color ?? '#7D11E9'
+        obj["iconColor"] = data?.iconColor ?? 'blue'
+        obj["similarity_query"] = data?.similarity_query ?? ''
+        obj["sessionid"] = data.sessionid
+        obj["audiofiletimestamp"] = data?.audiofiletimestamp
+        obj["istranscription"] = data?.istranscription
+        obj["msg_receiving_timestamp"] = data?.msg_receiving_timestamp
+        if (data?.audio_url) {
+            obj["audio_url"] = data.audio_url
+        }
+        if (data?.audiobase64) {
+            obj["audio_url"] = `data:audio/wav;base64,${data.audiobase64}`
+        }
+        arr = [...arr, obj]
+        //@ts-ignore
+        obj = {}
+    }
+
     if(data?.content){
         data.content.map((e:any,i:number)=>{
             //@ts-ignore

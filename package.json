@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
-    "build": "sh ./build.sh",
-    "oldbuild": "tsc && vite build && cp ./lame.min.js ./dist",
+    "build": "node ./scripts/build.js",
+    "oldbuild": "tsc && vite build && node -e \"require('fs').copyFileSync('lame.min.js','dist/lame.min.js')\"",
     "preview": "vite preview",
     "sass": "sass --watch ./src/css/roshanFile.scss ./src/css/roshanFile.css"
   },

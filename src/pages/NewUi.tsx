@@ -55,8 +55,6 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
     msgLoading,
     handleQuery,
     
-    manualVadRecordingOn,
-    setManualVadRecordingOn,
     audioUrl,
     setAudioUrl,
     recordingActive,
@@ -144,12 +142,20 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
     audioElem.src = audioUrl;
 
     //@ts-ignore
-    audioElem.addEventListener("canplaythrough", (event) => {
+    const handleCanPlayThrough = () => {
       /* the audio is now playable; play it if permissions allow */
-
       //@ts-ignore
-      audioElem.play();
-    });
+      const playPromise = audioElem.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch((err: any) => {
+          console.warn('Auto-play failed:', err);
+        });
+      }
+    };
+    audioElem.addEventListener("canplaythrough", handleCanPlayThrough);
+    return () => {
+      audioElem.removeEventListener("canplaythrough", handleCanPlayThrough);
+    };
   }, [audioUrl]);
 
   // Removed: was forcing scroll to top on every data change. Sticky scroll (below) handles scroll: to bottom only when user is at bottom.
@@ -243,7 +249,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
       }}
     >
       {/* <LoadingIconsComp/> */}
-      <audio style={{ display: "none" }} ref={audioRef}></audio>
+      <audio style={{ display: "none" }} ref={audioRef} autoPlay preload="auto" playsInline></audio>
 
       {/* <div>
         <input
@@ -381,83 +387,44 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
         </h3>
       )} */}
       <div style={{ position: 'relative', width: '100%' }}>
-      <div
-
-        className="cues-container"
-        style={{
-          width: "100%",
-          height:'80vh',
-          backgroundColor: "#F7F7FB",
-          overflowY: "scroll",
-          //border:'0.1rem solid blue'
-
-        }}
-        ref={cuesContainerRef}
-        onScroll={handleCuesScroll}
-      >
-       
-        {/* {data && data.map((e:any,i:number)=>{
-                    return <Msg e={e} key={e.id}/>
-                })} */}
-        {data &&
-          data.map((e: any, i: number) => {
-            if (e.is_outgoing===true) {
-              return (
-                <div style={{width:'100%',display:'flex',justifyContent:'flex-end'}}>
-                  <TokenMsg e={e} key={e.id} />
-                  {/*<button className="btn btn-primary" style={{
-                    
-                    // backgroundColor:'#adacac',
-                    // color:'white',
-                    width:'20rem',
-                    margin:'0.5rem 2rem',
-                    padding:'1rem 1rem',
-                    textAlign:'center',
-                    fontSize:'1.5rem',
-                    // display:'flex',
-                    // justifyContent:'center',
-                    outline:'none',border:'none',borderRadius:'1rem'
-                }} onClick={handleCopyToClipboard}>Copy</button>*/}
-                </div>
-              );
-            } else {
-              return <TokenMsg e={e} key={e.id} />;
-            }
-          })}
-           {msgLoading == true ? (
-          <div className="msg-loader-wrapper">
-            <img
-              src="https://media.tenor.com/On7kvXhzml4AAAAj/loading-gif.gif"
-              className="msg-loader"
-            />
-          </div>
-        ) : null}
-      </div>
-      {showScrollToBottom && (
-        <button
-          type="button"
-          onClick={scrollToBottom}
-          aria-label="Scroll to bottom"
+        <div
+          className="cues-container"
           style={{
-            position: 'absolute',
-            bottom: '1rem',
-            right: '1rem',
-            width: '2.5rem',
-            height: '2.5rem',
-            borderRadius: '50%',
-            border: 'none',
-            backgroundColor: '#7D11E9',
-            color: 'white',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            width: "100%",
+            height:'80vh',
+            backgroundColor: "#F7F7FB",
+            overflowY: "scroll",
           }}
+          ref={cuesContainerRef}
+          onScroll={handleCuesScroll}
         >
-          <FontAwesomeIcon icon={faChevronDown} style={{ fontSize: '1.2rem' }} />
-        </button>
-      )}
+          <MsgWrapper />
+        </div>
+        {showScrollToBottom && (
+          <button
+            type="button"
+            onClick={scrollToBottom}
+            aria-label="Scroll to bottom"
+            style={{
+              position: 'absolute',
+              bottom: '1rem',
+              right: '1rem',
+              width: '2.5rem',
+              height: '2.5rem',
+              borderRadius: '50%',
+              border: 'none',
+              backgroundColor: '#7D11E9',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            }}
+          >
+            <FontAwesomeIcon icon={faChevronDown} style={{ fontSize: '1.2rem' }} />
+          </button>
+        )}
       </div>
       <div
         style={{
@@ -488,6 +455,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
 
       
       
+
       <div
         style={{
           width: "100%",
@@ -538,6 +506,11 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
           //className="inputContainer"
           //style={{border:'0.1rem solid red'}}
           >
+            <FontAwesomeIcon
+              icon={manualVadStatus ? faMicrophone : faMicrophoneAltSlash}
+              style={{fontSize:'2rem',cursor:'pointer', marginRight:'0.5rem', color: manualVadStatus ? 'gray' : 'red'}}
+              onClick={() => setManualVadStatus((p) => !p)}
+            />
             <img
               src={Send}
               //className="sendIcon"
