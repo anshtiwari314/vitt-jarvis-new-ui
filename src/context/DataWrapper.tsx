@@ -504,7 +504,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
 
     // Initialize WsClient
     useEffect(()=>{
-        const client = new WsClient({ url: wsUrl });
+        const client = new WsClient({ url: pendingSocketUrl });
         wsClientRef.current = client;
         client.connect();
 
@@ -512,7 +512,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
           client.disconnect();
           wsClientRef.current = null;
         }
-    },[wsUrl])
+    },[pendingSocketUrl])
 
     // State refs for event listener
     const currentUserRef = useRef(currentUser);
@@ -591,10 +591,13 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
                 })
                 return
               }
-
+              
               setMsgLoading(false)
               const {arr,audiourl}=handleData(result)
-              
+              console.log('***********')
+              console.log(result);
+              console.log(arr,' ',audiourl)
+              console.log('***********')
               console.log(`%c audioRef paused ${audioRef.current.paused} ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
               
               setData(prev=>[...arr,...prev])
@@ -629,7 +632,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
            wsClient.off('cues', receiveData)
            wsClient.off('cues-update', receiveData)
        }
-    },[msgId]) // Dependency msgId was in original code, keeping it or should check if needed. 
+    },[msgId,pendingSocketUrl]) // Dependency msgId was in original code, keeping it or should check if needed. 
     // Actually [SESSION_ID, socket, msgId] was the original dep array. 
     // socket is now wsClientRef (stable-ish, but effect runs on mount).
     // SESSION_ID is handled via ref. msgId is state. 
@@ -770,7 +773,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
           placeholder="ws://localhost:5000/register_client"
           style={{ flex: 1, padding: '0.45rem 0.75rem', fontSize: '0.95rem' }}
         />
-        <button
+        {/*<button
           onClick={handleSaveSocketUrl}
           style={{
             cursor: 'pointer',
@@ -781,7 +784,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
           }}
         >
           Save
-        </button>
+        </button>*/}
       </div>
       {children}
     </Context.Provider>
