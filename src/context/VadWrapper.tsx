@@ -272,10 +272,14 @@ export function VadWrapper({children}){
 
     /** manual vad logic  begins here ( offline logic)*/
 
-    // useEffect(()=>{
-    //   console.log('useEffect manual vad paused runs',VAD2)
-    //   VAD2?.pause()
-    // },[])
+    useEffect(()=>{
+      if(!VAD2.loading){
+      console.log('useEffect manual vad paused runs',VAD2)
+      setManualVadStatus(false)
+      VAD2?.pause()
+      }
+
+    },[VAD2?.loading])
 
       useEffect(()=>{
 

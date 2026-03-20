@@ -21,7 +21,7 @@ function IconColor(identiyingColor:string){
     return '#D60067'
 }
 function IconName(identiyingColor:string){
-    console.log(identiyingColor)
+    //console.log(identiyingColor)
     if(identiyingColor==='red')
         return 'fa-solid fa-clipboard-question'
     else if(identiyingColor === 'green')
@@ -88,7 +88,7 @@ function enumIcons(color:string){
 
 export default function Msg({e}:{e:any}) {
     //console.log(e)
-    console.log(IconName(e.iconColor))
+    //console.log(IconName(e.iconColor))
     const [checked,setChecked] = useState<boolean>(false)
     let radioRef = useRef(false)
 
