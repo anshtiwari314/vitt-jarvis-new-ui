@@ -32,6 +32,7 @@ export function VadWrapper({children}){
     const [vadStatus,setVadStatus] = useState(false)
     const vadRef = useRef({ oldVadrecordingStatus:false,myVad:null })
     const [manualVadStatus,setManualVadStatus] = useState(true)
+    const vadMicStreamRef = useRef<MediaStream | null>(null)
 
     const initReqStatusRef = useRef(false)
     //const {PostReq } = useRequest()
@@ -111,6 +112,46 @@ export function VadWrapper({children}){
         //modelURL: "http://localhost:8080/silero_vad.onnx",
         //@ts-ignore
         modelURL:`./silero_vad.onnx`,
+        positiveSpeechThreshold: 0.7,
+        submitUserSpeechOnPause:true,
+        model:"v5",
+        getStream: async () => {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              channelCount: 2,
+              echoCancellation: true,
+              autoGainControl: false,
+              noiseSuppression: true,
+            },
+          })
+          vadMicStreamRef.current = stream
+          return stream
+        },
+        pauseStream: async (stream: MediaStream) => {
+          stream.getTracks().forEach((track) => {
+            track.enabled = false
+            track.stop()
+          })
+          vadMicStreamRef.current?.getTracks().forEach((track) => {
+            track.enabled = false
+            track.stop()
+          })
+          if (vadMicStreamRef.current === stream) {
+            vadMicStreamRef.current = null
+          }
+        },
+        resumeStream: async () => {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              channelCount: 2,
+              echoCancellation: true,
+              autoGainControl: false,
+              noiseSuppression: true,
+            },
+          })
+          vadMicStreamRef.current = stream
+          return stream
+        },
         // Default legacy minSpeechFrames is 3 (~288ms+ of speech-positive frames); short clips (e.g. ~0.2s) become onVADMisfire. Lower to capture brief utterances (try 1 if you need the absolute minimum and accept more false positives).
         //minSpeechFrames: 2,
         //minSpeechMs:20,
@@ -151,6 +192,16 @@ export function VadWrapper({children}){
             processAudioToBase64(audio, oneWayUrl, data)
         }
       })
+
+      useEffect(() => {
+        return () => {
+          vadMicStreamRef.current?.getTracks().forEach((track) => {
+            track.enabled = false
+            track.stop()
+          })
+          vadMicStreamRef.current = null
+        }
+      }, [])
 
       
       useEffect(()=>{

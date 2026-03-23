@@ -87,6 +87,12 @@ function isSemanticFillerText(text: string) {
   // Hard guard requested: if transcript contains cough/throat, filter out.
   if (raw.includes('cough') || raw.includes('throat')) return true
 
+  // Filter out cheering/crowd cheering style non-speech annotations.
+  if (raw.includes('cheer') || raw.includes('cheering')) return true
+  if (raw.includes('scream') || raw.includes('screaming')) return true
+  if (raw.includes('buzz') || raw.includes('buzzing')) return true
+  // Block common non-speech annotations that Whisper often emits.
+
   // Block non-speech music annotations like "(dramatic music)" or "[music]".
   if (
     raw.includes('[music]') ||
@@ -94,6 +100,20 @@ function isSemanticFillerText(text: string) {
     raw.includes('dramatic music') ||
     /\(([^)]*music[^)]*)\)/.test(raw) ||
     /\[([^\]]*music[^\]]*)\]/.test(raw)
+  ) {
+    return true
+  }
+
+  // Block common non-speech ASR annotations.
+  if (
+    raw.includes('grunt') ||
+    raw.includes('(grunts)') ||
+    raw.includes('[inaudible]') ||
+    raw.includes('inaudible') ||
+    raw.includes('(laughing)') ||
+    raw.includes('[laughing]') ||
+    raw.includes('laughing') ||
+    raw.includes('grunts')
   ) {
     return true
   }
@@ -162,6 +182,9 @@ async function detectAcousticNoiseWithYamnet(audio: Float32Array) {
   }
 
   const blockedClasses = new Set([
+    13, // Laughter
+    11, // Screaming
+    125, // Buzzing / Buzz
     21, 56, 57, 58, 59, 61, 64, 65, 66, 68, 69, 71, 73
   ])
   return { isAcousticNoise: blockedClasses.has(topClassIdx), topClassIdx, topScore }
