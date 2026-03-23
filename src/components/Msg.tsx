@@ -29,6 +29,7 @@ function IconName(identiyingColor:string){
     else if(identiyingColor === 'yellow')
         return 'fa-solid fa-forward-fast';
     else if(identiyingColor === 'blue')
+
         return 'fa-solid fa-circle-question';
     else if(identiyingColor==='pink' )
         return 'fa-regular fa-pen-to-square';
@@ -111,7 +112,7 @@ export default function Msg({e}:{e:any}) {
   return (
       // https://media.tenor.com/On7kvXhzml4AAAAj/loading-gif.gif
      
-    <div className='msg' >
+    <div className='msg' style={{border:'0.1rem solid red'}}>
             {/* <h5>{e.similarity_query}</h5> */}
             <div className='wrapper' style={{marginBottom:"0.5rem"}}>
                 <div className='first v-center h-center' style={{opacity:0}}>   

@@ -60,9 +60,10 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
     recordingActive,
     setRecordingActive,
     sessionUid ,ngrokServerUrl,setNgrokServerUrl,audioRef,isFilesLoaded,
-    recordingServerUrl,setRecordingServerUrl,toggleChunking,setToggleChunking,
+    pendingSocketUrl,setPendingSocketUrl,toggleChunking,setToggleChunking,
     toggleContinuousChunking,setToggleContinuousChunking,
-    yamnetModelDownloading
+    yamnetModelDownloading,
+    whisperModelDownloading
   }:void = useData();
   
   const {manualVadStatus,setManualVadStatus,vadRecordingOn,
@@ -71,9 +72,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
   const [query, setQuery] = useState<string>("");
   const [state, setState] = useState({ date: "", time: "" });
   const cuesContainerRef = useRef<HTMLDivElement | null>(null)
-  const isAtBottomRef = useRef(true)
-  const [showScrollToBottom, setShowScrollToBottom] = useState(false)
-  const scrollThreshold = 80 
+  
 
   //const transcriptionState = useAppSelector(state => state.trcpReducer);
     const transcriptionState = []
@@ -98,32 +97,14 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
     window.alert("Content copied");
   }
 
-  function scrollToBottom() {
-    const el = cuesContainerRef.current
-    if (el) {
-      el.scrollTop = el.scrollHeight - el.clientHeight
-      isAtBottomRef.current = true
-      setShowScrollToBottom(false)
-    }
-  }
-
-  function handleCuesScroll() {
-    const el = cuesContainerRef.current
-    if (!el) return
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= scrollThreshold
-    isAtBottomRef.current = atBottom
-    setShowScrollToBottom(!atBottom)
-  }
-
+  // Always keep the newest messages at the top of the scroll container.
   useEffect(() => {
-    if (!isAtBottomRef.current) return
     const el = cuesContainerRef.current
     if (!el) return
     requestAnimationFrame(() => {
-      const container = cuesContainerRef.current
-      if (container) container.scrollTop = container.scrollHeight - container.clientHeight
+      el.scrollTop = 0
     })
-  }, [data])
+  }, [data, msgLoading])
 
    const [microPhonesHide,setMicroPhonesHide]=useState(false);
     const onClickOfHamburger=()=>{
@@ -275,10 +256,10 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
         </div> */}
         
       <div>
-      {/* <input
+      <input
           type="text"
-          value={recordingServerUrl}
-         onChange={(e) => setRecordingServerUrl(e.target.value)}
+          value={pendingSocketUrl}
+         onChange={(e) => setPendingSocketUrl(e.target.value)}
           placeholder="Enter Server Link ..."
           style={{
             width: "100%",
@@ -293,7 +274,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
             //boxShadow: "0px 4px 12px rgba(37, 99, 235, 0.4)",
             //...(inputValue && inputFocusStyle),
           }}
-        /> */}
+        />
 
       </div>
       <div 
@@ -305,84 +286,104 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
         
         {/* <h2 style={{fontSize:'2.5rem',fontFamily: '"DM Sans", sans-serif',fontWeight:700}}>Meeting title</h2> */}
         <div 
-            className="hamburger-container"
+            className=""
         style={{
             //border:'0.1rem solid red' ,
-            marginLeft:'1rem',marginRight:'2rem'}}>
-            <FontAwesomeIcon 
+            //marginRight:'2rem'
+            }}>
+            {/* <FontAwesomeIcon 
             icon={faBars}  
             style={{fontSize:'3rem'}}
             ref={btnRef}
             onClick={onClickOfHamburger}
-            />
+            /> */}
         </div>
         
-        <div className="on-going">
+        <div className="" style={{width:'100%',border:'none'}}>
             <h3
             style={{
                 fontSize: "2rem",
                 fontFamily: '"DM Sans", sans-serif',
                 fontWeight: 700,
                 margin: "0.5rem 0",
+              
                 color: "#1B1B1B",
-                
+                //border:'0.1rem solid red'
             }}
-            className="ongoing-call-text"
+            //className="ongoing-call-text"
             >
             Ongoing call
             </h3>
+            
+            <div style={{ display: "flex", margin: "0.5rem 0", padding: 0, color: "#95969B" }}>
+              {
+              state.date && state.time &&
+              <div style={{ display: "flex", alignItems: "center" ,marginLeft:0}}>
+                  <img
+                  src={Time}
+                  style={{
+                      width: "1.3rem",
+                      height: "1.5rem",
+                      objectFit: "contain",
+                  }}
+                  />
+                  <pre
+                  style={{
+                      marginRight: "0.3rem",
+                      marginBottom: "0",
+                      fontSize: "1.2rem",
+                      fontFamily: '"Inter", sans-serif',
+                      fontWeight: 400,
+                  }}
+                  >
+                  {state.date} |{" "}
+                  </pre>
+
+                  <img
+                  src={Calendar}
+                  style={{
+                      width: "1.1rem",
+                      height: "1.1rem",
+                      objectFit: "contain",
+                  }}
+                  />
+                  <pre
+                  style={{
+                      marginLeft: "0.3rem",
+                      marginBottom: "0",
+                      fontSize: "1.2rem",
+                      fontFamily: '"Inter", sans-serif',
+                      fontWeight: 400,
+                  }}
+                  >
+                  {state.time}
+                  </pre>
+              </div>
+              }
+            </div>
+            <div>
             {yamnetModelDownloading ? (
-              <p style={{ margin: '0.2rem 0 0.6rem 0', color: '#95969B', fontSize: '1.1rem', fontFamily: '"Inter", sans-serif' }}>
-                YAMNet model is downloading. Please wait…
+              <p style={{ margin: '0.2rem 0 0.2rem 0', color: '#95969B', fontSize: '1.1rem', fontFamily: '"Inter", sans-serif' }}>
+                <strong>YAMNet</strong>: downloading model. Please wait…
               </p>
             ) : null}
-            <div style={{ display: "flex", margin: "0.5rem 0", color: "#95969B" }}>
-            <div style={{ display: "flex", alignItems: "center" }}>
-                <img
-                src={Time}
-                style={{
-                    width: "1.3rem",
-                    height: "1.5rem",
-                    objectFit: "contain",
-                }}
-                />
-                <pre
-                style={{
-                    marginRight: "0.3rem",
-                    marginBottom: "0",
-                    fontSize: "1.2rem",
-                    fontFamily: '"Inter", sans-serif',
-                    fontWeight: 400,
-                }}
-                >
-                {state.date} |{" "}
-                </pre>
-
-                <img
-                src={Calendar}
-                style={{
-                    width: "1.1rem",
-                    height: "1.1rem",
-                    objectFit: "contain",
-                }}
-                />
-                <pre
-                style={{
-                    marginLeft: "0.3rem",
-                    marginBottom: "0",
-                    fontSize: "1.2rem",
-                    fontFamily: '"Inter", sans-serif',
-                    fontWeight: 400,
-                }}
-                >
-                {state.time}
-                </pre>
-            </div>
+            {whisperModelDownloading ? (
+              <p style={{ margin: '0.2rem 0 0.6rem 0', color: '#95969B', fontSize: '1.1rem', fontFamily: '"Inter", sans-serif' }}>
+                <strong>Whisper</strong>: downloading model. Please wait…
+              </p>
+            ) : null}
+            {
+              VAD2.loading ? (
+                <p style={{ margin: '0.2rem 0 0.6rem 0', color: '#95969B', fontSize: '1.1rem', fontFamily: '"Inter", sans-serif' }}>
+                <strong>Vad</strong>: downloading model. Please wait…
+              </p>
+              ):null
+            }
             </div>
         </div>
       </div>
       {/* <FileLoadChecker/> */}
-      {/* {vadInstance !==null && !VAD2.loading ? (
+       {/* { !VAD2.loading ? (
         <h3 style={{ color: "green",margin:'0.5rem 0',fontWeight:700,textTransform:'capitalize'}}>All files are loaded ✅</h3>
       ) : (
         <h3 style={{ color: "red",margin:'0.5rem 0',fontWeight:700,textTransform:'capitalize' }}>Loading files Wait...
@@ -391,7 +392,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
               style={{height:'4rem',width:'4rem'}}
             />
         </h3>
-      )} */}
+      )}  */}
       <div style={{ position: 'relative', width: '100%' }}>
         <div
           className="cues-container"
@@ -402,35 +403,9 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
             overflowY: "scroll",
           }}
           ref={cuesContainerRef}
-          onScroll={handleCuesScroll}
         >
           <MsgWrapper />
         </div>
-        {showScrollToBottom && (
-          <button
-            type="button"
-            onClick={scrollToBottom}
-            aria-label="Scroll to bottom"
-            style={{
-              position: 'absolute',
-              bottom: '1rem',
-              right: '1rem',
-              width: '2.5rem',
-              height: '2.5rem',
-              borderRadius: '50%',
-              border: 'none',
-              backgroundColor: '#7D11E9',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-            }}
-          >
-            <FontAwesomeIcon icon={faChevronDown} style={{ fontSize: '1.2rem' }} />
-          </button>
-        )}
       </div>
       <div
         style={{
@@ -511,12 +486,36 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
           <div 
           //className="inputContainer"
           //style={{border:'0.1rem solid red'}}
-          >
-            <FontAwesomeIcon
+          > 
+
+{/* {
+          !VAD2.loading ? 
+         <CustomFillButtonWithIcon 
+          color="#8236f5" 
+          text="" 
+          icon={faMicrophoneAlt}
+          style={{
+            backgroundColor: manualVadStatus ? 'red' : 'gray',
+            padding:"0.5rem 1rem",
+            margin:0,
+            marginRight:"1rem"
+          }}
+          className={wasClosedByUserRef.current?"":"hidden"}
+          iconComp={<FontAwesomeIcon icon={faMicrophoneAlt} style={{ fontSize: '2rem' }} />} 
+          onClick={() => setManualVadStatus((p) => !p)}
+        />
+        
+        : 
+        <div style={{}}>
+            <TailSpin stroke="red"  strokeOpacity={1} speed={.95} style={{margin:'2rem'}}/>
+        </div>
+} */}
+
+            {/* <FontAwesomeIcon
               icon={manualVadStatus ? faMicrophone : faMicrophoneAltSlash}
               style={{fontSize:'2rem',cursor:'pointer', marginRight:'0.5rem', color: manualVadStatus ? 'gray' : 'red'}}
               onClick={() => setManualVadStatus((p) => !p)}
-            />
+            /> */}
             <img
               src={Send}
               //className="sendIcon"
@@ -586,7 +585,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
         } */}
         
 
-        {/* {
+        {
           !VAD2.loading ? 
          <CustomFillButtonWithIcon 
           color="#8236f5" 
@@ -604,22 +603,24 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
         <div style={{}}>
             <TailSpin stroke="red"  strokeOpacity={1} speed={.95} style={{margin:'2rem'}}/>
         </div>
-        } */}
+        }
+        
+         
 
-        {/* <div style={{height:'4.5rem',width:'8rem',backgroundColor:'white',display:'flex',alignItems:'center',justifyContent:'center'}}>
-          {
+        <div style={{height:'4.5rem',width:'8rem',backgroundColor:'white',display:'flex',alignItems:'center',justifyContent:'center'}}>
+          {/* {
             userSpeaking ? 
             <img src={playSound} style={{width:'8rem',height:'4.5rem'}}/>:
             null
-          }
+          } */}
           {
             VAD2?.userSpeaking ?             
             <img src={playSound} style={{width:'8rem',height:'4.5rem'}}/>:
             null
           }
-            {/* <img src={playSound} style={{width:'8rem',height:'4.5rem'}}/> 
+            {/* <img src={playSound} style={{width:'8rem',height:'4.5rem'}}/>*/} 
 
-        </div> */}
+        </div>
           
         {/* <div>
           
@@ -684,7 +685,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
         */}
       
 
-        {/* <CustomFillButtonWithIcon 
+        <CustomFillButtonWithIcon 
         color="#8236f5"
         text=""
         icon={faTimes} 
@@ -693,7 +694,7 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
         iconStyle={{fontSize:'2rem'}}
         iconComp = {<FontAwesomeIcon icon={faTimes} style={{fontSize:'2rem'}}/>}
          onClick={()=>endCall()}
-        /> */}
+        />
 
       </div>
       <div style={{textAlign:'center'}}>

@@ -138,6 +138,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
 
     const[msgLoading,setMsgLoading]= useAutoResetState(false,10000)
     const [yamnetModelDownloading, setYamnetModelDownloading] = useState(false)
+    const [whisperModelDownloading, setWhisperModelDownloading] = useState(false)
 
     const wasmUrls = [
       'ort-wasm-simd-threaded.jsep.wasm',
@@ -738,11 +739,17 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         send, // Added
         socketUrl,
         setSocketUrl,
+        // Expose the live websocket URL used by WsClient.
+        // NewUi can update this instead of using the DataWrapper input.
+        pendingSocketUrl,
+        setPendingSocketUrl,
         SESSION_ID,setSessionId,
         msgLoading,
         setMsgLoading,
         yamnetModelDownloading,
         setYamnetModelDownloading,
+        whisperModelDownloading,
+        setWhisperModelDownloading,
         audioArr,
         audioUrlFlag,audioUrlRef,
         handleQuery,
@@ -754,41 +761,12 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         recordingActive,setRecordingActive,tabs,activeTab,setActiveTab,
         ngrokServerUrl,setNgrokServerUrl,oneWayUrl,isFilesLoaded,recordingServerUrl,setRecordingServerUrl,
         toggleChunking,setToggleChunking,toggleContinuousChunking,setToggleContinuousChunking,audioQueueRef,isAudioStillPlaying
-    }), [data, SESSION_ID, msgLoading, yamnetModelDownloading, audioArr, audioUrlFlag, audioUrl, recordingActive, activeTab, ngrokServerUrl, oneWayUrl, recordingServerUrl, toggleChunking, toggleContinuousChunking, manualVadRecordingOn, socketUrl]) // Added dependencies for useMemo
+    }), [data, SESSION_ID, msgLoading, yamnetModelDownloading, whisperModelDownloading, audioArr, audioUrlFlag, audioUrl, recordingActive, activeTab, ngrokServerUrl, oneWayUrl, recordingServerUrl, toggleChunking, toggleContinuousChunking, manualVadRecordingOn, socketUrl, pendingSocketUrl]) // Added dependencies for useMemo
     
   return (
     //@ts-ignore
     <Context.Provider value={values}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem',
-          padding: '0.75rem 1rem',
-          background: 'rgba(255,255,255,0.85)',
-          borderBottom: '1px solid rgba(0,0,0,0.12)',
-        }}
-      >
-        <span style={{ fontWeight: 600, fontSize: '1rem' }}>WS URL:</span>
-        <input
-          value={pendingSocketUrl}
-          onChange={(e) => setPendingSocketUrl(e.target.value)}
-          placeholder="ws://localhost:5000/register_client"
-          style={{ flex: 1, padding: '0.45rem 0.75rem', fontSize: '0.95rem' }}
-        />
-        {/*<button
-          onClick={handleSaveSocketUrl}
-          style={{
-            cursor: 'pointer',
-            padding: '0.45rem 0.75rem',
-            borderRadius: '0.45rem',
-            border: '1px solid rgba(0,0,0,0.2)',
-            background: '#fff',
-          }}
-        >
-          Save
-        </button>*/}
-      </div>
+      {/* WS URL input moved to `NewUi.tsx` */}
       {children}
     </Context.Provider>
   )

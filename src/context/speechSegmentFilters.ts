@@ -10,7 +10,7 @@ let tfPromise: Promise<any> | null = null
 let yamnetModelPromise: Promise<any> | null = null
 let remainingTimingLogs = 10
 export const ENABLE_YAMNET_FILTER = false
-const ENABLE_WHISPER_SEMANTIC_FILTER = false
+export const ENABLE_WHISPER_SEMANTIC_FILTER = false
 
 function getSpeechSegmentDurationSec(audio: Float32Array) {
   return audio.length / VAD_SPEECH_SAMPLE_RATE_HZ
@@ -198,18 +198,29 @@ async function detectAcousticNoiseWithYamnet(audio: Float32Array) {
 }
 
 export async function prewarmSpeechSegmentFilters() {
-  if (!ENABLE_YAMNET_FILTER) return
+  const tasks: Promise<any>[] = []
 
-  // Trigger YAMNet model download/initialization ahead of time.
-  // Whisper prewarm stays disabled unless you explicitly enable it.
-  /*
-  if (ENABLE_WHISPER_SEMANTIC_FILTER) {
-    await Promise.all([getWhisperPipeline(), getYamnetModel()])
-  } else {
-    await getYamnetModel()
+  if (ENABLE_YAMNET_FILTER) {
+    tasks.push(prewarmYamnetModel())
   }
-  */
+  if (ENABLE_WHISPER_SEMANTIC_FILTER) {
+    tasks.push(prewarmWhisperModel())
+  }
+
+  // Case: both disabled. Nothing should be downloaded.
+  if (tasks.length === 0) return
+
+  await Promise.all(tasks)
+}
+
+export async function prewarmYamnetModel() {
+  if (!ENABLE_YAMNET_FILTER) return
   await getYamnetModel()
+}
+
+export async function prewarmWhisperModel() {
+  if (!ENABLE_WHISPER_SEMANTIC_FILTER) return
+  await getWhisperPipeline()
 }
 
 export async function shouldSkipSpeechSegment(audio: Float32Array) {
@@ -222,17 +233,87 @@ export async function shouldSkipSpeechSegment(audio: Float32Array) {
     }
   }
 
+  // Case: both disabled => fallback to old logic (send to server).
+  if (!ENABLE_YAMNET_FILTER && !ENABLE_WHISPER_SEMANTIC_FILTER) {
+    return {
+      skip: false,
+      reason: 'short_segment_no_filters_enabled',
+      details: { durationSec: Number(durationSec.toFixed(3)) }
+    }
+  }
+
   try {
-    if (!ENABLE_YAMNET_FILTER) {
+    // Case 3: only Whisper enabled.
+    if (!ENABLE_YAMNET_FILTER && ENABLE_WHISPER_SEMANTIC_FILTER) {
+      const whisperStart = typeof performance !== 'undefined' ? performance.now() : Date.now()
+      const semanticResult = await detectSemanticFillerWithWhisper(audio)
+      const whisperMs =
+        (typeof performance !== 'undefined' ? performance.now() : Date.now()) - whisperStart
+
+      if (remainingTimingLogs > 0) {
+        remainingTimingLogs -= 1
+        console.log('[speech filter timing]', {
+          durationSec: Number(durationSec.toFixed(3)),
+          yamnetMs: 0,
+          whisperMs: Math.round(whisperMs),
+          verdict: semanticResult.isSemanticFiller ? 'semantic_filler' : 'clean_short_whisper'
+        })
+      }
+
+      if (semanticResult.isSemanticFiller) {
+        return {
+          skip: true,
+          reason: 'semantic_filler_detected_whisper',
+          details: { ...semanticResult, durationSec: Number(durationSec.toFixed(3)) }
+        }
+      }
+
       return {
         skip: false,
-        reason: 'short_segment_yamnet_disabled',
-        details: { durationSec: Number(durationSec.toFixed(3)) }
+        reason: 'short_segment_valid_speech_send',
+        details: { ...semanticResult, durationSec: Number(durationSec.toFixed(3)) }
       }
     }
 
+    // Case 4: only YAMNet enabled.
+    if (ENABLE_YAMNET_FILTER && !ENABLE_WHISPER_SEMANTIC_FILTER) {
+      const acousticStart = typeof performance !== 'undefined' ? performance.now() : Date.now()
+      const acousticResult = await detectAcousticNoiseWithYamnet(audio)
+      const acousticMs =
+        (typeof performance !== 'undefined' ? performance.now() : Date.now()) - acousticStart
+
+      if (remainingTimingLogs > 0) {
+        remainingTimingLogs -= 1
+        console.log('[speech filter timing]', {
+          durationSec: Number(durationSec.toFixed(3)),
+          yamnetMs: Math.round(acousticMs),
+          whisperMs: 0,
+          verdict: acousticResult.isAcousticNoise ? 'acoustic_noise' : 'clean_short_yamnet'
+        })
+      }
+
+      if (acousticResult.isAcousticNoise) {
+        return {
+          skip: true,
+          reason: 'acoustic_noise_detected_yamnet',
+          details: { ...acousticResult, durationSec: Number(durationSec.toFixed(3)) }
+        }
+      }
+
+      return {
+        skip: false,
+        reason: 'short_segment_valid_speech_send',
+        details: { ...acousticResult, durationSec: Number(durationSec.toFixed(3)) }
+      }
+    }
+
+    // Case 2 + Case 5: both enabled.
+    // Concurrent execution + early reject on YAMNet result.
+    const yamnetPromise = detectAcousticNoiseWithYamnet(audio)
+    const whisperPromise = detectSemanticFillerWithWhisper(audio)
+
     const acousticStart = typeof performance !== 'undefined' ? performance.now() : Date.now()
-    const acousticResult = await detectAcousticNoiseWithYamnet(audio)
+    const acousticResult = await yamnetPromise
     const acousticMs =
       (typeof performance !== 'undefined' ? performance.now() : Date.now()) - acousticStart
 
@@ -246,23 +327,46 @@ export async function shouldSkipSpeechSegment(audio: Float32Array) {
           verdict: 'acoustic_noise'
         })
       }
-      return { skip: true, reason: 'acoustic_noise_detected_yamnet', details: acousticResult }
+
+      // Early reject: do not wait for Whisper.
+      return {
+        skip: true,
+        reason: 'acoustic_noise_detected_yamnet',
+        details: { ...acousticResult, durationSec: Number(durationSec.toFixed(3)) }
+      }
     }
+
+    const semanticStart = typeof performance !== 'undefined' ? performance.now() : Date.now()
+    const semanticResult = await whisperPromise
+    const semanticMs =
+      (typeof performance !== 'undefined' ? performance.now() : Date.now()) - semanticStart
 
     if (remainingTimingLogs > 0) {
       remainingTimingLogs -= 1
       console.log('[speech filter timing]', {
         durationSec: Number(durationSec.toFixed(3)),
         yamnetMs: Math.round(acousticMs),
-        whisperMs: 0,
-        verdict: 'clean_short_yamnet'
+        whisperMs: Math.round(semanticMs),
+        verdict: semanticResult.isSemanticFiller ? 'semantic_filler' : 'clean_short_both'
       })
+    }
+
+    if (semanticResult.isSemanticFiller) {
+      return {
+        skip: true,
+        reason: 'semantic_filler_detected_whisper',
+        details: { ...semanticResult, durationSec: Number(durationSec.toFixed(3)) }
+      }
     }
 
     return {
       skip: false,
       reason: 'short_segment_valid_speech_send',
-      details: { ...acousticResult, durationSec: Number(durationSec.toFixed(3)) }
+      details: {
+        ...acousticResult,
+        ...semanticResult,
+        durationSec: Number(durationSec.toFixed(3))
+      }
     }
   } catch (err) {
     console.warn('speech filter model check failed, allowing audio', err)

@@ -38,6 +38,7 @@
   }
   .on-going {
     display: flex;
+    align-items: center;
   }
   .ongoing-call-text {
     margin-left: -3rem !important;

@@ -6,7 +6,14 @@ import { useData } from './DataWrapper';
 import { useAuth } from './AuthContext';
 import { useMicVAD} from "@ricky0123/vad-react"
 import { PostReq } from '../functions/requests';
-import { getMetaDataOfSpeechSegment, shouldSkipSpeechSegment } from './speechSegmentFilters';
+import {
+  getMetaDataOfSpeechSegment,
+  shouldSkipSpeechSegment,
+  prewarmYamnetModel,
+  prewarmWhisperModel,
+  ENABLE_YAMNET_FILTER,
+  ENABLE_WHISPER_SEMANTIC_FILTER,
+} from './speechSegmentFilters';
 //import { processAudioToBase64 } from '../functions/generalFn';
 //import useRequest from '../hooks/requests';
 import { addTranscription } from '../reducers/transcriptionReducer';
@@ -22,7 +29,17 @@ export function VadWrapper({children}){
 
 
     // Removed socket, setSocket, added send
-    const {ngrokServerUrl,setMsgLoading,oneWayUrl,audioQueueRef,audioRef,isAudioStillPlaying,send} = useData()
+    const {
+      ngrokServerUrl,
+      setMsgLoading,
+      oneWayUrl,
+      audioQueueRef,
+      audioRef,
+      isAudioStillPlaying,
+      send,
+      setYamnetModelDownloading,
+      setWhisperModelDownloading
+    } = useData()
     const {currentUser} = useAuth()
     const [vadRecordingOn,setVadRecordingOn] = useState<boolean>(false);
     let recordingStatus = useRef(false);
@@ -33,6 +50,41 @@ export function VadWrapper({children}){
     const vadRef = useRef({ oldVadrecordingStatus:false,myVad:null })
     const [manualVadStatus,setManualVadStatus] = useState(true)
     const vadMicStreamRef = useRef<MediaStream | null>(null)
+    const vad2FrameCounterRef = useRef(0)
+
+    const VAD2_TARGET_MIN_SPEECH_MS = 2000
+    const VAD2_FRAME_SAMPLES = 512
+    const VAD2_MIN_SPEECH_FRAMES = Math.max(
+      1,
+      Math.ceil((VAD2_TARGET_MIN_SPEECH_MS / 1000) * (16000 / VAD2_FRAME_SAMPLES))
+    )
+
+    // Preload only the enabled models and show UI while each downloads.
+    useEffect(() => {
+      const tasks: Promise<any>[] = []
+
+      if (ENABLE_YAMNET_FILTER) {
+        setYamnetModelDownloading(true)
+        tasks.push(
+          prewarmYamnetModel()
+            .catch((err) => console.warn('YAMNet prewarm failed', err))
+            .finally(() => setYamnetModelDownloading(false))
+        )
+      }
+
+      if (ENABLE_WHISPER_SEMANTIC_FILTER) {
+        setWhisperModelDownloading(true)
+        tasks.push(
+          prewarmWhisperModel()
+            .catch((err) => console.warn('Whisper prewarm failed', err))
+            .finally(() => setWhisperModelDownloading(false))
+        )
+      }
+
+      // Case: both disabled => do nothing.
+      if (tasks.length === 0) return
+      void Promise.all(tasks)
+    }, [])
 
     const initReqStatusRef = useRef(false)
     //const {PostReq } = useRequest()
@@ -107,15 +159,16 @@ export function VadWrapper({children}){
 }
 
 
-      const VAD2 = useMicVAD({
+      const vad2DebugConfig = {
         workletURL: `./vad.worklet.bundle.min.js`,
         //modelURL: "http://localhost:8080/silero_vad.onnx",
         //@ts-ignore
         modelURL:`./silero_vad.onnx`,
         positiveSpeechThreshold: 0.8,
         submitUserSpeechOnPause:true,
-        model:"v5",
-        minSpeechMs: 1200,
+        model:"v5" as const,
+        frameSamples: VAD2_FRAME_SAMPLES,
+        minSpeechFrames: VAD2_MIN_SPEECH_FRAMES,
         getStream: async () => {
           const stream = await navigator.mediaDevices.getUserMedia({
             audio: {
@@ -153,6 +206,18 @@ export function VadWrapper({children}){
           vadMicStreamRef.current = stream
           return stream
         },
+        // onFrameProcessed: (probs) => {
+        //   vad2FrameCounterRef.current += 1
+        //   if (vad2FrameCounterRef.current % 20 === 0) {
+        //     console.log("[VAD2 realtime frame]", {
+        //       frameCount: vad2FrameCounterRef.current,
+        //       isSpeechProbability: probs?.isSpeech,
+        //       thresholdUsed: 0.8,
+        //       currentDecision: probs?.isSpeech >= 0.8 ? "speech" : "non-speech",
+        //       minSpeechFramesUsed: VAD2_MIN_SPEECH_FRAMES
+        //     })
+        //   }
+        //},
         // Default legacy minSpeechFrames is 3 (~288ms+ of speech-positive frames); short clips (e.g. ~0.2s) become onVADMisfire. Lower to capture brief utterances (try 1 if you need the absolute minimum and accept more false positives).
         //minSpeechFrames: 2,
         //minSpeechMs:20,
@@ -201,7 +266,9 @@ export function VadWrapper({children}){
             setMsgLoading(true)
             processAudioToBase64(audio, oneWayUrl, data)
         }
-      })
+      }
+
+      const VAD2 = useMicVAD(vad2DebugConfig)
 
       useEffect(() => {
         return () => {
@@ -346,13 +413,37 @@ export function VadWrapper({children}){
     /** manual vad logic  begins here ( offline logic)*/
 
     useEffect(()=>{
-      if(!VAD2.loading){
+      if(VAD2.loading) return
+
       console.log('useEffect manual vad paused runs',VAD2)
-      setManualVadStatus(false)
-      VAD2?.pause()
+      console.log("[VAD2 object keys]", Object.keys((VAD2 as any) || {}))
+
+      const micVAD = (VAD2 as any)?.micVAD
+      if (micVAD?.options) {
+        console.log("[VAD2 runtime fields]", {
+          positiveSpeechThreshold: micVAD.options.positiveSpeechThreshold,
+          negativeSpeechThreshold: micVAD.options.negativeSpeechThreshold,
+          minSpeechFrames: micVAD.options.minSpeechFrames,
+          frameSamples: micVAD.options.frameSamples,
+          model: micVAD.options.model,
+        })
+      } else {
+        console.log("[VAD2 runtime fields] micVAD/options not available yet", {
+          micVADExists: !!micVAD,
+          loading: VAD2.loading,
+        })
       }
 
-    },[VAD2?.loading])
+      setManualVadStatus(false)
+      VAD2?.pause()
+
+    },[VAD2?.loading, (VAD2 as any)?.micVAD])
+
+    useEffect(() => {
+      if ((VAD2 as any)?.errored) {
+        console.log("[VAD2 error]", (VAD2 as any).errored)
+      }
+    }, [(VAD2 as any)?.errored])
 
       useEffect(()=>{
 
@@ -371,7 +462,11 @@ export function VadWrapper({children}){
             VAD2?.start()
             //console.log('manual vad is active',VAD2)
             console.log('vad2 after changing parameteres',VAD2)
-         
+          
+            const micVAD = (VAD2 as any)?.micVAD
+            if (micVAD?.options) {
+              console.log("[VAD2 runtime fields]", micVAD.options);
+            }
         }else{
           console.log('manual vad is paused',VAD2)
           VAD2?.pause()
