@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Whisper Test (Transformers.js)</title>
+    <style>body { font-family: sans-serif; padding: 20px; }</style>
+</head>
+<body>
+    <h2>Whisper tiny.en - Filler/Speech Test</h2>
+    <input type="file" id="audio-upload" accept="audio/*">
+    <p id="status">Status: Waiting for file...</p>
+    <p><strong>Transcript:</strong> <span id="output"></span></p>
+
+    <script type="module">
+        // Import Transformers.js from CDN
+        import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.16.0';
+
+        // Optional: Disable local models to force CDN usage
+        env.allowLocalModels = false;
+
+        const status = document.getElementById('status');
+        const output = document.getElementById('output');
+        let transcriber = null;
+
+        // Initialize the model on load
+        async function init() {
+            status.innerText = "Status: Downloading/Loading Whisper tiny.en (~40MB)...";
+            transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
+            status.innerText = "Status: Model Loaded! Please upload an audio file.";
+        }
+
+        document.getElementById('audio-upload').addEventListener('change', async (e) => {
+            if (!transcriber) return alert("Model not loaded yet!");
+            
+            const file = e.target.files[0];
+            if (!file) return;
+
+            status.innerText = "Status: Processing audio...";
+            output.innerText = "";
+
+            // Convert uploaded file to URL so Whisper can read it
+            const audioUrl = URL.createObjectURL(file);
+
+            // Run the audio through the model
+            const result = await transcriber(audioUrl, {
+                chunk_length_s: 30, // Processes in 30s chunks
+                stride_length_s: 5
+            });
+
+            // Display result
+            output.innerText = result.text || "[No speech detected / Filler ignored]";
+            status.innerText = "Status: Done!";
+        });
+
+        init();
+    </script>
+</body>
+</html>

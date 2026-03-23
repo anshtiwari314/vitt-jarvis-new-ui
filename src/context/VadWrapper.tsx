@@ -6,6 +6,7 @@ import { useData } from './DataWrapper';
 import { useAuth } from './AuthContext';
 import { useMicVAD} from "@ricky0123/vad-react"
 import { PostReq } from '../functions/requests';
+import { getMetaDataOfSpeechSegment, shouldSkipSpeechSegment } from './speechSegmentFilters';
 //import { processAudioToBase64 } from '../functions/generalFn';
 //import useRequest from '../hooks/requests';
 import { addTranscription } from '../reducers/transcriptionReducer';
@@ -110,11 +111,15 @@ export function VadWrapper({children}){
         //modelURL: "http://localhost:8080/silero_vad.onnx",
         //@ts-ignore
         modelURL:`./silero_vad.onnx`,
+        // Default legacy minSpeechFrames is 3 (~288ms+ of speech-positive frames); short clips (e.g. ~0.2s) become onVADMisfire. Lower to capture brief utterances (try 1 if you need the absolute minimum and accept more false positives).
+        //minSpeechFrames: 2,
+        //minSpeechMs:20,
         onVADMisfire: () => {
-          //console.log("Vad misfire")
+          console.log("Vad misfire")
+          
         },
         onSpeechStart: () => {
-         // console.log("Speech start")
+          console.log("Speech start")
 
           audioRef.current.pause()
           isAudioStillPlaying.current = false
@@ -122,7 +127,14 @@ export function VadWrapper({children}){
           audioQueueRef.current = []
           //console.log(audioQueueRef.current)
         },
-        onSpeechEnd:(audio)=>{
+        onSpeechEnd:async (audio)=>{
+          console.log("Speech end")
+            getMetaDataOfSpeechSegment(audio)
+            const filterDecision = await shouldSkipSpeechSegment(audio)
+            console.log('[speech segment filter decision]', filterDecision)
+            if (filterDecision.skip) {
+              return
+            }
             let data = {
               // this one is for jarvis-in-person
               //sessionid:currentUser?.userid,

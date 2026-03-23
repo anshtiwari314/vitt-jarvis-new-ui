@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>YAMNet Test (TensorFlow.js)</title>
+    <style>body { font-family: sans-serif; padding: 20px; }</style>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0"></script>
+</head>
+<body>
+    <h2>YAMNet - Acoustic Noise Test</h2>
+    <input type="file" id="audio-upload" accept="audio/*">
+    <p id="status">Status: Waiting for file...</p>
+    <p><strong>Top Prediction Index:</strong> <span id="output"></span></p>
+    <p><small>(0 = Speech, 56 = Cough, 61 = Breathing, 73 = Sneeze)</small></p>
+
+    <script>
+        const status = document.getElementById('status');
+        const output = document.getElementById('output');
+        let yamnetModel = null;
+
+        async function init() {
+            status.innerText = "Status: Downloading/Loading YAMNet (~4MB)...";
+            // Load the official TFJS YAMNet model from Google's TF Hub
+            yamnetModel = await tf.loadGraphModel('https://tfhub.dev/google/tfjs-model/yamnet/tfjs/1', { fromTFHub: true });
+            status.innerText = "Status: Model Loaded! Please upload an audio file.";
+        }
+
+        document.getElementById('audio-upload').addEventListener('change', async (e) => {
+            if (!yamnetModel) return alert("Model not loaded yet!");
+            const file = e.target.files[0];
+            if (!file) return;
+
+            status.innerText = "Status: Resampling and processing audio...";
+            
+            // 1. Read file as ArrayBuffer
+            const arrayBuffer = await file.arrayBuffer();
+
+            // 2. Decode & Resample to 16kHz Mono using Web Audio API
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+            const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+            
+            // 3. Extract raw float32 channel data
+            const channelData = audioBuffer.getChannelData(0); 
+
+            // 4. Convert to TensorFlow Tensor
+            const waveform = tf.tensor(channelData);
+
+            // 5. Run prediction (YAMNet returns [scores, embeddings, log_mel_spectrogram])
+            const [scores, embeddings, spectrogram] = yamnetModel.predict(waveform);
+            
+            // 6. YAMNet analyzes audio in 0.96s chunks. We average the scores across all chunks.
+            const meanScores = scores.mean(0); 
+            const maxIndex = meanScores.argMax().dataSync()[0];
+            const maxScore = meanScores.max().dataSync()[0];
+
+            output.innerText = `Class Index: ${maxIndex} (Confidence: ${(maxScore * 100).toFixed(2)}%)`;
+            status.innerText = "Status: Done!";
+
+            // Cleanup memory
+            tf.dispose([waveform, scores, embeddings, spectrogram, meanScores]);
+        });
+
+        init();
+    </script>
+</body>
+</html>
