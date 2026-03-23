@@ -8,6 +8,9 @@ const YAMNET_MODEL_URL = 'https://tfhub.dev/google/tfjs-model/yamnet/tfjs/1'
 let whisperPipelinePromise: Promise<any> | null = null
 let tfPromise: Promise<any> | null = null
 let yamnetModelPromise: Promise<any> | null = null
+let remainingTimingLogs = 10
+export const ENABLE_YAMNET_FILTER = false
+const ENABLE_WHISPER_SEMANTIC_FILTER = false
 
 function getSpeechSegmentDurationSec(audio: Float32Array) {
   return audio.length / VAD_SPEECH_SAMPLE_RATE_HZ
@@ -56,7 +59,8 @@ async function getWhisperPipeline() {
     whisperPipelinePromise = (async () => {
       const { pipeline, env } = await import('@xenova/transformers')
       env.allowLocalModels = false
-      return pipeline('automatic-speech-recognition', WHISPER_MODEL_ID)
+      // Quantized Whisper is generally faster for short on-device inference.
+      return pipeline('automatic-speech-recognition', WHISPER_MODEL_ID, { quantized: true })
     })()
   }
   return whisperPipelinePromise
@@ -155,6 +159,9 @@ function isSemanticFillerText(text: string) {
 }
 
 async function detectSemanticFillerWithWhisper(audio: Float32Array) {
+  if (!ENABLE_WHISPER_SEMANTIC_FILTER) {
+    return { isSemanticFiller: false, transcript: '' }
+  }
   const asr = await getWhisperPipeline()
   const result = await asr(audio, {
     chunk_length_s: 30,
@@ -190,6 +197,21 @@ async function detectAcousticNoiseWithYamnet(audio: Float32Array) {
   return { isAcousticNoise: blockedClasses.has(topClassIdx), topClassIdx, topScore }
 }
 
+export async function prewarmSpeechSegmentFilters() {
+  if (!ENABLE_YAMNET_FILTER) return
+
+  // Trigger YAMNet model download/initialization ahead of time.
+  // Whisper prewarm stays disabled unless you explicitly enable it.
+  /*
+  if (ENABLE_WHISPER_SEMANTIC_FILTER) {
+    await Promise.all([getWhisperPipeline(), getYamnetModel()])
+  } else {
+    await getYamnetModel()
+  }
+  */
+  await getYamnetModel()
+}
+
 export async function shouldSkipSpeechSegment(audio: Float32Array) {
   const durationSec = getSpeechSegmentDurationSec(audio)
   if (durationSec >= SHORT_CLIP_THRESHOLD_SEC) {
@@ -201,23 +223,46 @@ export async function shouldSkipSpeechSegment(audio: Float32Array) {
   }
 
   try {
-    const [acousticResult, semanticResult] = await Promise.all([
-      detectAcousticNoiseWithYamnet(audio),
-      detectSemanticFillerWithWhisper(audio)
-    ])
+    if (!ENABLE_YAMNET_FILTER) {
+      return {
+        skip: false,
+        reason: 'short_segment_yamnet_disabled',
+        details: { durationSec: Number(durationSec.toFixed(3)) }
+      }
+    }
+
+    const acousticStart = typeof performance !== 'undefined' ? performance.now() : Date.now()
+    const acousticResult = await detectAcousticNoiseWithYamnet(audio)
+    const acousticMs =
+      (typeof performance !== 'undefined' ? performance.now() : Date.now()) - acousticStart
 
     if (acousticResult.isAcousticNoise) {
+      if (remainingTimingLogs > 0) {
+        remainingTimingLogs -= 1
+        console.log('[speech filter timing]', {
+          durationSec: Number(durationSec.toFixed(3)),
+          yamnetMs: Math.round(acousticMs),
+          whisperMs: 0,
+          verdict: 'acoustic_noise'
+        })
+      }
       return { skip: true, reason: 'acoustic_noise_detected_yamnet', details: acousticResult }
     }
 
-    if (semanticResult.isSemanticFiller) {
-      return { skip: true, reason: 'semantic_filler_detected_whisper', details: semanticResult }
+    if (remainingTimingLogs > 0) {
+      remainingTimingLogs -= 1
+      console.log('[speech filter timing]', {
+        durationSec: Number(durationSec.toFixed(3)),
+        yamnetMs: Math.round(acousticMs),
+        whisperMs: 0,
+        verdict: 'clean_short_yamnet'
+      })
     }
 
     return {
       skip: false,
       reason: 'short_segment_valid_speech_send',
-      details: { ...acousticResult, ...semanticResult, durationSec: Number(durationSec.toFixed(3)) }
+      details: { ...acousticResult, durationSec: Number(durationSec.toFixed(3)) }
     }
   } catch (err) {
     console.warn('speech filter model check failed, allowing audio', err)

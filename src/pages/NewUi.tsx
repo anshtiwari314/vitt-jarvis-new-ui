@@ -61,7 +61,8 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
     setRecordingActive,
     sessionUid ,ngrokServerUrl,setNgrokServerUrl,audioRef,isFilesLoaded,
     recordingServerUrl,setRecordingServerUrl,toggleChunking,setToggleChunking,
-    toggleContinuousChunking,setToggleContinuousChunking
+    toggleContinuousChunking,setToggleContinuousChunking,
+    yamnetModelDownloading
   }:void = useData();
   
   const {manualVadStatus,setManualVadStatus,vadRecordingOn,
@@ -330,6 +331,11 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
             >
             Ongoing call
             </h3>
+            {yamnetModelDownloading ? (
+              <p style={{ margin: '0.2rem 0 0.6rem 0', color: '#95969B', fontSize: '1.1rem', fontFamily: '"Inter", sans-serif' }}>
+                YAMNet model is downloading. Please wait…
+              </p>
+            ) : null}
             <div style={{ display: "flex", margin: "0.5rem 0", color: "#95969B" }}>
             <div style={{ display: "flex", alignItems: "center" }}>
                 <img

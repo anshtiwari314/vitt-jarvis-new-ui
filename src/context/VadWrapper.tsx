@@ -112,9 +112,10 @@ export function VadWrapper({children}){
         //modelURL: "http://localhost:8080/silero_vad.onnx",
         //@ts-ignore
         modelURL:`./silero_vad.onnx`,
-        positiveSpeechThreshold: 0.7,
+        positiveSpeechThreshold: 0.8,
         submitUserSpeechOnPause:true,
         model:"v5",
+        minSpeechMs: 1200,
         getStream: async () => {
           const stream = await navigator.mediaDevices.getUserMedia({
             audio: {
@@ -157,18 +158,27 @@ export function VadWrapper({children}){
         //minSpeechMs:20,
         onVADMisfire: () => {
           console.log("Vad misfire")
-          
+
+          audioRef.current.play()
+          isAudioStillPlaying.current = true;
+        
         },
         onSpeechStart: () => {
           console.log("Speech start")
 
-          audioRef.current.pause()
-          isAudioStillPlaying.current = false
           
-          audioQueueRef.current = []
+          audioRef.current.pause()
+          isAudioStillPlaying.current = true ;
+
+          
           //console.log(audioQueueRef.current)
         },
         onSpeechEnd:async (audio)=>{
+
+          audioRef.current.pause()
+          isAudioStillPlaying.current = false
+          audioQueueRef.current = []
+
           console.log("Speech end")
             getMetaDataOfSpeechSegment(audio)
             const filterDecision = await shouldSkipSpeechSegment(audio)

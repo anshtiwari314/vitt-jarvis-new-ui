@@ -137,6 +137,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     const [activeTab,setActiveTab ] = useState(0)
 
     const[msgLoading,setMsgLoading]= useAutoResetState(false,10000)
+    const [yamnetModelDownloading, setYamnetModelDownloading] = useState(false)
 
     const wasmUrls = [
       'ort-wasm-simd-threaded.jsep.wasm',
@@ -740,6 +741,8 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         SESSION_ID,setSessionId,
         msgLoading,
         setMsgLoading,
+        yamnetModelDownloading,
+        setYamnetModelDownloading,
         audioArr,
         audioUrlFlag,audioUrlRef,
         handleQuery,
@@ -751,7 +754,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         recordingActive,setRecordingActive,tabs,activeTab,setActiveTab,
         ngrokServerUrl,setNgrokServerUrl,oneWayUrl,isFilesLoaded,recordingServerUrl,setRecordingServerUrl,
         toggleChunking,setToggleChunking,toggleContinuousChunking,setToggleContinuousChunking,audioQueueRef,isAudioStillPlaying
-    }), [data, SESSION_ID, msgLoading, audioArr, audioUrlFlag, audioUrl, recordingActive, activeTab, ngrokServerUrl, oneWayUrl, recordingServerUrl, toggleChunking, toggleContinuousChunking, manualVadRecordingOn, socketUrl]) // Added dependencies for useMemo
+    }), [data, SESSION_ID, msgLoading, yamnetModelDownloading, audioArr, audioUrlFlag, audioUrl, recordingActive, activeTab, ngrokServerUrl, oneWayUrl, recordingServerUrl, toggleChunking, toggleContinuousChunking, manualVadRecordingOn, socketUrl]) // Added dependencies for useMemo
     
   return (
     //@ts-ignore
