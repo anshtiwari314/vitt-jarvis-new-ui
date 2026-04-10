@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons"
 
@@ -19,16 +20,13 @@ interface FinancialGoal {
 interface FinancialToggleCardProps {
   goal: FinancialGoal
   formatCurrency: (value: number) => string
-  isExpanded: boolean
-  onToggle: (goalId: string) => void
 }
 
 export default function FinancialToggleCard({
   goal,
   formatCurrency,
-  isExpanded,
-  onToggle,
 }: FinancialToggleCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
   const getPriorityStyle = (priority: string) => {
     switch (priority?.toLowerCase()) {
       case "high priority":
@@ -100,7 +98,7 @@ export default function FinancialToggleCard({
 
       <div className="flex justify-end">
         <button
-          onClick={() => onToggle(goal.id)}
+          onClick={() => setIsExpanded((prev) => !prev)}
           className="flex items-center gap-2 text-sky-500 hover:text-sky-600 text-sm font-medium"
         >
           <span className="text-lg">Show calculation</span>

@@ -1,4 +1,3 @@
-import React from "react"
 import RecommendationToggleCard from "./RecommendationToggleCard"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faLightbulb } from "@fortawesome/free-solid-svg-icons"
@@ -28,18 +27,8 @@ interface RecommendationsProps {
 
  
 export default function Recommendations({ data, formatCurrency }: RecommendationsProps) {
-  const [expandedRecs, setExpandedRecs] = React.useState<{ [key: string]: boolean }>({})
- 
-  // console.log(data, "the data i received")   [{...}, {...}, {...}....]  ye hai strcuture baaki we can do like 
-  //{"sbi":[{},{}],"icici":[{},{}],"hdfc":[{},{}]}  something like and i can get recommendation category wise if needed
- console.log("Rendering Recommendations component",data)
-  const toggleCalculation = (recId: string) => {
-    setExpandedRecs((prevState) => ({
-      ...prevState,
-      [recId]: !prevState[recId],
-    }))
-  }
- 
+  console.log("Rendering Recommendations component",data)
+
   if (!data || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4">
@@ -61,8 +50,6 @@ export default function Recommendations({ data, formatCurrency }: Recommendation
           key={realId}
           recommendation={rec}
           formatCurrency={formatCurrency}
-          isExpanded={expandedRecs[realId] || true}
-          onToggle={() => toggleCalculation(realId)}
         />
       )
     })}

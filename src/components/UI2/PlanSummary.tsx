@@ -1,4 +1,3 @@
-import React from "react"
 import PlanSummaryCard from "./PlanSummaryCard"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faChartLine } from "@fortawesome/free-solid-svg-icons"
@@ -21,14 +20,6 @@ interface PlanSummaryProps {
 
 export default function PlanSummary({ data, formatCurrency }: PlanSummaryProps) {
   console.log("PlanSummary data in its component:", data)
-  const [expandedSummary, setExpandedSummary] = React.useState<{ [key: string]: boolean }>({})
-
-  const toggleCalculation = (summaryId: string) => {
-    setExpandedSummary((prevState) => ({
-      ...prevState,
-      [summaryId]: !prevState[summaryId],
-    }))
-  }
 
   if (!data || data.length === 0) {
     return (
@@ -66,8 +57,6 @@ export default function PlanSummary({ data, formatCurrency }: PlanSummaryProps) 
             <PlanSummaryCard
               summaryItem={{ ...item, id: summaryId }}
               formatCurrency={formatCurrency}
-              isExpanded={expandedSummary[summaryId] || true}
-              onToggle={toggleCalculation}
             />
           </div>
         )

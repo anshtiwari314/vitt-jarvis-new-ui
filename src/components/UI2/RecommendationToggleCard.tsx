@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons"
 
@@ -22,16 +23,13 @@ interface Recommendation {
 interface RecommendationToggleCardProps {
   recommendation: Recommendation
   formatCurrency: (value: number) => string
-  isExpanded: boolean
-  onToggle: (recId: string) => void
 }
 
 export default function RecommendationToggleCard({
   recommendation,
   formatCurrency,
-  isExpanded,
-  onToggle,
 }: RecommendationToggleCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
   const parseCorpusValue = (corpusString: string | null | undefined): number => {
     if (!corpusString) return 0
     let cleanString = corpusString.replace(/₹|\s/g, "")
@@ -95,7 +93,7 @@ export default function RecommendationToggleCard({
       {/* Show calculation toggle */}
       <div className="flex justify-end">
         <button
-          onClick={() => onToggle(recommendation.id)}
+          onClick={() => setIsExpanded((prev) => !prev)}
           className="flex items-center gap-2 text-sky-600 hover:text-sky-700 text-sm font-medium"
         >
           <span className="text-[1.06rem] font-medium tracking-tight">Show calculation</span>

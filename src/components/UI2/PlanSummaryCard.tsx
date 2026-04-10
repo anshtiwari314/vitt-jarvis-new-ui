@@ -21,16 +21,13 @@ interface PlanSummaryItem {
 interface PlanSummaryCardProps {
   summaryItem: PlanSummaryItem
   formatCurrency: (value: number) => string
-  isExpanded: boolean
-  onToggle: (summaryId: string) => void
 }
 
 export default function PlanSummaryCard({
   summaryItem,
   formatCurrency,
-  isExpanded,
-  onToggle,
 }: PlanSummaryCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
   
   // 🟦 Normalize cols (convert array -> object)
   const getNormalizedCols = () => {
@@ -132,7 +129,7 @@ export default function PlanSummaryCard({
           <div>
             <div className="flex justify-end">
               <button
-                onClick={() => onToggle(summaryId)}
+                onClick={() => setIsExpanded((prev) => !prev)}
                 className="flex items-center gap-2 text-sky-600 hover:text-sky-700 text-sm font-medium"
               >
                 <span className="text-[1.05rem] font-medium tracking-tight">
@@ -194,7 +191,7 @@ export default function PlanSummaryCard({
         <div>
           <div className="flex justify-end">
             <button
-              onClick={() => onToggle(summaryId)}
+              onClick={() => setIsExpanded((prev) => !prev)}
               className="flex items-center gap-2 text-sky-600 hover:text-sky-700 text-sm font-medium"
             >
               <span className="text-[1.05rem] font-medium tracking-tight">

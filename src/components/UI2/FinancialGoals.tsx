@@ -1,4 +1,3 @@
-import React from "react"
 import FinancialToggleCard from "./FinancialToggleCard"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faBullseye } from "@fortawesome/free-solid-svg-icons"
@@ -20,18 +19,6 @@ interface FinancialGoalsProps {
 }
 
 export default function FinancialGoals({ data, formatCurrency }: FinancialGoalsProps) {
-  const [expandedGoals, setExpandedGoals] = React.useState<{ [key: string]: boolean }>({})
-
-  console.log('expanded goals',expandedGoals)
-  // console.log("the data taht is  received data", data) 
-
-  const toggleCalculation = (goalId: string) => {
-    setExpandedGoals((prevState) => ({
-      ...prevState,
-      [goalId]: !prevState[goalId],
-    }))
-  }
-
   if (!data || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4">
@@ -50,8 +37,6 @@ export default function FinancialGoals({ data, formatCurrency }: FinancialGoalsP
           key={goal.id}
           goal={goal}
           formatCurrency={formatCurrency}
-          isExpanded={expandedGoals[goal.id] || false}
-          onToggle={toggleCalculation}
         />
       ))}
     </div>
