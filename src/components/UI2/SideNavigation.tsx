@@ -9,14 +9,14 @@ export default function SideNavigation(){
     const currentNavigation = useAppSelector(state => state.salesCopilotReducer.navigation);
     const salesData = useAppSelector(state => state.salesCopilotReducer.salesData); 
 
-    const {recommendationsGenerated,setRecommendationsGenerated} = useData()
+    const {recommendationsGenerated} = useData()
     const [recommendationsOpen, setRecommendationsOpen] = useState(false);
 
     const handleNavigationClick = (page: string) => {
         console.log("clicked on---->",page);
       
         dispatch(setNavigation(page));
-        if(page==='productRec')
+        if(page==='Recommendations')
             {
 
             }
@@ -24,22 +24,25 @@ export default function SideNavigation(){
     const handleRecommendationClick = (recGroup: string) => {
         console.log("clicked on recommendation group---->",recGroup);
         dispatch(setRecomendationSelected(recGroup));
-        dispatch(setNavigation("productRec"));
+        dispatch(setNavigation("Recommendations"));
     }
     const mockData = salesData.recommendations;
    
     const recGroups = mockData.map(item => item.planName);
 
     const navItems = [
-        { id: 'basicInfo', label: 'Basic Info', icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke="#38BDF8"></path></svg> },
-        { id: 'asset', label: 'Assets', icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke="#38BDF8"></path></svg> },
-        { id: 'liability', label: 'Liabilities', icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke="#38BDF8"></path></svg> },
-        { id: 'financialGoals', label: 'Financial Goals', icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h1a2 2 0 002-2v-1a2 2 0 012-2h1.945M12 4v4m0 0l-2-2m2 2l2-2" stroke="#38BDF8"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18V14m0 4a2 2 0 002-2v-1a2 2 0 00-2-2h-1a2 2 0 00-2 2v1a2 2 0 002 2z" stroke="#38BDF8"></path></svg> },
-        { id: 'planSummary', label: 'Plan Summary', icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="#38BDF8"></path></svg> },
+        { id: 'basicInfo', value: 'Basic Info', label: 'Basic Info', width: 'w-[13.5rem]', offset: '', icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke="#60A5FA"></path></svg> },
+        { id: 'financialGoals', value: 'Financial Goals', label: 'Financial Goals', width: 'w-[13rem]', offset: 'ml-2', icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h1a2 2 0 002-2v-1a2 2 0 012-2h1.945M12 4v4m0 0l-2-2m2 2l2-2" stroke="#60A5FA"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18V14m0 4a2 2 0 002-2v-1a2 2 0 00-2-2h-1a2 2 0 00-2 2v1a2 2 0 002 2z" stroke="#60A5FA"></path></svg> },
+        { id: 'planSummary', value: 'Plan Summary', label: 'Financial Review', width: 'w-[13.5rem]', offset: 'ml-3', icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="#60A5FA"></path></svg> },
+        { id: 'assets', value: 'Assets', label: 'Assets', width: 'w-[12.5rem]', offset: 'ml-10', icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke="#60A5FA"></path></svg> },
+        { id: 'liabilities', value: 'Liabilities', label: 'Liabilities', width: 'w-[12.5rem]', offset: 'ml-12', icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a2 2 0 00-2 2v8a3 3 0 003 3z" stroke="#60A5FA"></path></svg> },
         {
-            id: 'productRec', 
-            label: 'Recommendations', 
-            icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke="#38BDF8"></path></svg> ,
+            id: 'recommendations',
+            value: 'Recommendations',
+            label: 'Recommendations',
+            width: 'w-[13rem]',
+            offset: 'ml-2',
+            icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke="#60A5FA"></path></svg>,
             subItems: recGroups,
         },
     ];
@@ -58,10 +61,21 @@ export default function SideNavigation(){
         return () => clearInterval(interval);
     }, []);
 
+    useEffect(() => {
+        if (currentNavigation === 'Recommendations') {
+            setRecommendationsOpen(true);
+        }
+    }, [currentNavigation]);
+
+    const getRecommendationOffset = (index: number) => {
+        const offsets = ['ml-11', 'ml-18', 'ml-20', 'ml-14', 'ml-20'];
+        return offsets[index % offsets.length];
+    };
+
     return (
         <aside className="w-72 bg-white border-r border-slate-200 flex flex-col hidden lg:block">
             <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-                <a href="#/lead-management" id="home-button" className="text-slate-500 hover:text-sky-600" onClick={() => handleNavigationClick('basicInfo')}>
+                <a href="#/lead-management" id="home-button" className="text-slate-500 hover:text-sky-600" onClick={() => handleNavigationClick('Basic Info')}>
                     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
@@ -71,23 +85,25 @@ export default function SideNavigation(){
                     <div id="current-time" className="text-sm text-slate-500" style={{marginLeft:'0.5rem'}}></div>
                 </div>
             </div>
-            <nav className="flex-1 p-2 space-y-1">
+            <nav className="flex-1 overflow-y-auto px-4 py-5">
+                <div className="space-y-4">
                 {navItems.map(item => (
                     <div key={item.id}>
-                        <div className="flex items-center justify-between">
-                            <a
-                                className={`flex items-center flex-1 px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 ${currentNavigation === item.id ? 'active-nav-item' : ''}`}
-                                style={{cursor:'default'}}
-                                onClick={() => handleNavigationClick(item.id)}
+                        <div className={`flex ${item.offset || ''}`}>
+                            <button
+                                className={`flex items-center ${item.width || 'w-full'} px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 ${currentNavigation === item.value ? 'active-nav-item' : ''}`}
+                                onClick={() => {
+                                    handleNavigationClick(item.value);
+                                    if (item.id === 'recommendations') {
+                                        setRecommendationsOpen((prev) => !prev);
+                                    }
+                                }}
                             >
                                 {item.icon}
                                 {item.label}
-                            </a>
-                            {item.id === 'productRec' && item.subItems && (
-                                <button
-                                    onClick={() => setRecommendationsOpen(!recommendationsOpen)}
-                                    className="flex items-center justify-center mr-2 transition-transform"
-                                >
+                            </button>
+                            {item.id === 'recommendations' && item.subItems && (
+                                <div className="ml-2 flex items-center justify-center">
                                     <svg
                                         className={`w-4 h-4 transition-transform ${
                                             recommendationsOpen ? "rotate-90 text-sky-500" : "text-slate-400"
@@ -101,24 +117,26 @@ export default function SideNavigation(){
                                     <span className="text-xs font-semibold text-slate-500 ml-1 bg-slate-200 rounded-full px-2 py-0.5">
                                         {item.subItems.length}
                                     </span>
-                                </button>
+                                </div>
                             )}
                         </div>
-                        {item.id === 'productRec' && recommendationsOpen && item.subItems && (
-                            <div className="ml-6 mt-1 space-y-1 border-l-2 border-slate-200 pl-2">
-                                {item.subItems.map((subItem) => (
-                                    <button
-                                        key={subItem}
-                                        className="block w-full text-left px-3 py-2 text-sm text-slate-600 rounded-lg hover:bg-slate-100 transition-colors duration-200"
-                                        onClick={() => handleRecommendationClick(subItem)}
-                                    >
-                                        {subItem}
-                                    </button>
+                        {item.id === 'recommendations' && recommendationsOpen && item.subItems && (
+                            <div className="mt-3 space-y-3">
+                                {item.subItems.map((subItem, index) => (
+                                    <div key={subItem} className={`flex ${getRecommendationOffset(index)}`}>
+                                        <button
+                                            className="block w-[10rem] rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-600 transition-colors duration-200 hover:bg-slate-100"
+                                            onClick={() => handleRecommendationClick(subItem)}
+                                        >
+                                            {subItem}
+                                        </button>
+                                    </div>
                                 ))}
                             </div>
                         )}
                     </div>
                 ))}
+                </div>
             </nav>
 
             {recommendationsGenerated && 

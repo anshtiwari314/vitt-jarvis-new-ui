@@ -1,6 +1,7 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons"
+import { useData } from "../../context/DataWrapper"
 
 interface Recommendation {
   id: string
@@ -29,19 +30,76 @@ export default function RecommendationToggleCard({
   recommendation,
   formatCurrency,
 }: RecommendationToggleCardProps) {
+  const { updateField } = useData()
   const [isExpanded, setIsExpanded] = useState(false)
-  const parseCorpusValue = (corpusString: string | null | undefined): number => {
-    if (!corpusString) return 0
-    let cleanString = corpusString.replace(/₹|\s/g, "")
-    cleanString = cleanString.replace(/,/g, "")
-    return Number.parseInt(cleanString, 10) || 0
-  }
+  const [copiedField, setCopiedField] = useState<string | null>(null)
 
   const safeValue = (val: string | null | undefined) =>
     val === null || val === undefined || val === "" ? "" : val
 
+  const getDisplayValue = (key: string, value: string | null | undefined) => {
+    const normalizedValue = safeValue(value)
+
+    if (!normalizedValue) {
+      return ""
+    }
+
+    if (
+      key.toLowerCase().includes("premium") ||
+      key.toLowerCase().includes("cover") ||
+      key.toLowerCase().includes("corpus")
+    ) {
+      return normalizedValue
+    }
+
+    return normalizedValue
+  }
+
   const cols = recommendation?.cols
   const calculation = recommendation?.calculation
+  const [editableCols, setEditableCols] = useState<Record<string, string>>({})
+  const [editableCalculation, setEditableCalculation] = useState<Record<string, string>>({})
+  const [calculationText, setCalculationText] = useState("")
+
+  useEffect(() => {
+    const nextCols = Object.fromEntries(
+      Object.entries(cols || {}).map(([key, value]) => [key, getDisplayValue(key, value)])
+    )
+
+    setEditableCols(nextCols)
+  }, [cols])
+
+  useEffect(() => {
+    const nextCalculation = Object.fromEntries(
+      Object.entries(calculation || {}).map(([key, value]) => [key, safeValue(value)])
+    )
+
+    setEditableCalculation(nextCalculation)
+  }, [calculation])
+
+  useEffect(() => {
+    setCalculationText(
+      safeValue(recommendation.calculationDetails || recommendation.text_area_value)
+    )
+  }, [recommendation.calculationDetails, recommendation.text_area_value])
+
+  const copyValue = async (fieldKey: string, value: string) => {
+    if (!value) {
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopiedField(fieldKey)
+      window.setTimeout(() => {
+        setCopiedField((currentField) => (currentField === fieldKey ? null : currentField))
+      }, 1500)
+    } catch (error) {
+      console.error("Failed to copy recommendation value", error)
+    }
+  }
+
+  void formatCurrency
 
   return (
     <div className="bg-white rounded-2xl border-b border-t border-l border-r border-sky-500 p-3 shadow-sm ring-2 ring-sky-600">
@@ -53,30 +111,37 @@ export default function RecommendationToggleCard({
         {safeValue(recommendation?.sub_header || recommendation?.description)}
       </p>
 
-      {/* map of the cols */}
       {cols && Object.keys(cols).length > 0 && (
-        <div className="grid grid-cols-3 gap-6 mb-3">
-          {Object.entries(cols).map(([key, value]) => {
-            console.log(key,' ',value)
-            return <div key={key}>
-              <p className="text-slate-500 text-md mb-1">{key}</p>
-              <p className="text-slate-800 font-semibold text-lg">
-                {key.toLowerCase().includes("premium") ||
-                key.toLowerCase().includes("cover") ||
-                key.toLowerCase().includes("corpus") ? (
-                  <span
-                    // dangerouslySetInnerHTML={{
-                    //   __html: formatCurrency(parseCorpusValue(safeValue(value))),
-                    // }}
-                    
-                  >{safeValue(value)}</span>
-                ) : (
-                  safeValue(value)
-                 //value
-                )}
-              </p>
+        <div className="mb-3 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {Object.entries(cols).map(([key, value]) => (
+            <div key={key}>
+              <label className="mb-1 block text-sm font-medium text-slate-500">
+                {key}
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={editableCols[key] ?? getDisplayValue(key, value)}
+                  onChange={(e) => {
+                    const nextValue = e.target.value
+                    setEditableCols((prev) => ({ ...prev, [key]: nextValue }))
+                    updateField(
+                      `${safeValue(recommendation?.header || recommendation?.title)} ${key}`,
+                      nextValue
+                    )
+                  }}
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2EA9FF]"
+                />
+                <button
+                  type="button"
+                  onClick={() => copyValue(key, editableCols[key] ?? getDisplayValue(key, value))}
+                  className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition-colors duration-200 hover:bg-slate-50 hover:text-slate-800"
+                >
+                  {copiedField === key ? "Copied" : "Copy"}
+                </button>
+              </div>
             </div>
-})}
+          ))}
         </div>
       )}
 
@@ -90,7 +155,6 @@ export default function RecommendationToggleCard({
 
       <div className="-mx-4 border-t border-gray-200 my-3" />
 
-      {/* Show calculation toggle */}
       <div className="flex justify-end">
         <button
           onClick={() => setIsExpanded((prev) => !prev)}
@@ -106,14 +170,12 @@ export default function RecommendationToggleCard({
         </button>
       </div>
 
-      {/* Expandable calculation details */}
       <div
         className={`grid transition-[grid-template-rows,opacity,margin-top] duration-[3000ms] ease-in-out ${
           isExpanded ? "grid-rows-[1fr] opacity-100 mt-3" : "grid-rows-[0fr] opacity-0 mt-0"
         }`}
       >
         <div className="overflow-hidden">
-          {/* Calculation breakdown object if it exists */}
           {calculation && Object.keys(calculation).length > 0 && (
             <div className="mb-3">
               <h5 className="text-sm font-semibold text-slate-700 mb-2">
@@ -121,20 +183,60 @@ export default function RecommendationToggleCard({
               </h5>
               <div className="space-y-2 bg-gray-50 rounded p-3 border">
                 {Object.entries(calculation).map(([key, value]) => (
-                  <div key={key} className="flex justify-between items-center text-sm">
-                    <span className="text-slate-600">{key}:</span>
-                    <span className="font-medium text-slate-800">
-                      {safeValue(value)}
-                    </span>
+                  <div key={key} className="flex items-center gap-2 text-sm">
+                    <span className="w-40 shrink-0 text-slate-600">{key}:</span>
+                    <input
+                      type="text"
+                      value={editableCalculation[key] ?? safeValue(value)}
+                      onChange={(e) => {
+                        const nextValue = e.target.value
+                        setEditableCalculation((prev) => ({ ...prev, [key]: nextValue }))
+                        updateField(
+                          `${safeValue(recommendation?.header || recommendation?.title)} calculation ${key}`,
+                          nextValue
+                        )
+                      }}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#2EA9FF]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        copyValue(key, editableCalculation[key] ?? safeValue(value))
+                      }
+                      className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition-colors duration-200 hover:bg-slate-50 hover:text-slate-800"
+                    >
+                      {copiedField === key ? "Copied" : "Copy"}
+                    </button>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Text area fallback */}
-          <div className="text-sm text-slate-700 whitespace-pre-line font-mono bg-gray-50 p-3 rounded border">
-            {safeValue(recommendation.calculationDetails || recommendation.text_area_value)}
+          <div className="rounded border bg-gray-50 p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <span className="text-sm font-semibold text-slate-700">Calculation Notes</span>
+              <button
+                type="button"
+                onClick={() => copyValue("calculation-notes", calculationText)}
+                className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition-colors duration-200 hover:bg-slate-50 hover:text-slate-800"
+              >
+                {copiedField === "calculation-notes" ? "Copied" : "Copy"}
+              </button>
+            </div>
+            <textarea
+              value={calculationText}
+              onChange={(e) => {
+                const nextValue = e.target.value
+                setCalculationText(nextValue)
+                updateField(
+                  `${safeValue(recommendation?.header || recommendation?.title)} calculation notes`,
+                  nextValue
+                )
+              }}
+              rows={4}
+              className="w-full resize-y rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#2EA9FF]"
+            />
           </div>
         </div>
       </div>

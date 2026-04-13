@@ -9,6 +9,7 @@ import Liabilities from '../components/UI2/Liabilities'
 import FinancialGoals from '../components/UI2/FinancialGoals';
 import PlanSummary from '../components/UI2/PlanSummary'
 import Recommendations from '../components/UI2/Recommendations';
+import NewFinancialGoals from '../components/UI2/NewFinancialGoals'
 
 import SideNavigation from '../components/UI2/SideNavigation'
 import SideBarMobile from '../components/UI2/SideBarMobile'
@@ -158,12 +159,14 @@ console.log("Filtered Recommendations:", filteredRecommendations);
     switch (currentNavigation) {
         case 'Basic Info':
             return <BasicInfo data={salesData.basicInfo} />;
+        case 'Financial Goals':
+            return <NewFinancialGoals />
         case 'Assets':
             return <Assets data={salesData.assets} formatCurrency={formatCurrency} />;
         case 'Liabilities':
             return <Liabilities data={salesData.liabilities} formatCurrency={formatCurrency} />;
-        case 'Financial Goals':
-            return <FinancialGoals data={salesData.financialGoals} formatCurrency={formatCurrency} />;
+        // case 'Financial Goals':
+        //     return <FinancialGoals data={salesData.financialGoals} formatCurrency={formatCurrency} />;
         case 'Plan Summary':
             return <PlanSummary data={salesData.planSummary} formatCurrency={formatCurrency} />;
         case 'Recommendations':
@@ -209,23 +212,18 @@ console.log("Filtered Recommendations:", filteredRecommendations);
   return (
     
     <div className="bg-slate-50 text-slate-800 antialiased">
-        <div className="flex h-screen overflow-scroll">
+        <div className="flex h-screen overflow-hidden">
             <SideNavigation/>
             <SideBarMobile />
             <div className="flex-1 flex flex-col">
                 
                 <Header/>
-                <div className="flex flex-col lg:flex-row flex-1 overflow-y-scroll ">
+                <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
                     {/* <!-- Main Content --> */}
                     <main 
                     className="
-                        flex-1 flex flex-col bg-slate-100 py-1 sm:p-6 pb-5
-                        order-2 lg:order-1 
-                        min-w-0 overflow-y-auto 
-                        
-                        {/* FIX 3: Your 99% width request. */}
-                        w-[94vw] mx-auto    {/* <-- ADDED */}
-                        lg:w-4/6 lg:mx-8 {/* <-- 'lg:mx-8' will override mx-auto on large screens */}
+                        order-2 flex min-w-0 flex-1 flex-col overflow-y-auto bg-slate-100 px-3 py-1 pb-5 sm:p-6
+                        lg:order-1 lg:basis-[62%]
                       "
                     >
                         {renderContent()}
@@ -234,12 +232,9 @@ console.log("Filtered Recommendations:", filteredRecommendations);
                     {/* <!-- AI Cues Sidebar --> */}
                     <aside 
                     className="
-                        w-[99vw] lg:w-2/6
-                        order-1 lg:order-2 
-                        bg-white border-l border-slate-200 
-                        lg:shadow-none lg:h-full 
-                        flex-shrink-0
-                      " // Added overflow-y-auto here for the aside element
+                        order-1 w-full flex-shrink-0 border-slate-200 bg-white
+                        lg:order-2 lg:h-full lg:w-[38%] lg:border-l lg:shadow-none
+                      "
                     style={{overflow:'hidden'}}>
                     <RightPanel/>
                     </aside>
