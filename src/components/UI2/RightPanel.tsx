@@ -32,9 +32,9 @@ export default function RightPanel() {
       */}
       <div style={{}} 
       className={`
-      flex overflow-x-scroll mb-2
+      mb-2 flex overflow-x-auto
       sm:flex-row 
-      lg:flex-col lg:items-center  lg:h-full lg:overflow-x-hidden lg:overflow-y-scroll lg:px-5 lg:mb-0` } >
+      lg:mb-0 lg:h-full lg:flex-col lg:items-stretch lg:overflow-x-hidden lg:overflow-y-scroll lg:px-5` } >
       {cues?.cards?.map((card, index) => {
 
         const colorClass = card.color || "blue";
@@ -50,8 +50,8 @@ export default function RightPanel() {
               bg-${colorClass}-50 border border-${colorClass}-200 p-4 rounded-lg m-2 shadow-sm 
               max-w-80 max-h-32 flex-shrink-0 overflow-y-scroll
               sm:max-w-80
-              lg:overflow-y-visible lg:min-w-64 lg:w-full lg:max-w-full lg:h-fit lg:max-h-max lg:mx-8
-              
+              lg:min-w-0 lg:w-full lg:max-w-full lg:h-fit lg:max-h-max lg:overflow-y-visible lg:mx-0
+               
             `} 
             style={{}}
           >
