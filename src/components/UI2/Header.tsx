@@ -14,7 +14,7 @@ import { Flag } from "lucide-react"
 import { useDispatch } from "react-redux";
 
 export default function Header() {
-  const { socket } = useData()
+  const { socket, isAudioPlayingState, audioRef, speakerEnabled, setSpeakerEnabled } = useData()
   const dispatch = useAppDispatch()
   //@ts-ignore
   const { setCurrentUser } = useAuth()
@@ -166,6 +166,43 @@ export default function Header() {
                   <TailSpin stroke="red" speed={0.95} className="w-4 h-4 m-1" />
                 </div>
               )}
+
+              {/* Speaker toggle — right of mic */}
+              <button
+                className={`p-2 rounded-md hover:bg-slate-200 transition-colors ${speakerEnabled ? (isAudioPlayingState ? "text-green-600" : "text-slate-600") : "text-red-400"}`}
+                title={speakerEnabled ? (isAudioPlayingState ? "Audio playing — click to disable speaker" : "Speaker on — click to disable") : "Speaker off — click to enable"}
+                onClick={() => {
+                  if (speakerEnabled) {
+                    // turning off: stop any current playback and clear queue
+                    if (audioRef?.current) {
+                      audioRef.current.pause()
+                      audioRef.current.src = ''
+                    }
+                  }
+                  setSpeakerEnabled((prev: boolean) => !prev)
+                }}
+              >
+                {speakerEnabled ? (
+                  isAudioPlayingState ? (
+                    /* Speaker with sound waves — on & playing */
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M11.553 3.064A.75.75 0 0112 3.75v16.5a.75.75 0 01-1.255.555L5.46 16H2.75A1.75 1.75 0 011 14.25v-4.5C1 8.784 1.784 8 2.75 8H5.46l5.285-4.805a.75.75 0 01.808-.131z" />
+                      <path d="M17.03 7.47a.75.75 0 011.06 0 8.25 8.25 0 010 11.66.75.75 0 11-1.06-1.06 6.75 6.75 0 000-9.54.75.75 0 010-1.06zM14.47 9.97a.75.75 0 011.06 0 5.25 5.25 0 010 7.06.75.75 0 11-1.06-1.06 3.75 3.75 0 000-4.94.75.75 0 010-1.06z" />
+                    </svg>
+                  ) : (
+                    /* Speaker — on but silent */
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M11.553 3.064A.75.75 0 0112 3.75v16.5a.75.75 0 01-1.255.555L5.46 16H2.75A1.75 1.75 0 011 14.25v-4.5C1 8.784 1.784 8 2.75 8H5.46l5.285-4.805a.75.75 0 01.808-.131z" />
+                    </svg>
+                  )
+                ) : (
+                  /* Speaker — off / muted (X overlay) */
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M11.553 3.064A.75.75 0 0112 3.75v16.5a.75.75 0 01-1.255.555L5.46 16H2.75A1.75 1.75 0 011 14.25v-4.5C1 8.784 1.784 8 2.75 8H5.46l5.285-4.805a.75.75 0 01.808-.131z" />
+                    <path fillRule="evenodd" d="M16.28 9.22a.75.75 0 011.06 0l1.72 1.72 1.72-1.72a.75.75 0 111.06 1.06L20.12 12l1.72 1.72a.75.75 0 11-1.06 1.06L19.06 13.06l-1.72 1.72a.75.75 0 11-1.06-1.06L17.94 12l-1.66-1.72a.75.75 0 010-1.06z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </button>
             </div>
 
             {/* Timer */}

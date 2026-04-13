@@ -1,5 +1,6 @@
 import type React from "react"
-import { useState, createContext, useContext, useEffect } from "react"
+import { useState, createContext, useContext, useEffect, useRef } from "react"
+import { v4 as uuidv4 } from 'uuid'
 import { io, type Socket } from "socket.io-client"
 import {
   initSalesState,
@@ -49,6 +50,20 @@ const [pref_language,setPref_language]=useState("English")
   const salesCopilotState = useAppSelector(state=>state.salesCopilotReducer)
 
   const [recommendationsGenerated,setRecommendationsGenerated] = useState(false)
+
+  // --- Audio playback state ---
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioQueueRef = useRef<string[]>([])
+  const isAudioStillPlaying = useRef<boolean>(false)
+  const [audioUrl, setAudioUrl] = useState('')
+  const [resetAudioPlayerState, setResetAudioPlayerState] = useState('')
+  const audioUnlockedRef = useRef(false)
+  const pendingAutoplayRef = useRef(false)
+  const [isAudioPlayingState, setIsAudioPlayingState] = useState(false)
+  const [speakerEnabled, setSpeakerEnabled] = useState(true)
+  const speakerEnabledRef = useRef(true)
+  // ----------------------------
+
   const [toggleNotificationModal,setToggleNotificationModal] = useState({
            visibility:false,
            text:"",
@@ -63,6 +78,10 @@ const [pref_language,setPref_language]=useState("English")
 
   function updateSalesState(data:any) {
     console.log("handle incoming data", data, " the data type", data.type)
+
+    // Extract and play audio if present in the incoming data
+    extractAndPlayAudio(data)
+
     //return null;
     switch (data.type) {
       case "value-modified":
@@ -123,12 +142,42 @@ const [pref_language,setPref_language]=useState("English")
   function initialisationSalesState(data: any) {
     console.log('init sales data',data)
     //return null;
-    
+
     dispatch(initSalesState(data))
   }
 
-  
-  
+  // Keep speakerEnabledRef in sync so socket callbacks always read the latest value
+  useEffect(() => {
+    speakerEnabledRef.current = speakerEnabled
+  }, [speakerEnabled])
+
+  function enqueueAudio(audiourl: string) {
+    if (!speakerEnabledRef.current) return   // speaker is off — ignore
+    if (isAudioStillPlaying.current) {
+      audioQueueRef.current = [...audioQueueRef.current, audiourl]
+    } else {
+      isAudioStillPlaying.current = true
+      setIsAudioPlayingState(true)
+      setAudioUrl(audiourl)
+      setResetAudioPlayerState(uuidv4())
+    }
+  }
+
+  function extractAndPlayAudio(data: any) {
+    let audiourl: string | null = null
+    if (data?.audio_url && data.audio_url !== null) {
+      audiourl = data.audio_url
+    }
+    if (data?.audiobase64 && data.audiobase64 !== null) {
+      audiourl = `data:audio/mpeg;base64,${data.audiobase64}`
+    }
+    if (audiourl) {
+      enqueueAudio(audiourl)
+    }
+  }
+
+
+
 useEffect(()=>{
   console.log('sales copilot state',salesCopilotState)
 },[salesCopilotState])
@@ -165,10 +214,10 @@ useEffect(()=>{
         tempSocket.on("connect", connected);
         tempSocket.on("disconnect", disconnect);
 
-        tempSocket.on('questions_loader_res',initialisationSalesState)
-        tempSocket.on('ai_suggestion_res',updateSalesState)
-        tempSocket.on('notifications',updateNotifications)
-        
+        tempSocket.on('questions_loader_res', initialisationSalesState)
+        tempSocket.on('ai_suggestion_res', updateSalesState)
+        tempSocket.on('notifications', updateNotifications)
+
     setSocket(tempSocket)
 
     return () => {
@@ -176,6 +225,7 @@ useEffect(()=>{
       tempSocket.off("disconnect", disconnect)
       tempSocket.off("questions_loader_res", initialisationSalesState)
       tempSocket.off("ai_suggestion_res", updateSalesState)
+      tempSocket.off("notifications", updateNotifications)
       tempSocket.disconnect()
     }
   }, [])
@@ -209,12 +259,101 @@ useEffect(()=>{
       roomid: roomId,
         jobid: 'abcde',
         agentid: '1234',
-       
-        name: name, 
+
+        name: name,
       manual_transcript : `actually ${fieldname} is ${fieldvalue}`
     }
     socket?.emit('ai_suggestion_req_ins_v2',ob)
   }
+
+  // --- Audio event listeners ---
+  useEffect(() => {
+    const audioElem = audioRef.current
+    if (!audioElem) return
+
+    function handlePlay() {
+      isAudioStillPlaying.current = true
+      setIsAudioPlayingState(true)
+    }
+    function handlePause() {
+      setIsAudioPlayingState(false)
+    }
+    function handlePlaying() {
+      isAudioStillPlaying.current = true
+      setIsAudioPlayingState(true)
+    }
+    function handleEnded() {
+      const nextAudio = audioQueueRef.current.shift()
+      if (nextAudio) {
+        setAudioUrl(nextAudio)
+        setResetAudioPlayerState(uuidv4())
+      } else {
+        isAudioStillPlaying.current = false
+        setIsAudioPlayingState(false)
+        setAudioUrl('')
+      }
+    }
+
+    audioElem.addEventListener('play', handlePlay)
+    audioElem.addEventListener('pause', handlePause)
+    audioElem.addEventListener('playing', handlePlaying)
+    audioElem.addEventListener('ended', handleEnded)
+
+    return () => {
+      audioElem.removeEventListener('play', handlePlay)
+      audioElem.removeEventListener('pause', handlePause)
+      audioElem.removeEventListener('playing', handlePlaying)
+      audioElem.removeEventListener('ended', handleEnded)
+    }
+  }, [])
+
+  // Play audio when audioUrl changes
+  useEffect(() => {
+    const audioElem = audioRef.current
+    if (!audioElem || audioUrl === '') return
+
+    audioElem.src = audioUrl
+    audioElem.autoplay = true
+    audioElem.preload = 'auto'
+    const playPromise = audioElem.play()
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch((err: any) => {
+        console.warn('Auto-play failed:', err)
+        pendingAutoplayRef.current = true
+      })
+    }
+  }, [audioUrl, resetAudioPlayerState])
+
+  // Unlock audio on first user interaction (browser autoplay policy)
+  useEffect(() => {
+    function unlockAudio() {
+      if (audioUnlockedRef.current) return
+      audioUnlockedRef.current = true
+      const audioElem = audioRef.current
+      if (!audioElem) return
+      if (pendingAutoplayRef.current || audioUrl) {
+        const playPromise = audioElem.play()
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch((err: any) => {
+            console.warn('Auto-play retry failed:', err)
+          })
+        }
+        pendingAutoplayRef.current = false
+      }
+      document.removeEventListener('click', unlockAudio)
+      document.removeEventListener('touchstart', unlockAudio)
+      document.removeEventListener('keydown', unlockAudio)
+    }
+    document.addEventListener('click', unlockAudio, { once: true })
+    document.addEventListener('touchstart', unlockAudio, { once: true })
+    document.addEventListener('keydown', unlockAudio, { once: true })
+    return () => {
+      document.removeEventListener('click', unlockAudio)
+      document.removeEventListener('touchstart', unlockAudio)
+      document.removeEventListener('keydown', unlockAudio)
+    }
+  }, [audioUrl])
+  // -----------------------------
 
   const values = {
     socket,
@@ -222,10 +361,17 @@ useEffect(()=>{
     //socketConnected: socketConnected && socketReady,
     //ngrokServerUrl: "http://localhost:5000",
     setMsgLoading: (loading: boolean) => console.log("Loading:", loading),
-    oneWayUrl: "wss://recruito.vitti.insure", 
+    oneWayUrl: "wss://recruito.vitti.insure",
     toggleNotificationModal,setToggleNotificationModal,updateField,
     recommendationsGenerated,setRecommendationsGenerated,
-    pref_language,setPref_language
+    pref_language,setPref_language,
+    audioRef, audioUrl, setAudioUrl, audioQueueRef, isAudioStillPlaying, isAudioPlayingState,
+    speakerEnabled, setSpeakerEnabled
   }
-  return <Context.Provider value={values}>{children}</Context.Provider>
+  return (
+    <Context.Provider value={values}>
+      <audio ref={audioRef} style={{ display: 'none' }} />
+      {children}
+    </Context.Provider>
+  )
 }

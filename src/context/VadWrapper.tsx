@@ -21,7 +21,7 @@ export default function VadWrapper({children}){
 
     const oneWayUrl = ''
     const ngrokServerUrl = ''
-    const {socket,isSocketConnected,setMsgLoading} = useData()
+    const {socket,isSocketConnected,setMsgLoading,audioRef,isAudioStillPlaying,audioQueueRef} = useData()
     const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
     
     //const {currentUser} = useAuth()
@@ -36,6 +36,10 @@ export default function VadWrapper({children}){
 
     const initReqStatusRef = useRef(false);
     const isQuestionLoaderRunsFirstTime = useRef(true)
+
+    // Audio-VAD interaction refs
+    const wasPlayingBeforeSpeechRef = useRef(false)
+    const pausedAtRef = useRef(0)
 
     //const {PostReq } = useRequest()
 
@@ -159,12 +163,42 @@ export default function VadWrapper({children}){
         modelURL:`./silero_vad.onnx`,
         onVADMisfire: () => {
           console.log("Vad misfire")
+          // Misfire: resume audio that was paused on speech start
+          //@ts-ignore
+          if (wasPlayingBeforeSpeechRef.current && audioRef?.current) {
+            //@ts-ignore
+            audioRef.current.currentTime = pausedAtRef.current
+            //@ts-ignore
+            const playPromise = audioRef.current.play()
+            if (playPromise && typeof playPromise.catch === 'function') {
+              playPromise.catch((err: any) => console.warn('Audio resume failed:', err))
+            }
+            //@ts-ignore
+            isAudioStillPlaying.current = true
+            wasPlayingBeforeSpeechRef.current = false
+          }
         },
         onSpeechStart: () => {
           console.log("Speech start")
+          // If audio is playing, pause it
+          //@ts-ignore
+          if (isAudioStillPlaying.current && audioRef?.current && !audioRef.current.paused) {
+            //@ts-ignore
+            pausedAtRef.current = audioRef.current.currentTime
+            //@ts-ignore
+            audioRef.current.pause()
+            wasPlayingBeforeSpeechRef.current = true
+            //@ts-ignore
+            isAudioStillPlaying.current = false
+          }
         },
         onSpeechEnd:(audio)=>{
             console.log('getting data from vad2')
+          // Real speech detected - clear audio queue, keep audio stopped
+          //@ts-ignore
+          audioQueueRef.current = []
+          wasPlayingBeforeSpeechRef.current = false
+
           let speechStopDate = new Date();
 
             let data = {
