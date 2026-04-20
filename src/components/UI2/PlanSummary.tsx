@@ -49,7 +49,7 @@ export default function PlanSummary({ data, formatCurrency }: PlanSummaryProps) 
         return (
           <div key={summaryId}>
             {showHeading && (
-              <h2 className="text-xl font-semibold text-slate-800 mb-2">
+              <h2 className="text-lg font-semibold text-slate-700 mb-2">
                 Goal-Based Corpus Needs
               </h2>
             )}

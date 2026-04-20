@@ -1,196 +1,396 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Target,
   Users,
-  Briefcase,
   ShieldCheck,
-  ChevronRight,
+  Target,
+  Briefcase,
+  Copy,
+  Check,
   ChevronDown,
-  Plus,
 } from 'lucide-react';
+import { useData } from '../../context/DataWrapper';
+
+// ─── Types ─────────────────────────────────────────────────────────────────
+
+type FieldItem = {
+  field: string;
+  value: string;
+  type?: string;
+  options?: string[];
+  placeholder?: string;
+  modified_by_agent?: boolean;
+};
+
+type BoxData = {
+  header: string;
+  data: FieldItem[];
+};
+
+type TableData = {
+  header: string;
+  table_header: string[];
+  table_values: any[][];
+};
+
+type BasicInfoData = {
+  boxA?: BoxData;
+  table?: TableData;
+  boxB?: BoxData;
+  boxC?: BoxData;
+  boxD?: BoxData;
+};
 
 type BasicInfoProps = {
-  data?: unknown;
+  data?: BasicInfoData;
 };
 
-const App = (_props: BasicInfoProps) => {
-  const familyMembers = [
-    { name: 'Wife', relation: 'Spouse', age: '0' },
-    { name: 'Child 1', relation: 'Child', age: '1' },
-    { name: 'Child 2', relation: 'Child', age: '2' },
-  ];
+// ─── Icon map keyed by box header ──────────────────────────────────────────
+
+const SECTION_ICONS: Record<string, React.ReactNode> = {
+  'Client Info':             <Users       size={18} className="text-blue-500"   />,
+  'Financial Profile':       <ShieldCheck size={18} className="text-emerald-500"/>,
+  'Needs & Risk Assesment':  <Target      size={18} className="text-orange-500" />,
+  'Lead & meeting context':  <Briefcase   size={18} className="text-purple-500" />,
+};
+
+function getIcon(header: string) {
+  return (
+    SECTION_ICONS[header] ?? <ShieldCheck size={18} className="text-slate-400" />
+  );
+}
+
+// ─── Main component ─────────────────────────────────────────────────────────
+
+export default function BasicInfo({ data }: BasicInfoProps) {
+  const { updateField } = useData();
+
+  if (!data) {
+    return (
+      <div className="p-8 text-sm text-gray-400">Loading client data…</div>
+    );
+  }
+
+  const handleCopy = (value: string) => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(value ?? '').catch(console.error);
+    } else {
+      // Fallback for non-secure contexts (HTTP)
+      const textArea = document.createElement("textarea");
+      textArea.value = value ?? '';
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {
+        console.error('Fallback copy failed', err);
+      }
+      textArea.remove();
+    }
+  };
+
+  const handleBlur = (fieldName: string, value: string) => {
+    updateField(fieldName, value);
+  };
+
+  const BOX_ORDER = ['boxA', 'table', 'boxB', 'boxC', 'boxD'] as const;
 
   return (
-    <div className="w-full bg-gray-50 font-sans text-gray-800">
-      <main className="flex min-w-0 flex-col">
-        <div className="flex-1 overflow-y-auto bg-[#f8fafc] px-3 py-4 sm:px-4 sm:py-5 lg:px-6">
-          <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 sm:gap-6">
-            <div className="grid grid-cols-12 gap-4 sm:gap-6">
-              <div className="col-span-12 space-y-6">
-                <Section icon={<Users size={18} className="text-blue-500" />} title="Personal Profile">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <InputField label="Customer Name" value="Vibhuti" />
-                    <InputField label="Age" type="number" value="40" />
-                    <SelectField label="Gender" options={['Male', 'Female', 'Other']} />
-                    <SelectField label="Marital Status" options={['Married', 'Single', 'Divorced', 'Widowed']} />
-                    <InputField label="City / Tier" value="Bangalore / Tier 1" />
-                    <InputField label="Occupation" value="Software Engineer" />
-                    <SelectField label="Spouse Working?" options={['Unknown', 'Yes', 'No']} />
-                    <InputField label="Number of Dependents" type="number" value="3" />
-                    <SelectField label="Primary Earning Member?" options={['Yes', 'No', 'Unknown']} />
-                  </div>
+    <div className="min-w-0 w-full font-sans text-gray-800">
+      <div className="flex w-full flex-col gap-4 sm:gap-6 min-w-0">
+        <div className="col-span-12 space-y-6 min-w-0">
 
-                  <div className="mt-6">
-                    <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                        Family Structure
-                      </label>
-                      <button className="flex items-center gap-1 text-[10px] font-bold uppercase text-blue-600 hover:text-blue-700">
-                        <Plus size={12} /> Add Member
-                      </button>
-                    </div>
-                    <div className="overflow-x-auto rounded-lg border border-blue-100 bg-white shadow-sm">
-                      <table className="w-full min-w-[420px] text-left text-sm">
-                        <thead className="border-b border-blue-100 bg-[#f1f5f9]">
-                          <tr>
-                            <th className="px-4 py-2 font-semibold text-gray-600">Name</th>
-                            <th className="px-4 py-2 font-semibold text-gray-600">Relation</th>
-                            <th className="px-4 py-2 font-semibold text-gray-600">Age</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-blue-50">
-                          {familyMembers.map((member, i) => (
-                            <tr key={i} className="transition-colors hover:bg-blue-50/30">
-                              <td className="px-4 py-2.5 text-gray-700">{member.name}</td>
-                              <td className="px-4 py-2.5 text-gray-700">{member.relation}</td>
-                              <td className="px-4 py-2.5 text-gray-700">{member.age}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                </Section>
+            {BOX_ORDER.map((key) => {
+              if (key === 'table') {
+                const table = data.table;
+                if (!table) return null;
+                return (
+                  <Section
+                    key="table"
+                    icon={<Users size={18} className="text-blue-500" />}
+                    title={table.header || 'Family Structure'}
+                  >
+                    <FamilyTable table={table} />
+                  </Section>
+                );
+              }
 
-                <Section icon={<ShieldCheck size={18} className="text-emerald-500" />} title="Financial Portfolio">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                    <InputField label="Monthly Income" placeholder="â‚¹ Amount" />
-                    <InputField label="Approx Monthly Savings" placeholder="â‚¹ Amount" />
-                    <SelectField label="Existing Term Insurance?" options={['Unknown', 'Yes', 'No']} />
-                    <InputField label="Life Cover Amount" placeholder="â‚¹ Sum Assured" />
-                    <SelectField label="Existing Regular Invest.?" options={['Unknown', 'Yes', 'No']} />
-                    <SelectField label="Existing Liabilities?" options={['No', 'Yes']} />
-                    <div className="md:col-span-3">
-                      <InputField
-                        label="Outstanding Liability Amount (Approx)"
-                        placeholder="Enter outstanding debt amount if any"
-                      />
-                    </div>
-                  </div>
-                </Section>
+              const box = data[key] as BoxData | undefined;
+              if (!box || !box.header) return null;
 
-                <Section icon={<Target size={18} className="text-orange-500" />} title="Needs & Risk Assessment">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <SelectField label="Risk Appetite" options={['Unknown', 'Low', 'Medium', 'High']} />
-                    <SelectField
-                      label="Current Investment Preference"
-                      options={['Unknown', 'Guaranteed', 'Market-linked', 'Mixed']}
-                    />
-                    <SelectField
-                      label="Near-term Major Milestone"
-                      options={['Unknown', 'Child Education', 'Child Marriage', 'Retirement', 'Home Purchase', 'None']}
-                    />
-                    <SelectField label="Health / Underwriting Sensitivity" options={['Unknown', 'No', 'Yes']} />
-                  </div>
+              return (
+                <Section
+                  key={key}
+                  icon={getIcon(box.header)}
+                  title={box.header}
+                >
+                  <DataFields
+                    fields={box.data ?? []}
+                    onCopy={handleCopy}
+                    onBlur={handleBlur}
+                  />
                 </Section>
+              );
+            })}
 
-                <Section icon={<Briefcase size={18} className="text-purple-500" />} title="Lead & Meeting Context">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <SelectField
-                      label="Meeting Source"
-                      options={[
-                        'Unknown',
-                        'Referral',
-                        'Walk-in',
-                        'Existing Customer',
-                        'Digital Lead',
-                        'Tax Season Lead',
-                        'Child Plan Lead',
-                        'Retirement Lead',
-                        'Savings Lead',
-                      ]}
-                    />
-                    <InputField label="Lead Campaign Tag" placeholder="e.g. FB_Ads_Q1" />
-                    <SelectField label="Past Policyholder?" options={['No', 'Yes']} />
-                    <InputField label="Existing Insurer Relationship" placeholder="e.g. LIC, HDFC Life" />
-                    <InputField label="Prior Product Shown" placeholder="e.g. Sanchay Plus" />
-                    <div className="md:col-span-2">
-                      <label className="mb-1 block text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                        Previous Interaction / Meeting Notes
-                      </label>
-                      <textarea
-                        className="min-h-[100px] w-full rounded-md border border-gray-200 bg-gray-50 p-2.5 text-sm outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                        placeholder="Note down client preferences, meeting objectives, and specific concerns discussed..."
-                      />
-                    </div>
-                  </div>
-                </Section>
-              </div>
-            </div>
           </div>
         </div>
-
-        <footer className="shrink-0 border-t border-gray-200 bg-white px-3 py-3 sm:px-6 lg:px-8">
-          <div className="flex justify-stretch sm:justify-end">
-            <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-100 transition-all hover:bg-blue-700 sm:w-auto sm:px-6 sm:py-2">
-              Next: Goal Setting
-              <ChevronRight size={16} />
-            </button>
-          </div>
-        </footer>
-      </main>
     </div>
   );
-};
+}
 
-const Section = ({ icon, title, children }) => (
-  <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-    <div className="flex items-center gap-3 border-b border-gray-50 px-4 py-3 sm:px-5 sm:py-4">
-      {icon}
-      <h3 className="text-sm font-bold tracking-tight text-slate-700">{title}</h3>
+// ─── Section wrapper ────────────────────────────────────────────────────────
+
+function Section({
+  icon,
+  title,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-w-0 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-center gap-3 border-b border-gray-50 px-4 py-3 sm:px-5 sm:py-4">
+        {icon}
+        <h3 className="text-lg font-semibold text-slate-700">
+          {title}
+        </h3>
+      </div>
+      <div className="min-w-0 p-4 sm:p-5">{children}</div>
     </div>
-    <div className="p-4 sm:p-5">{children}</div>
-  </div>
-);
+  );
+}
 
-const InputField = ({ label, type = 'text', value = '', placeholder = '' }) => (
-  <div className="flex flex-col gap-1.5">
-    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{label}</label>
-    <input
-      type={type}
-      defaultValue={value}
-      placeholder={placeholder}
-      className="rounded-md border border-gray-200 bg-gray-50 p-2.5 text-sm outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
-    />
-  </div>
-);
+// ─── Grid of fields ─────────────────────────────────────────────────────────
 
-const SelectField = ({ label, options }) => (
-  <div className="flex flex-col gap-1.5">
-    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{label}</label>
-    <div className="group relative">
-      <select className="w-full appearance-none cursor-pointer rounded-md border border-gray-200 bg-gray-50 p-2.5 pr-10 text-sm outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100">
-        {options.map((opt) => (
-          <option key={opt} value={opt}>
-            {opt}
-          </option>
-        ))}
-      </select>
-      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500">
-        <ChevronDown size={16} />
+function DataFields({
+  fields,
+  onCopy,
+  onBlur,
+}: {
+  fields: FieldItem[];
+  onCopy: (v: string) => void;
+  onBlur: (name: string, v: string) => void;
+}) {
+  if (!fields || fields.length === 0) {
+    return <p className="text-sm text-gray-400">No data available.</p>;
+  }
+
+  return (
+    // CSS grid: items in the same row automatically share the tallest height
+    <div className="grid min-w-0 grid-cols-1 gap-4 items-stretch sm:grid-cols-2 md:grid-cols-3">
+      {fields.map((field, i) => (
+        <div
+          key={i}
+          className={field.type === 'text-area' ? 'col-span-1 sm:col-span-2 md:col-span-3' : ''}
+        >
+          <FieldCell
+            field={field}
+            onCopy={onCopy}
+            onBlur={onBlur}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Individual field cell ───────────────────────────────────────────────────
+
+function FieldCell({
+  field,
+  onCopy,
+  onBlur,
+}: {
+  field: FieldItem;
+  onCopy: (v: string) => void;
+  onBlur: (name: string, v: string) => void;
+}) {
+  const [localValue, setLocalValue] = useState(field.value ?? '');
+  const [copied, setCopied] = useState(false);
+
+  // Sync if the Redux value changes from the backend
+  useEffect(() => {
+    setLocalValue(field.value ?? '');
+  }, [field.value]);
+
+  const handleCopyClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onCopy(localValue);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
+  const handleBlur = () => {
+    onBlur(field.field, localValue);
+  };
+
+  const baseInputClass =
+    'w-full min-w-0 flex-1 rounded-md border p-2.5 text-sm outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100';
+
+  const inputClass = `${baseInputClass} border-gray-200 bg-gray-50`;
+
+  return (
+    // h-full + flex col ensures cell stretches to row height
+    <div className="flex h-full min-w-0 flex-col gap-1">
+      <div className="flex items-center justify-between gap-1">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <label className="truncate text-sm text-slate-500">
+            {field.field}
+          </label>
+        </div>
+      </div>
+
+      {/* Input — flex-1 so it fills all remaining height */}
+      <div className="relative flex min-w-0 flex-1 group">
+        {field.type === 'text-area' ? (
+          <textarea
+            value={localValue}
+            rows={5}
+            placeholder={field.placeholder ?? ''}
+            onChange={(e) => setLocalValue(e.target.value)}
+            onBlur={handleBlur}
+            className={`${inputClass} pr-9 min-h-[120px] resize-none`}
+          />
+        ) : field.type === 'option' ? (
+          <div className="relative flex-1 min-w-0">
+            <select
+              value={localValue}
+              onChange={(e) => {
+                setLocalValue(e.target.value);
+                onBlur(field.field, e.target.value);
+              }}
+              className={`${inputClass} cursor-pointer appearance-none pr-9`}
+            >
+              {(field.options ?? []).map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#2EA9FF]">
+              <ChevronDown size={14} />
+            </div>
+          </div>
+        ) : (
+          <input
+            type="text"
+            value={localValue}
+            placeholder={field.placeholder ?? ''}
+            onChange={(e) => setLocalValue(e.target.value)}
+            onBlur={handleBlur}
+            className={`${inputClass} pr-9`}
+          />
+        )}
+        
+        {/* Copy button */}
+        {field.type !== 'option' && (
+          <button
+            type="button"
+            onClick={handleCopyClick}
+            title="Copy"
+            className={`absolute z-20 right-1 p-2 text-gray-400 hover:text-gray-600 transition-colors ${
+              field.type === 'text-area' ? 'top-1' : 'top-1/2 -translate-y-1/2'
+            }`}
+          >
+            {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+          </button>
+        )}
       </div>
     </div>
-  </div>
-);
+  );
+}
 
-export default App;
+// ─── Family structure table ──────────────────────────────────────────────────
+
+function FamilyTable({ table }: { table: TableData }) {
+  const [copiedCell, setCopiedCell] = useState<string | null>(null);
+  const copyCell = (key: string, value: string) => {
+    const text = value ?? '';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(console.error);
+    } else {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {
+        console.error('Fallback copy failed', err);
+      }
+      textArea.remove();
+    }
+    setCopiedCell(key);
+    setTimeout(() => setCopiedCell((prev) => (prev === key ? null : prev)), 1200);
+  };
+  return (
+    <div>
+      <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-1 flex items-center justify-between gap-1">
+            <label className="text-sm text-slate-500">
+              Members
+            </label>
+            {/* <button className="flex items-center gap-1 text-xs font-semibold text-[#2EA9FF] hover:text-[#1E9BF0] transition-colors">
+              <Plus size={14} /> Add Member
+            </button> */}
+          </div>
+      </div>
+      <div className="overflow-x-auto rounded-lg border border-blue-100 bg-white shadow-sm">
+        <table className="w-full min-w-[420px] text-left text-sm">
+          <thead className="border-b border-blue-100 bg-[#f1f5f9]">
+            <tr>
+              {(table.table_header ?? []).map((h, i) => (
+                <th
+                  key={i}
+                  className="px-4 py-2 font-semibold capitalize text-gray-600"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-blue-50">
+            {(table.table_values ?? []).map((row, i) => (
+              <tr
+                key={i}
+                className="transition-colors hover:bg-blue-50/30"
+              >
+                {row.map((cell, j) => (
+                  <td key={j} className="px-4 py-2.5 text-gray-700">
+                    <div className="flex items-center gap-2">
+                      <span>{cell}</span>
+                      {cell !== null && cell !== undefined && String(cell) !== '' && (
+                        <button
+                          type="button"
+                          onClick={() => copyCell(`basic-${i}-${j}`, String(cell))}
+                          className="rounded p-1 text-slate-400 hover:text-slate-600"
+                          title="Copy"
+                        >
+                          {copiedCell === `basic-${i}-${j}` ? (
+                            <Check size={14} className="text-green-500" />
+                          ) : (
+                            <Copy size={14} />
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

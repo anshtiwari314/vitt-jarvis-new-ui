@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/store';
-import { setNavigation, setRecomendationSelected } from '../../reducers/salesCopilotReducer';
+import { setNavigation } from '../../reducers/salesCopilotReducer';
 import { useData } from '../../context/DataWrapper';
 import { useVad } from '../../context/VadWrapper';
 
@@ -13,44 +13,42 @@ export default function SideBarMobile() {
   const { recommendationsGenerated } = useData();
   // --- End of Real State ---
   const [recommendationsOpen, setRecommendationsOpen] = useState(false);
+  const [financialReviewOpen, setFinancialReviewOpen] = useState(false);
   // --- Draggable Button State ---
-  const [position, setPosition] = useState({ x: 16, y: window.innerHeight / 2 });
+  const [position, setPosition] = useState({ x: typeof window !== 'undefined' ? window.innerWidth - 60 : 16, y: 80 });
   const [isDragging, setIsDragging] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
   const [dragStart, setDragStart] = useState({ pointerX: 0, pointerY: 0, buttonX: 0, buttonY: 0 });
   const buttonRef = useRef(null);
       const salesData = useAppSelector(state => state.salesCopilotReducer.salesData); 
   
- const mockData = salesData.recommendations;
-   
-    const recGroups = mockData.map(item => item.planName);
-   
-    // const recGroups = Object.keys(mockData);
-  // --- Merged Handler (from SideNavigation logic + SideBarMobile logic) ---
-  const handleNavigationClick = (page: string) => {
-    dispatch(setNavigation(page)); // Real logic from SideNavigation
-    setIsOpen(false); // Logic from SideBarMobile (to close panel)
-  };
-   const handleRecommendationClick = (recGroup: string) => {
-          console.log("clicked on recommendation group---->",recGroup);
-          dispatch(setRecomendationSelected(recGroup));
-          dispatch(setNavigation("productRec"));
-      }
+  const mockData = salesData.recommendations;
+  const recCategories: { category: string; title: string }[] = Array.isArray(mockData)
+    ? []
+    : (mockData as any)?.categories?.map((c: any) => ({
+        category: c.category,
+        title: c.title || c.category,
+      })) ?? [];
 
-  // --- Nav Items (from SideNavigation) ---
-  const navItems = [
-    { id: 'basicInfo', label: 'Basic Info', icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke="#38BDF8"></path></svg> },
-    { id: 'asset', label: 'Assets', icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" stroke="#38BDF8"></path></svg> },
-    { id: 'liability', label: 'Liabilities', icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" stroke="#38BDF8"></path></svg> },
-    { id: 'financialGoals', label: 'Financial Goals', icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h1a2 2 0 002-2v-1a2 2 0 012-2h1.945M12 4v4m0 0l-2-2m2 2l2-2" stroke="#38BDF8"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18V14m0 4a2 2 0 002-2v-1a2 2 0 00-2-2h-1a2 2 0 00-2 2v1a2 2 0 002 2z" stroke="#38BDF8"></path></svg> },
-    { id: 'planSummary', label: 'Plan Summary', icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke="#38BDF8"></path></svg> },
-     {
-            id: 'productRec', 
-            label: 'Recommendations', 
-            icon: <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke="#38BDF8"></path></svg> ,
-            subItems: recGroups,
-        },
-  ];
+  const recNavKey = (cat: string) => `Recommendations::${cat}`;
+
+  useEffect(() => {
+    if (typeof currentNavigation === 'string' && currentNavigation.startsWith('Recommendations::')) {
+      setRecommendationsOpen(true);
+    }
+    if (currentNavigation === 'Assets' || currentNavigation === 'Liabilities') {
+      setFinancialReviewOpen(true);
+    }
+  }, [currentNavigation]);
+
+  // --- Merged Handler ---
+  const handleNavigationClick = (page: string) => {
+    dispatch(setNavigation(page));
+    setIsOpen(false);
+  };
+
+  const ICON_COLOR = "#38BDF8";
+  const iconClass = "w-5 h-5 shrink-0";
 
 
   // --- Draggable Button Handlers (from SideBarMobile) ---
@@ -117,7 +115,11 @@ export default function SideBarMobile() {
   useEffect(() => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      setPosition(prev => ({ ...prev, y: window.innerHeight / 2 - rect.height / 2 }));
+      // Position at the right edge, just below the header
+      setPosition({ 
+        x: window.innerWidth - rect.width - 16, 
+        y: 80 
+      });
     }
   }, []);
 
@@ -203,16 +205,16 @@ export default function SideBarMobile() {
         {/* AI Copilot Header */}
         <div className="flex items-center gap-3 p-4 border-b border-slate-200">
           <div className="bg-blue-500 p-2 rounded-lg">
-            <svg 
-  xmlns="http://www.w3.org/2000/svg" 
-  width="20" 
-  height="20" 
-  viewBox="0 0 24 24" 
-  fill="none" 
-  stroke="white" 
-  stroke-width="2" 
-  stroke-linecap="round" 
-  stroke-linejoin="round"
+            <svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="white"
+  strokeWidth="2"
+  strokeLinecap="round"
+  strokeLinejoin="round"
 >
   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
   <path d="M12 11.1c-1.9-1.8-4.6-.9-4.6 1.4 0 1.9 4.6 4.1 4.6 4.1s4.6-2.2 4.6-4.1c0-2.3-2.7-3.2-4.6-1.4z"/>
@@ -221,56 +223,95 @@ export default function SideBarMobile() {
           <h1 className="text-lg font-bold text-slate-800">Life Ins AI Copilot</h1>
         </div>
 
-        {/* Navigation (Using real navItems and handler) */}
-       <nav className="flex-1 p-2 space-y-1">
-                {navItems.map(item => (
-                    <div key={item.id}>
-                        <div className="flex items-center justify-between">
-                            <a
-                                className={`flex items-center flex-1 px-3 py-3 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 ${currentNavigation === item.id ? 'active-nav-item' : ''}`}
-                                style={{cursor:'default'}}
-                                onClick={() => handleNavigationClick(item.id)}
-                            >
-                                {item.icon}
-                                {item.label}
-                            </a>
-                            {item.id === 'productRec' && item.subItems && (
-                                <button
-                                    onClick={() => setRecommendationsOpen(!recommendationsOpen)}
-                                    className="flex items-center justify-center mr-2 transition-transform"
-                                >
-                                    <svg
-                                        className={`w-4 h-4 transition-transform ${
-                                            recommendationsOpen ? "rotate-90 text-sky-500" : "text-slate-400"
-                                        }`}
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                                    </svg>
-                                    <span className="text-xs font-semibold text-slate-500 ml-1 bg-slate-200 rounded-full px-2 py-0.5">
-                                        {item.subItems.length}
-                                    </span>
-                                </button>
-                            )}
-                        </div>
-                        {item.id === 'productRec' && recommendationsOpen && item.subItems && (
-                            <div className="ml-6 mt-1 space-y-1 border-l-2 border-slate-200 pl-2">
-                                {item.subItems.map((subItem) => (
-                                    <button
-                                        key={subItem}
-                                        className="block w-full text-left px-3 py-2 text-sm text-slate-600 rounded-lg hover:bg-slate-100 transition-colors duration-200"
-                                        onClick={() => handleRecommendationClick(subItem)}
-                                    >
-                                        {subItem}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+        {/* Navigation */}
+        <nav className="flex-1 p-2 space-y-1">
+            {/* Basic Info */}
+            <button
+                className={`flex items-center gap-3 w-full px-3 py-2.5 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 text-sm ${currentNavigation === 'Basic Info' ? 'active-nav-item' : ''}`}
+                onClick={() => handleNavigationClick('Basic Info')}
+            >
+                <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                Basic Info
+            </button>
+
+            {/* Financial Goals */}
+            <button
+                className={`flex items-center gap-3 w-full px-3 py-2.5 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 text-sm ${currentNavigation === 'Financial Goals' ? 'active-nav-item' : ''}`}
+                onClick={() => handleNavigationClick('Financial Goals')}
+            >
+                <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                Financial Goals
+            </button>
+
+            {/* Financial Review — dropdown */}
+            <div>
+                <button
+                    className={`flex items-center gap-3 w-full px-3 py-2.5 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 text-sm ${currentNavigation === 'Assets' || currentNavigation === 'Liabilities' ? 'active-nav-item' : ''}`}
+                    onClick={() => setFinancialReviewOpen(prev => !prev)}
+                >
+                    <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span className="flex-1 text-left">Financial Review</span>
+                    <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${financialReviewOpen ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+                {financialReviewOpen && (
+                    <div className="ml-4 mt-1 space-y-1 border-l-2 border-slate-100 pl-3">
+                        <button
+                            className={`flex items-center gap-3 w-full px-3 py-2.5 text-slate-600 font-medium rounded-lg hover:bg-slate-100 text-sm ${currentNavigation === 'Assets' ? 'active-nav-item' : ''}`}
+                            onClick={() => handleNavigationClick('Assets')}
+                        >
+                            <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                            Assets
+                        </button>
+                        <button
+                            className={`flex items-center gap-3 w-full px-3 py-2.5 text-slate-600 font-medium rounded-lg hover:bg-slate-100 text-sm ${currentNavigation === 'Liabilities' ? 'active-nav-item' : ''}`}
+                            onClick={() => handleNavigationClick('Liabilities')}
+                        >
+                            <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a2 2 0 00-2 2v8a3 3 0 003 3z"/></svg>
+                            Liabilities
+                        </button>
                     </div>
-                ))}
-            </nav>
+                )}
+            </div>
+
+            {/* Plan Summary */}
+            <button
+                className={`flex items-center gap-3 w-full px-3 py-2.5 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 text-sm ${currentNavigation === 'Plan Summary' ? 'active-nav-item' : ''}`}
+                onClick={() => handleNavigationClick('Plan Summary')}
+            >
+                <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+                Plan Summary
+            </button>
+
+            {/* Recommendations — dropdown */}
+            <div>
+                <button
+                    className={`flex items-center gap-3 w-full px-3 py-2.5 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 text-sm ${typeof currentNavigation === 'string' && currentNavigation.startsWith('Recommendations::') ? 'active-nav-item' : ''}`}
+                    onClick={() => setRecommendationsOpen(prev => !prev)}
+                >
+                    <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                    <span className="flex-1 text-left">Recommendations</span>
+                    <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${recommendationsOpen ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+                {recommendationsOpen && (
+                    <div className="ml-4 mt-1 space-y-1 border-l-2 border-slate-100 pl-3">
+                        {recCategories.length === 0 && (
+                            <div className="px-3 py-2 text-xs text-slate-400">No recommendations yet</div>
+                        )}
+                        {recCategories.map(cat => (
+                            <button
+                                key={cat.category}
+                                className={`flex items-center gap-3 w-full px-3 py-2 text-slate-600 font-medium rounded-lg hover:bg-slate-100 text-sm ${currentNavigation === recNavKey(cat.category) ? 'active-nav-item' : ''}`}
+                                onClick={() => handleNavigationClick(recNavKey(cat.category))}
+                            >
+                                <span className="flex-1 text-left">{cat.title}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </nav>
 
         {/* Recommendations Status (Using real data) */}
         {recommendationsGenerated && (

@@ -1,34 +1,13 @@
 import RecommendationToggleCard from "./RecommendationToggleCard"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faLightbulb } from "@fortawesome/free-solid-svg-icons"
- 
-interface Recommendation {
-  id: string
-  title: string
-  description: string
-  calculationDetails: string
-  isPrimary?: boolean
-  cover?: number
-  targetCorpus?: number
-  term?: string
-  premium: number
-  reason: string
-  header?: string
-  sub_header?: string
-  text_area_value?: string
-  cols?: { [key: string]: string }
-  calculation?: { [key: string]: string }
-}
- 
+
 interface RecommendationsProps {
-  data: Recommendation[]
+  data: any[]
   formatCurrency: (value: number) => string
 }
 
- 
 export default function Recommendations({ data, formatCurrency }: RecommendationsProps) {
-  console.log("Rendering Recommendations component",data)
-
   if (!data || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4">
@@ -40,19 +19,19 @@ export default function Recommendations({ data, formatCurrency }: Recommendation
       </div>
     )
   }
- 
+
   return (
     <div className="space-y-4">
-     {data.map((rec, idx) => {
-      const realId = rec.id || `rec-${idx}`
-      return (
-        <RecommendationToggleCard
-          key={realId}
-          recommendation={rec}
-          formatCurrency={formatCurrency}
-        />
-      )
-    })}
+      {data.map((rec: any, idx: number) => {
+        const realId = rec.id || `rec-${idx}`
+        return (
+          <RecommendationToggleCard
+            key={realId}
+            recommendation={rec}
+            formatCurrency={formatCurrency}
+          />
+        )
+      })}
     </div>
   )
 }

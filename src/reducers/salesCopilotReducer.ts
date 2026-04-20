@@ -1,5 +1,6 @@
 import { createSlice,current } from "@reduxjs/toolkit";
 import { act } from "react";
+import { recommendationsData } from "../data/recommendation.js";
 
 // Define types for our data structure for type safety
 export interface PfrData {
@@ -366,7 +367,7 @@ const initialCopilotLoadState= {
 };
 
 const initialCopilotState = {
-  "navigation": "",
+  "navigation": "Basic Info",
   "pref_language":"English",
   "language_ids":["English","Hindi","Marathi"],
   "RecomendationSelected":"",
@@ -376,68 +377,48 @@ const initialCopilotState = {
     "basicInfo": {
       "boxA": {
         "header": "",
-        "data": {
-          // "name": "",
-          // "age": 0,
-          // "city": "",
-          // "occupation": "",
-          // "dependents": 0,
-          // "address": ""
-        }
+        "data": []
       },
       "table": {
         "header": "",
         "table_header": [],
         "table_values": []
-      }
-    },
-    "assets": {
-      "boxA": {
-        "header": "",
-        "sub_header": "",
-        "sub_header_data": 0,
-        "text_area_header": "",
-        "text_area_value": ""
       },
       "boxB": {
         "header": "",
-        "text_area_headerA": "",
-        "text_area_valueA": "",
-        "text_area_headerB": "",
-        "text_area_valueB": ""
+        "data": []
       },
-      "table": {
+      "boxC": {
         "header": "",
-        "table_header": [],
-        "table_values": []
+        "data": []
+      },
+      "boxD": {
+        "header": "",
+        "data": []
       }
     },
-    "liabilities": {
-      "boxA": {
-        "header": "",
-        "data": {
-          // "Monthly Expenses (INR)": 0,
-          // "Total Monthly EMI (INR)": 0,
-          // "Credit Card Dues (if any)": 0
-        }
+    "financialReview": {
+      "assets": {
+        "boxA": {
+          "heading": { "header": "", "sub_header": "", "sub_header_data": 0, "modified_by_agent": false },
+          "text_area": { "text_area_header": "", "text_area_value": "", "placeholder": "", "modified_by_agent": false }
+        },
+        "boxB": {
+          "header": "",
+          "text_area_1": { "text_area_headerA": "", "text_area_valueA": "", "placeholder": "", "modified_by_agent": false },
+          "text_area_2": { "text_area_headerB": "", "text_area_valueB": "", "placeholder": "", "modified_by_agent": false }
+        },
+        "table": { "header": "", "table_header": [], "table_values": [] }
       },
-      "boxB": {
-        "header": "",
-        "data": {
-          // "Outstanding Amount (INR)": 0,
-          // "Monthly EMI (INR)": 0,
-          // "Remaining Tenure (Months)": 0
-        }
-      },
-      "table": {
-        "header": "",
-        "table_header": [],
-        "table_values": []
+      "liabilities": {
+        "boxA": { "header": "", "data": [] },
+        "boxB": { "header": "", "data": [] },
+        "table": { "header": "", "table_header": [], "table_values": [] }
       }
     },
-    "financialGoals": [],
+    "financialGoals": { "goals": [] },
     "planSummary": [],
-    "recommendations": [],
+    "recommendations": recommendationsData,
     // "followUpQn": {
     //   "header": "",
     //   "data": []
@@ -458,6 +439,42 @@ const initialCopilotState = {
   }
 }
 
+function normalizeInitPayload(rawPayload: any) {
+  // Support both formats:
+  // 1) direct object payload
+  // 2) wrapped payload ["questions_loader_res", {...}]
+  let payload = rawPayload;
+  if (Array.isArray(rawPayload) && rawPayload.length >= 2 && typeof rawPayload[1] === "object") {
+    payload = rawPayload[1];
+  }
+
+  const incomingSalesData = payload?.salesData ?? {};
+  const normalizedSalesData: any = {
+    ...incomingSalesData,
+    financialReview: {
+      ...(initialCopilotState.salesData.financialReview ?? {}),
+      ...(incomingSalesData.financialReview ?? {}),
+    },
+    cues: {
+      header: incomingSalesData?.cues?.header ?? "",
+      cards: Array.isArray(incomingSalesData?.cues?.cards) ? incomingSalesData.cues.cards : [],
+    },
+  };
+
+  // Backward compatibility: some payloads keep assets/liabilities at salesData root.
+  if (incomingSalesData?.assets) {
+    normalizedSalesData.financialReview.assets = incomingSalesData.assets;
+  }
+  if (incomingSalesData?.liabilities) {
+    normalizedSalesData.financialReview.liabilities = incomingSalesData.liabilities;
+  }
+
+  return {
+    ...payload,
+    salesData: normalizedSalesData,
+  };
+}
+
 
 const salesCopilotSlice = createSlice({
   name: "salesCopilotReducer", // Changed from "usersReducer" for consistency
@@ -465,9 +482,16 @@ const salesCopilotSlice = createSlice({
   reducers: {
     initSalesState:(state,action)=>{
       console.log('action payload',action.payload)
-      //state = {...state,...action.payload};
-      //state.
-      return action.payload;
+      const payload = normalizeInitPayload(action.payload ?? {});
+      return {
+        ...state,
+        ...payload,
+        navigation: payload.navigation ?? state.navigation ?? "Basic Info",
+        salesData: {
+          ...state.salesData,
+          ...(payload.salesData ?? {}),
+        },
+      };
     },
      updatePref_language:(state,action)=>{
       state.pref_language=action.payload;
@@ -495,19 +519,24 @@ const salesCopilotSlice = createSlice({
 
        return state;
     },
-    updateAssets:(state,action)=>{
-      state.salesData.assets={
-        ...state.salesData.assets,
+    updateFinancialReview:(state,action)=>{
+      state.salesData.financialReview={
+        ...state.salesData.financialReview,
         ...action.payload,
       }
-     
+      return state;
+    },
+    updateAssets:(state,action)=>{
+      state.salesData.financialReview.assets={
+        ...state.salesData.financialReview.assets,
+        ...action.payload,
+      }
       return state;
     },
     updateLiabilities:(state,action)=>{
       console.log('liabilities',action)
-
-      state.salesData.liabilities={
-        ...state.salesData.liabilities,
+      state.salesData.financialReview.liabilities={
+        ...state.salesData.financialReview.liabilities,
         ...action.payload
       }
       return state;
@@ -515,6 +544,20 @@ const salesCopilotSlice = createSlice({
     updateFinancialGoals: (state, action) => {
       state.salesData.financialGoals = action.payload;
 
+      return state;
+    },
+
+    toggleFinancialGoalCard: (state, action) => {
+      // payload: { sectionIndex, cardId, modified_by_agent, match }
+      const { sectionIndex, cardId, modified_by_agent, match } = action.payload;
+      const goals = (state.salesData.financialGoals as any)?.goals;
+      if (goals?.[sectionIndex]) {
+        const card = goals[sectionIndex].cards.find((c: any) => c.id === cardId);
+        if (card) {
+          card.modified_by_agent = modified_by_agent;
+          if (match !== undefined) card.match = match;
+        }
+      }
       return state;
     },
 
@@ -530,6 +573,19 @@ const salesCopilotSlice = createSlice({
       state.salesData.recommendations = action.payload;
       return state;
     },
+    updateRecommendationPlanDetails: (state, action) => {
+      // payload: { category, plan, planDetails }
+      const { category, plan, planDetails } = action.payload || {};
+      const recs: any = state.salesData.recommendations;
+      const cats = recs?.categories;
+      if (!Array.isArray(cats)) return state;
+      const cat = cats.find((c: any) => c.category === category);
+      if (!cat) return state;
+      const p = (cat.plans || []).find((pp: any) => pp.planName === plan);
+      if (!p) return state;
+      p.planDetails = planDetails;
+      return state;
+    },
     updateFollowUpQn:(state,action)=>{
       console.log("follow up question that came",action.payload);
       state.salesData.followUpQn={
@@ -541,19 +597,53 @@ const salesCopilotSlice = createSlice({
     },
     addCues:(state,action)=>{
       console.log('add cues trigger',action.payload)
-      state.salesData.cues.cards=[
-        {...action.payload},
-        ...state.salesData.cues.cards
-        
-      ]
+      const incoming = action.payload ?? {};
+      const cueId = incoming.id;
+      const cards = state.salesData.cues?.cards ?? [];
+      const normalizedCard = {
+        id: cueId ?? `${Date.now()}`,
+        header: incoming.header ?? "Follow-up Question",
+        color: incoming.color ?? "blue",
+        data: Array.isArray(incoming.data) ? incoming.data : [],
+        card_type: incoming.card_type ?? "regular_card",
+      };
+
+      const existingIndex = cards.findIndex((card: any) => card?.id === cueId);
+      if (existingIndex >= 0) {
+        // Same card id should replace the old message.
+        cards[existingIndex] = {
+          ...cards[existingIndex],
+          ...normalizedCard,
+        };
+      } else {
+        cards.unshift(normalizedCard);
+      }
       return state 
     },
     updateCues: (state, action) => {
-      // state.salesData.cues = {
-      //   ...state.salesData.cues,
-      //   ...action.payload,
-      // }
-      
+      const incoming = action.payload ?? {};
+      const cueId = incoming.id;
+      const cards = state.salesData.cues?.cards ?? [];
+
+      const normalizedCard = {
+        id: cueId ?? `${Date.now()}`,
+        header: incoming.header ?? "Follow-up Question",
+        color: incoming.color ?? "blue",
+        data: Array.isArray(incoming.data) ? incoming.data : [],
+        card_type: incoming.card_type ?? "regular_card",
+      };
+
+      const existingIndex = cards.findIndex((card: any) => card?.id === cueId);
+      if (existingIndex >= 0) {
+        cards[existingIndex] = {
+          ...cards[existingIndex],
+          ...normalizedCard,
+        };
+      } else {
+        // If card id is not found, add as latest cue to avoid data loss.
+        cards.unshift(normalizedCard);
+      }
+      return state;
     },
     updateAlerts: (state, action) => {
       state.salesData.alert = {
@@ -591,11 +681,12 @@ const salesCopilotSlice = createSlice({
 
 export const { initSalesState,
   updateSalesCopilotState,
-  updateBasicInfo,updateAssets, 
+  updateBasicInfo,updateAssets,updateFinancialReview,
   updateLiabilities,updateFinancialGoals,
-  updatePlanSummary,updateRecommendations,
+  updatePlanSummary,updateRecommendations,updateRecommendationPlanDetails,
   updateFollowUpQn,addCues,updateCues,updateAlerts,
-  setNavigation ,updatePrefLanguage,setRecomendationSelected,updatePref_language} = salesCopilotSlice.actions;
+  setNavigation ,updatePrefLanguage,setRecomendationSelected,updatePref_language,
+  toggleFinancialGoalCard} = salesCopilotSlice.actions;
 
 export default {
   salesCopilotReducer: salesCopilotSlice.reducer,

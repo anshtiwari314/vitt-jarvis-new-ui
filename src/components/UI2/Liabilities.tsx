@@ -1,125 +1,230 @@
-import React from "react";
+import React, { useState } from "react";
+import { Copy, Check } from "lucide-react";
 import { useData } from "../../context/DataWrapper";
+
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+interface FieldItem {
+  field: string;
+  value: string | number | null | undefined;
+  type?: string;
+  placeholder?: string;
+  modified_by_agent?: boolean;
+}
+
+interface BoxData {
+  header: string;
+  data: FieldItem[];
+}
+
+interface TableData {
+  header: string;
+  table_header: string[];
+  table_values: (string | number | null | undefined)[][];
+}
 
 interface Props {
   data: {
-    boxA: {
-      header: string;
-      data: { [key: string]: string | number | null | undefined };
-    };
-    boxB: {
-      header: string;
-      data: { [key: string]: string | number | null | undefined };
-    };
-    table: {
-      header: string;
-      table_header: string[];
-      table_values: (string | number | null | undefined)[][];
-    };
+    boxA: BoxData;
+    boxB: BoxData;
+    table: TableData;
   };
   formatCurrency: (num: number) => string;
 }
 
-export default function Liabilities({ data, formatCurrency }: Props) {
 
-  const {updateField} = useData()
+function CopyButton({ value }: { value: string }) {
+  const [copied, setCopied] = useState(false);
 
-  console.log('liabilities component',data)
-
-  const renderFormattedValue = (value: string | number | null | undefined) => {
-    if (value === null || value === undefined || value === "") return "";
-
-    if (typeof value === "number") {
-      return formatCurrency(value).replace(/<[^>]+>/g, "");
+  const handleCopy = () => {
+    const text = value ?? '';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(console.error);
+    } else {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {
+        console.error('Fallback copy failed', err);
+      }
+      textArea.remove();
     }
-
-    return String(value).replace(/<[^>]+>/g, "");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   };
 
   return (
-    <div>
-      <div className="space-y-6">
-        {/* Monthly Outflow */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border-b border-t border-l border-r border-sky-500">
-          <h3 className="text-lg font-semibold text-slate-700 mb-4">
-            {data.boxA.header}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-            {Object.entries(data.boxA.data).map(([key, value]) => (
-              <div key={key}>
-                <label className="block text-slate-500 mb-1">{key}</label>
-                <input
-                  type="text"
-                  defaultValue={renderFormattedValue(value)}
-                  className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-                  onChange={(e)=>updateField(key,e.target.value)}
-                  //readOnly
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+    <button
+      type="button"
+      onClick={handleCopy}
+      title="Copy"
+      className="absolute z-20 right-1 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 transition-colors"
+    >
+      {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+    </button>
+  );
+}
 
-        {/* Home Loan Details */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border-b border-t border-l border-r border-sky-500">
-          <h3 className="text-lg font-semibold text-slate-700 mb-4">
-            {data.boxB.header}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
-            {Object.entries(data.boxB.data).map(([key, value]) => (
-              <div key={key}>
-                <label className="block text-slate-500 mb-1">{key}</label>
-                <input
-                  type="text"
-                  defaultValue={renderFormattedValue(value)}
-                  className="w-full p-2 border border-slate-300 rounded-md bg-slate-50"
-                  onChange={(e)=>updateField(`${data.boxB.header} ${key}`,e.target.value)}
-                  //readOnly
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+function EditableInputField({
+  initialValue,
+  placeholder,
+  className,
+  onCommit,
+}: {
+  initialValue: string;
+  placeholder: string;
+  className: string;
+  onCommit: (value: string) => void;
+}) {
+  const [localValue, setLocalValue] = useState(initialValue);
 
-        {/* Other Loans Table */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border-b border-t border-l border-r border-sky-500">
-          <h3 className="text-lg font-semibold text-slate-700 mb-4">
-            {data.table.header}
-          </h3>
-          <div className="space-y-3 text-sm">
-            <div className="grid grid-cols-3 gap-3 font-medium text-slate-600 px-2">
-              {data.table.table_header.map((heading, idx) => (
-                <span key={idx} className={idx === 0 ? "" : "text-right"}>
-                  {heading}
-                </span>
-              ))}
+  React.useEffect(() => {
+    setLocalValue(initialValue);
+  }, [initialValue]);
+
+  return (
+    <div className="relative w-full">
+      <input
+        type="text"
+        value={localValue}
+        placeholder={placeholder}
+        className={className}
+        onChange={(e) => setLocalValue(e.target.value)}
+        onBlur={() => {
+          if (localValue !== initialValue) {
+            onCommit(localValue);
+          }
+        }}
+      />
+      <CopyButton value={localValue} />
+    </div>
+  );
+}
+
+export default function Liabilities({ data, formatCurrency }: Props) {
+  const { updateField } = useData();
+  const [copiedCell, setCopiedCell] = useState<string | null>(null);
+
+  if (!data) {
+    return <div className="p-8 text-sm text-gray-400">Loading liabilities data…</div>;
+  }
+
+  const renderValue = (value: string | number | null | undefined) => {
+    if (value === null || value === undefined || value === '') return '';
+    if (typeof value === 'number') return formatCurrency(value).replace(/<[^>]+>/g, '');
+    return String(value).replace(/<[^>]+>/g, '');
+  };
+  const copyCell = (key: string, value: string) => {
+    const text = value ?? '';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(console.error);
+    } else {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {
+        console.error('Fallback copy failed', err);
+      }
+      textArea.remove();
+    }
+    setCopiedCell(key);
+    setTimeout(() => setCopiedCell((prev) => (prev === key ? null : prev)), 1200);
+  };
+
+  const renderBox = (box: BoxData, colSpan = 2) => (
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-sky-500">
+      <h3 className="text-lg font-semibold text-slate-700 mb-4">{box.header}</h3>
+      <div className={`grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-${colSpan}`}>
+        {(box.data ?? []).map((item, i) => (
+          <div key={i} className="relative">
+            <div className="mb-1 flex items-center gap-1.5">
+              <label className="text-slate-500">{item.field}</label>
             </div>
-            {data.table.table_values.map((row, rowIndex) => (
-              <div
-                key={rowIndex}
-                className="grid grid-cols-3 gap-3 p-3 rounded-md bg-slate-50"
-              >
-                {row?.map((cell, colIdx) => {
-                  const cellValue =
-                    cell === null || cell === undefined || cell === ""
-                      ? ""
-                      : typeof cell === "number" && colIdx > 0
-                      ? cell
-                      : String(cell);
+            <EditableInputField
+              initialValue={renderValue(item.value)}
+              placeholder={item.placeholder ?? ''}
+              className={`w-full p-2 pr-9 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#2EA9FF] border-slate-300 bg-slate-50`}
+              onCommit={(value) => updateField(item.field, value)}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
-                  return (
-                    <span
-                      key={colIdx}
-                      className={colIdx === 0 ? "" : "text-right"}
-                      dangerouslySetInnerHTML={{ __html: cellValue }}
-                    />
-                  );
-                })}
-              </div>
+  return (
+    <div className="space-y-6">
+
+      {/* Monthly Outflow */}
+      {renderBox(data.boxA, 2)}
+
+      {/* Home Loan Details */}
+      {renderBox(data.boxB, 3)}
+
+      {/* Other Loans Table */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-sky-500">
+        <h3 className="text-lg font-semibold text-slate-700 mb-4">{data.table?.header}</h3>
+        <div className="space-y-3 text-sm">
+          <div
+            className="grid gap-3 font-medium text-slate-600 px-2"
+            style={{ gridTemplateColumns: `repeat(${data.table?.table_header?.length ?? 3}, minmax(0,1fr))` }}
+          >
+            {(data.table?.table_header ?? []).map((h, i) => (
+              <span key={i} className={i === 0 ? '' : 'text-right'}>{h}</span>
             ))}
           </div>
+          {(data.table?.table_values ?? []).map((row, rowIndex) => (
+            <div
+              key={rowIndex}
+              className="grid gap-3 p-3 rounded-md bg-slate-50"
+              style={{ gridTemplateColumns: `repeat(${data.table?.table_header?.length ?? 3}, minmax(0,1fr))` }}
+            >
+              {row?.map((cell, colIdx) => {
+                const cellValue =
+                  cell === null || cell === undefined || cell === ''
+                    ? ''
+                    : typeof cell === 'number' && colIdx > 0
+                    ? cell
+                    : String(cell);
+                return (
+                  <div key={colIdx} className={`flex items-center gap-2 ${colIdx === 0 ? '' : 'justify-end text-right'}`}>
+                    <span dangerouslySetInnerHTML={{ __html: String(cellValue) }} />
+                    {String(cellValue) && (
+                      <button
+                        type="button"
+                        onClick={() => copyCell(`liab-${rowIndex}-${colIdx}`, String(cellValue).replace(/<[^>]+>/g, ''))}
+                        className="rounded p-1 text-slate-400 hover:text-slate-600"
+                        title="Copy"
+                      >
+                        {copiedCell === `liab-${rowIndex}-${colIdx}` ? (
+                          <Check size={14} className="text-green-500" />
+                        ) : (
+                          <Copy size={14} />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
       </div>
+
     </div>
   );
 }

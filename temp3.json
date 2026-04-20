@@ -1,0 +1,328 @@
+
+    {
+        "clientName": "Anuj",
+        "salesData": {
+            "assets": {
+                "boxA": {
+                    "header": "Income and Savings",
+                    "sub_header": "Monthly Income (INR)",
+                    "sub_header_data": "25 K",
+                    "text_area_value": "FD: 1 L\nPPF: 0\nNSC: 0",
+                    "text_area_header": "Savings (FD, PPF, NSC, etc.)"
+                },
+                "boxB": {
+                    "header": "Investments and Other Assets",
+                    "text_area_valueA": "Mutual Funds: 50 K \nDirect Equity: 0\nDigital Gold: 0",
+                    "text_area_valueB": "1.5 lakhs of worth of gold, 2.5 lakhs of worth of land",
+                    "text_area_headerA": "Investments (Mutual Funds, Equity, DigitalGold)",
+                    "text_area_headerB": "Other Assets (Gold, Land, Property)"
+                },
+                "table": {
+                    "header": "Existing Life Insurance",
+                    "table_header": [
+                        "Insurer Name",
+                        "Cover Amount (INR)",
+                        "Annual Premium (INR)"
+                    ],
+                    "table_values": [
+                        [
+                            "",
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            },
+            "liabilities": {
+                "boxA": {
+                    "data": {
+                        "Monthly Expenses (INR)": "0",
+                        "Credit Card Dues (if any)": "50 K"
+                    },
+                    "header": "Monthly Outflow"
+                },
+                "boxB": {
+                    "data": {
+                        "Monthly EMI (INR)": "0",
+                        "Outstanding Amount (INR)": "0",
+                        "Remaining Tenure (Months)": "0"
+                    },
+                    "header": "Home Loan Details"
+                },
+                "table": {
+                    "header": "Other Loans",
+                    "table_header": [
+                        "Loan Type",
+                        "Outstanding (INR)",
+                        "Monthly EMI (INR)"
+                    ],
+                    "table_values": [
+                        [
+                            "",
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            },
+            "financialGoals": [
+                {
+                    "cols": {
+                        "TimeFrame": "1",
+                        "Required Corpus": "2.5 L"
+                    },
+                    "header": "Marriage",
+                    "priority": "1",
+                    "sub_header": "I have a financial goal of first marrying myself in around next year.",
+                    "text_area_value": "The client mentioned a requirement of 2 to 5 lakhs for marriage, so I have taken the average of 2.5 lakhs."
+                },
+                {
+                    "cols": {
+                        "TimeFrame": "5",
+                        "Required Corpus": "10 L"
+                    },
+                    "header": "Home Purchase",
+                    "priority": "2",
+                    "sub_header": "I want to buy a home after 5 years.",
+                    "text_area_value": "The client mentioned a requirement of around 10 lakhs for buying a home."
+                }
+            ],
+            "recommendations": [
+                {
+                    "planName": "Kotak Signature Term Plan",
+                    "planDetails": [
+                        {
+                            "cols": {
+                                "Term": "36 Years",
+                                "Cover": "50 K",
+                                "Est. Annual Premium": "750.0"
+                            },
+                            "header": "Recommendation 1: Term Plan",
+                            "reason": "To cover the life cover gap and provide income replacement for dependents.",
+                            "sub_header": "This term plan provides essential life cover to secure the financial future of your dependents.",
+                            "calculation": "",
+                            "text_area_value": [
+                                "Sum Assured (50000) / 100,000 * 1,500 = \u20b9750.0 annual premium. Term: 60 - 24 (Age) = 36 years."
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "planName": "Kotak Assured Savings Plan",
+                    "planDetails": [
+                        {
+                            "cols": {
+                                "Term": 1,
+                                "Cover": "2.5 L",
+                                "Est. Annual Premium": "2.5 L"
+                            },
+                            "header": "Recommendation 2: Marriage",
+                            "reason": "Aligns with time frame and risk profile for goal.",
+                            "sub_header": "To save 2.5 L for marriage by 2027",
+                            "calculation": "",
+                            "text_area_value": "To build 2.5 L over the 1 yrs with an expectation of minimum 5% return per year, estimated annual premium = (fv * r) / ((1 + r) ** n - 1) --> (2.5 L * 0.05) / ((1 + 0.05) ** 1 - 1))"
+                        },
+                        {
+                            "cols": {
+                                "Term": 5,
+                                "Cover": "10 L",
+                                "Est. Annual Premium": "1.81 L"
+                            },
+                            "header": "Recommendation 3: Home Purchase",
+                            "reason": "Aligns with time frame and risk profile for goal.",
+                            "sub_header": "To save 10 L for home purchase by 2031",
+                            "calculation": "",
+                            "text_area_value": "To build 10 L over the 5 yrs with an expectation of minimum 5% return per year, estimated annual premium = (fv * r) / ((1 + r) ** n - 1) --> (10 L * 0.05) / ((1 + 0.05) ** 5 - 1))"
+                        }
+                    ]
+                }
+            ],
+            "basicInfo": {
+                "boxA": {
+                    "data": {
+                        "Age": "24",
+                        "City": "Ghaziabad",
+                        "Name": "Anuj",
+                        "Dependents": "3",
+                        "Occupation": "software developer"
+                    },
+                    "header": "Client Info"
+                },
+                "table": {
+                    "header": "Family Structure",
+                    "table_header": [
+                        "Name",
+                        "Relation",
+                        "Age"
+                    ],
+                    "table_values": [
+                        [
+                            "Mother",
+                            "mother",
+                            "49"
+                        ],
+                        [
+                            "Father",
+                            "father",
+                            "51"
+                        ],
+                        [
+                            "Mahesh",
+                            "brother",
+                            "13"
+                        ]
+                    ]
+                }
+            },
+            "planSummary": [
+                {
+                    "cols": [
+                        {
+                            "value": "50 K",
+                            "heading": "Outstanding Liabilities"
+                        },
+                        {
+                            "value": "0",
+                            "heading": "Annual Expenses"
+                        },
+                        {
+                            "value": "50 K",
+                            "heading": "Required Corpus"
+                        }
+                    ],
+                    "header": "Immediate Life Cover Analysis",
+                    "reason": "<h3 style=\"font-size:3rem\">Total Recommended Cover <p style=\"color:blue\">50 K</p></h3>",
+                    "sub_header": "",
+                    "calculation": {},
+                    "text_area_value": ""
+                },
+                {
+                    "cols": [
+                        {
+                            "value": 1,
+                            "heading": "Time Frame"
+                        },
+                        {
+                            "value": 2026,
+                            "heading": "Target Year"
+                        },
+                        {
+                            "value": "2.5 L",
+                            "heading": "Required Corpus"
+                        }
+                    ],
+                    "header": "Marriage",
+                    "sub_header": "I have a financial goal of first marrying myself in around next year.",
+                    "calculation": "",
+                    "text_area_value": "Inflation rate percent: 6%"
+                },
+                {
+                    "cols": [
+                        {
+                            "value": 5,
+                            "heading": "Time Frame"
+                        },
+                        {
+                            "value": 2030,
+                            "heading": "Target Year"
+                        },
+                        {
+                            "value": "10 L",
+                            "heading": "Required Corpus"
+                        }
+                    ],
+                    "header": "Home Purchase",
+                    "sub_header": "I want to buy a home after 5 years.",
+                    "calculation": "",
+                    "text_area_value": "Inflation rate percent: 6%"
+                }
+            ],
+            "cues": {
+                "header": "ai cues",
+                "cards": [
+                    {
+                        "header": "Follow-up Question",
+                        "color": "blue",
+                        "data": [
+                            {
+                                "id": "0",
+                                "text": "Please provide the outstanding amount on your credit card."
+                            }
+                        ]
+                    },
+                    {
+                        "header": "Follow-up Question",
+                        "color": "blue",
+                        "data": [
+                            {
+                                "id": "0",
+                                "text": "Please provide your monthly expenses."
+                            },
+                            {
+                                "id": "1",
+                                "text": "What is the outstanding amount on your home loan?"
+                            }
+                        ]
+                    },
+                    {
+                        "header": "Follow-up Question",
+                        "color": "blue",
+                        "data": [
+                            {
+                                "id": "0",
+                                "text": "Please provide details on any existing life insurance policies, including insurer name, cover amount, and annual premium."
+                            },
+                            {
+                                "id": "1",
+                                "text": "Do you have any investments in equity or digital gold?"
+                            }
+                        ]
+                    },
+                    {
+                        "header": "Follow-up Question",
+                        "color": "blue",
+                        "data": [
+                            {
+                                "id": "0",
+                                "text": "Do you have any dependents? If yes, please provide their names, relationships, and ages."
+                            }
+                        ]
+                    },
+                    {
+                        "header": "Follow-up Question",
+                        "color": "blue",
+                        "data": [
+                            {
+                                "id": "0",
+                                "text": "What city do you live in?"
+                            },
+                            {
+                                "id": "1",
+                                "text": "What is your occupation?"
+                            }
+                        ]
+                    },
+                    {
+                        "header": "Follow-up Question",
+                        "color": "blue",
+                        "data": [
+                            {
+                                "id": "0",
+                                "text": "What is your age?"
+                            },
+                            {
+                                "id": "1",
+                                "text": "Which city do you live in?"
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        "pref_language": "English",
+        "language_ids": [
+            "English",
+            "Hindi",
+            "Marathi"
+        ]
+    }

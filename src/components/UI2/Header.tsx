@@ -8,9 +8,8 @@ import { useAuth } from "../../context/AuthContext"
 import { useData } from "../../context/DataWrapper"
 import playSound from "../../assets/sound-play.gif"
 import { updatePref_language } from "../../reducers/salesCopilotReducer"
-import { X } from "lucide-react"
 import { TailSpin } from "react-loading-icons"
-import { Flag } from "lucide-react"
+import { Flag, X, Mic, MicOff } from "lucide-react"
 import { useDispatch } from "react-redux";
 
 export default function Header() {
@@ -139,37 +138,43 @@ export default function Header() {
 
 
           {/* Right: Controls */}
-          <div className="flex flex-wrap items-center gap-2 md:gap-4">
-            <button className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition-colors duration-200 hover:bg-slate-50 md:px-4 md:text-base">
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+            {/* <button className="h-9 md:h-10 flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 md:px-4 text-xs md:text-sm font-bold text-slate-700 transition-colors duration-200 hover:bg-slate-50">
               Skip PFR
-            </button>
+            </button> */}
 
-            {/* VAD Controls */}
-            <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg flex-shrink-0">
-              {VAD2 !== undefined && !VAD2.loading ? (
+            {/* Mic Control */}
+            <div className="h-10 md:h-12 flex items-center flex-shrink-0">
+              {VAD2 !== undefined && VAD2.loading === false ? (
                 <button
-                  className={`p-2 rounded-md hover:bg-slate-200 ${VAD2.listening ? "text-sky-600" : "text-slate-600"}`}
+                  className={`h-full px-3 md:px-4 flex items-center justify-center rounded-lg transition-all duration-200 shadow-sm ${
+                    VAD2.listening 
+                      ? "text-sky-600 bg-white shadow-[0_0_10px_rgba(2,132,199,0.3)] relative z-10" 
+                      : "text-slate-600 bg-slate-100 hover:bg-slate-200"
+                  }`}
                   onClick={() => setManualVadStatus(!VAD2.listening)}
                 >
                   {VAD2.listening ? (
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M5.75 4.5a.75.75 0 00-.75.75v10.5a.75.75 0 001.5 0V5.25A.75.75 0 005.75 4.5zm8.5 0a.75.75 0 00-.75.75v10.5a.75.75 0 001.5 0V5.25a.75.75 0 00-.75-.75z"></path>
-                    </svg>
+                    <Mic className="w-5 h-4 md:w-7 md:h-7" />
                   ) : (
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"></path>
-                    </svg>
+                    <MicOff className="w-5 h-4 md:w-7 md:h-7" />
                   )}
                 </button>
               ) : (
-                <div className="p-2 flex justify-center items-center">
-                  <TailSpin stroke="red" speed={0.95} className="w-4 h-4 m-1" />
+                <div className="h-full px-3 md:px-4 flex justify-center items-center rounded-lg bg-slate-100 shadow-sm">
+                  <TailSpin stroke="red" speed={0.95} className="w-5 h-5 md:w-6 md:h-6" />
                 </div>
               )}
+            </div>
 
-              {/* Speaker toggle — right of mic */}
+            {/* Speaker Control */}
+            <div className="h-10 md:h-12 ml-1 md:ml-2 flex items-center flex-shrink-0">
               <button
-                className={`p-2 rounded-md hover:bg-slate-200 transition-colors ${speakerEnabled ? (isAudioPlayingState ? "text-green-600" : "text-slate-600") : "text-red-400"}`}
+                className={`h-full px-3 md:px-4 flex items-center justify-center rounded-lg transition-all duration-200 shadow-sm ${
+                  speakerEnabled 
+                    ? "text-green-600 bg-white shadow-[0_0_10px_rgba(22,163,74,0.3)] relative z-10" 
+                    : "text-red-400 bg-slate-100 hover:bg-slate-200"
+                }`}
                 title={speakerEnabled ? (isAudioPlayingState ? "Audio playing — click to disable speaker" : "Speaker on — click to disable") : "Speaker off — click to enable"}
                 onClick={() => {
                   if (speakerEnabled) {
@@ -185,19 +190,19 @@ export default function Header() {
                 {speakerEnabled ? (
                   isAudioPlayingState ? (
                     /* Speaker with sound waves — on & playing */
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 md:w-7 md:h-7" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M11.553 3.064A.75.75 0 0112 3.75v16.5a.75.75 0 01-1.255.555L5.46 16H2.75A1.75 1.75 0 011 14.25v-4.5C1 8.784 1.784 8 2.75 8H5.46l5.285-4.805a.75.75 0 01.808-.131z" />
                       <path d="M17.03 7.47a.75.75 0 011.06 0 8.25 8.25 0 010 11.66.75.75 0 11-1.06-1.06 6.75 6.75 0 000-9.54.75.75 0 010-1.06zM14.47 9.97a.75.75 0 011.06 0 5.25 5.25 0 010 7.06.75.75 0 11-1.06-1.06 3.75 3.75 0 000-4.94.75.75 0 010-1.06z" />
                     </svg>
                   ) : (
                     /* Speaker — on but silent */
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 md:w-7 md:h-7" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M11.553 3.064A.75.75 0 0112 3.75v16.5a.75.75 0 01-1.255.555L5.46 16H2.75A1.75 1.75 0 011 14.25v-4.5C1 8.784 1.784 8 2.75 8H5.46l5.285-4.805a.75.75 0 01.808-.131z" />
                     </svg>
                   )
                 ) : (
                   /* Speaker — off / muted (X overlay) */
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 md:w-7 md:h-7" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M11.553 3.064A.75.75 0 0112 3.75v16.5a.75.75 0 01-1.255.555L5.46 16H2.75A1.75 1.75 0 011 14.25v-4.5C1 8.784 1.784 8 2.75 8H5.46l5.285-4.805a.75.75 0 01.808-.131z" />
                     <path fillRule="evenodd" d="M16.28 9.22a.75.75 0 011.06 0l1.72 1.72 1.72-1.72a.75.75 0 111.06 1.06L20.12 12l1.72 1.72a.75.75 0 11-1.06 1.06L19.06 13.06l-1.72 1.72a.75.75 0 11-1.06-1.06L17.94 12l-1.66-1.72a.75.75 0 010-1.06z" clipRule="evenodd" />
                   </svg>
@@ -207,7 +212,7 @@ export default function Header() {
 
             {/* Timer */}
             <div
-              className={`text-lg font-mono font-semibold px-3 py-2 rounded-lg whitespace-nowrap ${VAD2?.listening ? "text-green-700 bg-green-50" : "text-slate-700 bg-slate-100"}`}
+              className={`h-10 md:h-12 flex items-center justify-center text-sm md:text-lg font-mono font-semibold px-3 md:px-4 rounded-lg whitespace-nowrap shadow-sm ${VAD2?.listening ? "text-green-700 bg-green-50" : "text-slate-700 bg-slate-100"}`}
             >
               {minutes}:{seconds}
             </div>
@@ -216,7 +221,7 @@ export default function Header() {
             <select
               value={pref_language}
               onChange={handleLanguageChange}
-              className="rounded-lg border border-slate-300 bg-slate-100 px-2 py-2 text-base text-slate-700 outline-none transition hover:bg-slate-200"
+              className="h-10 md:h-12 flex items-center rounded-lg border border-slate-300 bg-slate-100 px-2 md:px-4 text-sm md:text-base text-slate-700 outline-none transition hover:bg-slate-200 shadow-sm"
               aria-label="Select language"
             >
               {allLanguageOptions?.map((lang: string) => (
@@ -229,18 +234,17 @@ export default function Header() {
             {/* Flag Button */}
             <button
               onClick={() => setFlagOpen(true)}
-              className="p-2 rounded-md hover:bg-gray-100 transition"
+              className="h-10 md:h-12 w-10 md:w-12 flex items-center justify-center rounded-lg hover:bg-slate-100 transition shadow-sm"
             >
               <Flag
-                size={18}
-                className="text-gray-700 hover:text-red-500 transition"
+                className="w-5 h-5 md:w-6 md:h-6 text-gray-700 hover:text-red-500 transition"
               />
             </button>
 
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className="rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-bold text-slate-700 transition-colors duration-200 hover:bg-slate-200 md:px-4 md:text-base"
+              className="h-10 md:h-12 flex items-center justify-center rounded-lg border border-slate-300 bg-slate-100 px-3 md:px-5 text-sm md:text-base font-bold text-slate-700 transition-colors duration-200 hover:bg-slate-200 shadow-sm"
             >
               Logout
             </button>

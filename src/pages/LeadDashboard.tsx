@@ -555,6 +555,18 @@ export function Table({ setFormState, initialFormState }) {
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
                   >
+                    Lead Date
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  >
+                    Lead Time
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+                  >
                     Email
                   </th>
                   <th
@@ -618,6 +630,8 @@ export function Table({ setFormState, initialFormState }) {
                     <tr key={uniqueLeadId}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{lead.name}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.mob}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.timestamp ? (() => { const [y, m, d] = String(lead.timestamp).split(' ')[0].split('-'); return `${d}-${m}-${y}`; })() : '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.timestamp ? String(lead.timestamp).split(' ').slice(1).join(' ') : '-'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.email}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.lead_type}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead.priority}</td>

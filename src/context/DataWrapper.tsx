@@ -1,4 +1,4 @@
-import type React from "react"
+import React from "react"
 import { useState, createContext, useContext, useEffect, useRef } from "react"
 import { v4 as uuidv4 } from 'uuid'
 import { io, type Socket } from "socket.io-client"
@@ -7,9 +7,11 @@ import {
   updateBasicInfo,
   updateAssets,
   updateLiabilities,
+  updateFinancialReview,
   updateFinancialGoals,
   updatePlanSummary,
   updateRecommendations,
+  updateRecommendationPlanDetails,
   updateFollowUpQn,
   updateCues,
   updatePref_language,
@@ -45,7 +47,8 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   const [socket, setSocket] = useState<Socket | null>(null)
   const [isSocketConnected,setIsSocketConnected] = useState(false)
 const [pref_language,setPref_language]=useState("English")
-  const navigation = useAppSelector((state) => state.salesCopilotReducer.navigation)
+  const navigation =
+    useAppSelector((state) => state.salesCopilotReducer.navigation) || "Basic Info"
   const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
   const salesCopilotState = useAppSelector(state=>state.salesCopilotReducer)
 
@@ -60,8 +63,9 @@ const [pref_language,setPref_language]=useState("English")
   const audioUnlockedRef = useRef(false)
   const pendingAutoplayRef = useRef(false)
   const [isAudioPlayingState, setIsAudioPlayingState] = useState(false)
-  const [speakerEnabled, setSpeakerEnabled] = useState(true)
-  const speakerEnabledRef = useRef(true)
+  const [speakerEnabled, setSpeakerEnabled] = useState(false)
+  const speakerEnabledRef = useRef(false)
+  const lastSentSpeakerStateRef = useRef<"on" | "off" | null>(null)
   // ----------------------------
 
   const [toggleNotificationModal,setToggleNotificationModal] = useState({
@@ -80,7 +84,7 @@ const [pref_language,setPref_language]=useState("English")
     console.log("handle incoming data", data, " the data type", data.type)
 
     // Extract and play audio if present in the incoming data
-    extractAndPlayAudio(data)
+    //extractAndPlayAudio(data)
 
     //return null;
     switch (data.type) {
@@ -95,16 +99,12 @@ const [pref_language,setPref_language]=useState("English")
         setToggleNotificationModal(ob)
         break
       case "basic-info":
-        console.log(data,"int the basic section info");
+        console.log(data,"in the basic section info");
         dispatch(updateBasicInfo(data.basicInfo))
         break
-      case "assets":
-        console.log('receiving assets data',data)
-        dispatch(updateAssets(data.assets))
-        break
-      case "liabilities":
-        console.log('liabilities',data)
-        dispatch(updateLiabilities(data.liabilities))
+      case "financial-review":
+        console.log('receiving financial-review data',data)
+        dispatch(updateFinancialReview(data.financialReview))
         break
       case "financial-goals":
         dispatch(updateFinancialGoals(data.financialGoals))
@@ -116,15 +116,34 @@ const [pref_language,setPref_language]=useState("English")
         console.log('recommendation data from backend',data)
         dispatch(updateRecommendations(data.recommendations))
         break
-      case "follow-up-qn":
-        dispatch(updateFollowUpQn(data.followUpQn))
-        break
+      // case "follow-up-qn":
+      //   dispatch(updateFollowUpQn(data.followUpQn))
+      //   break
       case "add-cues":
-        dispatch(addCues(data))
+        dispatch(
+          addCues({
+            id: data.card_id ?? data.id ?? `${Date.now()}`,
+            header: data.header ?? "Follow-up Question",
+            color: data.color ?? "blue",
+            data: Array.isArray(data.data) ? data.data : [],
+            card_type: data.card_type ?? "regular_card",
+          })
+        )
         break
-      case "alert":
-        dispatch(updateAlerts(data.alert))
+      case "update-cues":
+        dispatch(
+          updateCues({
+            id: data.card_id ?? data.id ?? `${Date.now()}`,
+            header: data.header ?? "Follow-up Question",
+            color: data.color ?? "blue",
+            data: Array.isArray(data.data) ? data.data : [],
+            card_type: data.card_type ?? "regular_card",
+          })
+        )
         break
+      // case "alert":
+      //   dispatch(updateAlerts(data.alert))
+      //   break
       default:
         console.warn(`Unhandled action type: ${data.type}`)
     }
@@ -139,6 +158,11 @@ const [pref_language,setPref_language]=useState("English")
         setRecommendationsGenerated(false)
   }
 
+  function handleAudioPlaybackResponse(data: any) {
+    console.log("audio_playback_res received", data)
+    extractAndPlayAudio(data)
+  }
+
   function initialisationSalesState(data: any) {
     console.log('init sales data',data)
     //return null;
@@ -149,6 +173,25 @@ const [pref_language,setPref_language]=useState("English")
   // Keep speakerEnabledRef in sync so socket callbacks always read the latest value
   useEffect(() => {
     speakerEnabledRef.current = speakerEnabled
+  }, [speakerEnabled])
+
+  // When speaker is turned off, hard-reset local audio state so
+  // subsequent audio_playback_res events can start fresh after re-enable.
+  useEffect(() => {
+    if (speakerEnabled) return
+
+    const audioElem = audioRef.current
+    if (audioElem) {
+      audioElem.pause()
+      audioElem.src = ''
+      audioElem.load()
+    }
+
+    audioQueueRef.current = []
+    isAudioStillPlaying.current = false
+    pendingAutoplayRef.current = false
+    setIsAudioPlayingState(false)
+    setAudioUrl('')
   }, [speakerEnabled])
 
   function enqueueAudio(audiourl: string) {
@@ -217,6 +260,7 @@ useEffect(()=>{
         tempSocket.on('questions_loader_res', initialisationSalesState)
         tempSocket.on('ai_suggestion_res', updateSalesState)
         tempSocket.on('notifications', updateNotifications)
+        tempSocket.on('audio_playback_res', handleAudioPlaybackResponse)
 
     setSocket(tempSocket)
 
@@ -226,6 +270,7 @@ useEffect(()=>{
       tempSocket.off("questions_loader_res", initialisationSalesState)
       tempSocket.off("ai_suggestion_res", updateSalesState)
       tempSocket.off("notifications", updateNotifications)
+      tempSocket.off("audio_playback_res", handleAudioPlaybackResponse)
       tempSocket.disconnect()
     }
   }, [])
@@ -252,18 +297,212 @@ useEffect(()=>{
     socket.emit("selected_topic_req_v2", data)
   }, [navigation,socket])
 
+  useEffect(() => {
+    if (!socket || !isSocketConnected) return
 
-  function updateField(fieldname,fieldvalue){
-    console.log('update field',fieldname,fieldvalue)
-    let ob = {
-      roomid: roomId,
-        jobid: 'abcde',
-        agentid: '1234',
-
-        name: name,
-      manual_transcript : `actually ${fieldname} is ${fieldvalue}`
+    const currentSpeakerState: "on" | "off" = speakerEnabled ? "on" : "off"
+    // Emit once right after connect, then only when speaker state actually changes.
+    if (lastSentSpeakerStateRef.current === currentSpeakerState) {
+      return
     }
-    socket?.emit('ai_suggestion_req_ins_v2',ob)
+
+    const payload = {
+      roomid: roomId,
+      agentid: "1234",
+      name: name,
+      agent_name: JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name || '',
+      timeStamp: new Date().toISOString(),
+      speaker: currentSpeakerState,
+    }
+    console.log("emitting audio_playback_req", payload)
+    socket.emit("audio_playback_req", payload)
+    lastSentSpeakerStateRef.current = currentSpeakerState
+  }, [socket, isSocketConnected, speakerEnabled, roomId, name])
+
+
+  // Label → value key pairs used across sections. When we find an object whose
+  // label key matches the edited fieldname, we update the matching value key
+  // and set modified_by_agent: true.
+  const FIELD_LABEL_VALUE_PAIRS: Array<[string, string]> = [
+    ['field', 'value'],
+    ['sub_header', 'sub_header_data'],
+    ['text_area_header', 'text_area_value'],
+    ['text_area_headerA', 'text_area_valueA'],
+    ['text_area_headerB', 'text_area_valueB'],
+  ]
+
+  function updateFieldInTree(
+    node: any,
+    fieldname: string,
+    fieldvalue: string
+  ): { node: any; changed: boolean } {
+    if (node === null || node === undefined) return { node, changed: false }
+
+    if (Array.isArray(node)) {
+      let changed = false
+      const next = node.map((item) => {
+        const res = updateFieldInTree(item, fieldname, fieldvalue)
+        if (res.changed) changed = true
+        return res.node
+      })
+      return { node: changed ? next : node, changed }
+    }
+
+    if (typeof node === 'object') {
+      for (const [labelKey, valueKey] of FIELD_LABEL_VALUE_PAIRS) {
+        if (node[labelKey] === fieldname && valueKey in node) {
+          const currentValue =
+            node[valueKey] === null || node[valueKey] === undefined ? '' : String(node[valueKey])
+          const nextValue = fieldvalue === null || fieldvalue === undefined ? '' : String(fieldvalue)
+          if (currentValue === nextValue) {
+            return { node, changed: false }
+          }
+          return {
+            node: { ...node, [valueKey]: fieldvalue, modified_by_agent: true },
+            changed: true,
+          }
+        }
+      }
+
+      let changed = false
+      const next: Record<string, any> = { ...node }
+      for (const key of Object.keys(node)) {
+        const res = updateFieldInTree(node[key], fieldname, fieldvalue)
+        if (res.changed) {
+          next[key] = res.node
+          changed = true
+        }
+      }
+      return { node: changed ? next : node, changed }
+    }
+
+    return { node, changed: false }
+  }
+
+  function updateField(fieldname: string, fieldvalue: string) {
+    console.log('update field', fieldname, fieldvalue , navigation)
+
+    let sectionKey: string | null = null
+    let modified_data: Record<string, any> = {}
+    let anyChanged = false
+
+    switch (navigation) {
+      case 'Basic Info': {
+        sectionKey = navigation
+        const { node: updated, changed } = updateFieldInTree(
+          salesCopilotState.salesData.basicInfo,
+          fieldname,
+          fieldvalue
+        )
+        anyChanged = changed
+        if (!changed) break
+        dispatch(updateBasicInfo(updated))
+        modified_data = { [navigation]: updated }
+        break
+      }
+      case 'Assets': {
+        sectionKey = navigation
+        const { node: updatedAssets, changed } = updateFieldInTree(
+          salesCopilotState.salesData.financialReview?.assets,
+          fieldname,
+          fieldvalue
+        )
+        anyChanged = changed
+        if (!changed) break
+        dispatch(updateAssets(updatedAssets))
+        modified_data = { [navigation]: updatedAssets }
+        break
+      }
+      case 'Liabilities': {
+        sectionKey = navigation
+        const { node: updatedLiab, changed } = updateFieldInTree(
+          salesCopilotState.salesData.financialReview?.liabilities,
+          fieldname,
+          fieldvalue
+        )
+        anyChanged = changed
+        if (!changed) break
+        dispatch(updateLiabilities(updatedLiab))
+        modified_data = { [navigation]: updatedLiab }
+        break
+      }
+      case 'Financial Goals': {
+        sectionKey = navigation
+        const { node: updated, changed } = updateFieldInTree(
+          salesCopilotState.salesData.financialGoals,
+          fieldname,
+          fieldvalue
+        )
+        anyChanged = changed
+        if (!changed) break
+        dispatch(updateFinancialGoals(updated))
+        modified_data = { [navigation]: updated } 
+        break
+      }
+      case 'Plan Summary': {
+        sectionKey = navigation
+        const { node: updated, changed } = updateFieldInTree(
+          salesCopilotState.salesData.planSummary,
+          fieldname,
+          fieldvalue
+        )
+        anyChanged = changed
+        if (!changed) break
+        dispatch(updatePlanSummary(updated))
+        modified_data = { [navigation]: updated }
+        break
+      }
+      default: {
+        // Recommendations: navigation === 'Recommendations::<category>'
+        if (typeof navigation === 'string' && navigation.startsWith('Recommendations::')) {
+          const parts = navigation.split('::')
+          const category = parts[1]
+          const recs: any = salesCopilotState.salesData.recommendations
+          if (recs?.categories && category) {
+            const updatedCategories = recs.categories.map((c: any) => {
+              if (c.category !== category) return c
+              const { node, changed } = updateFieldInTree(c, fieldname, fieldvalue)
+              if (changed) anyChanged = true
+              return node
+            })
+            if (!anyChanged) break
+            const updatedRecs = { ...recs, categories: updatedCategories }
+            dispatch(updateRecommendations(updatedRecs))
+            modified_data = { recommendations: updatedRecs }
+            break
+          }
+        }
+        anyChanged = true
+        modified_data = { [fieldname]: fieldvalue }
+      }
+    }
+
+    if (!anyChanged) {
+      console.log('No value change detected, skipping ai_suggestion_req_ins_v2 emit')
+      return
+    }
+
+    const ob = {
+      roomid: roomId,
+      jobid: 'abcde',
+      agentid: '1234',
+      name: name,
+      modified_data,
+    }
+    console.log('emitting ai_suggestion_req_ins_v2', ob)
+    socket?.emit('ai_suggestion_req_ins_v2', ob)
+  }
+
+  function emitModifiedData(modified_data: Record<string, any>) {
+    const ob = {
+      roomid: roomId,
+      jobid: 'abcde',
+      agentid: '1234',
+      name: name,
+      modified_data,
+    }
+    console.log('emitting ai_suggestion_req_ins_v2', ob)
+    socket?.emit('ai_suggestion_req_ins_v2', ob)
   }
 
   // --- Audio event listeners ---
@@ -362,7 +601,7 @@ useEffect(()=>{
     //ngrokServerUrl: "http://localhost:5000",
     setMsgLoading: (loading: boolean) => console.log("Loading:", loading),
     oneWayUrl: "wss://recruito.vitti.insure",
-    toggleNotificationModal,setToggleNotificationModal,updateField,
+    toggleNotificationModal,setToggleNotificationModal,updateField,emitModifiedData,
     recommendationsGenerated,setRecommendationsGenerated,
     pref_language,setPref_language,
     audioRef, audioUrl, setAudioUrl, audioQueueRef, isAudioStillPlaying, isAudioPlayingState,

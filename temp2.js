@@ -148,7 +148,7 @@ const questionsLoaderResExample = {
           },
         ]
       },
-      boxB:{
+      boxD:{
         header: 'Lead & meeting context',
         data:[
           {
@@ -289,8 +289,8 @@ const questionsLoaderResExample = {
             header: "Income Protection",
             sub_header: "Protect Family in case of any uncertainity",
             modified_by_agent:false,
-            match:['strongly identified'],
-            match_options:['strongly identified','possiblr fit','not identified yet'],
+            match:'strongly identified',
+            match_options:['strongly identified','possible fit','not identified yet','selected by agent','ignored by agent'],
             cols: [
               {
                 field:'Coverage(years)',
@@ -363,49 +363,140 @@ const questionsLoaderResExample = {
     ],
 
     recommendations: {
-      
-        categories:[
+      categories: [
         {
-          category:'ulip',
-          comparison:{
-
+          id: "life_cover",
+          category: "Immediate Life Cover Analysis",
+          title: "Immediate Life Cover Analysis",
+          subtitle:
+            "Pure protection need identified for family income replacement and liability protection.",
+          summary: {
+            cover: "71 L",
+            term: "20 years",
+            budget: "1.06 L / year"
           },
-          plans:[
+          products: [
             {
-              planName:'ulip_plan1',
-              planDetails:[
-                {
-                  header: "Recommendation 1: Term Plan",
-                  sub_header: "Pure protection for financial safety net.",
-                  cols: [
-                    {
-                      field:'cover',
-                      value:"₹ 1,20,50,000 (1.2 Cr)",
-                      type:'text',
-                      modified_by_agent:false
-                    },
-                    {
-                      field:'term',
-                      value: "30 Years",
-                      type:'text',
-                      modified_by_agent:false
-                    }
-                  ],
-                  calculation: {
-                    "Total liabilities": "27 lakhs",
-                    "Monthly expenses": "60k",
-                    "Multiplier": "120",
-                    "Recommended cover": "99 lakhs"
-                  },
-                  "calculationDetails": "Total liabilities (27 lakhs) + (Monthly expenses 60k * 120) = 99 lakhs",
-                  text_area_value:
-                    "Heuristic: ₹1,500 per year per ₹1L sum assured \n Calculation: (1,20,50,000 / 1,00,000) * 1500",
-                  reason: "Reason: Settle liabilities, provide for living expenses."
-                }
+              id: "signature_term",
+              name: "Kotak Signature Term Plan",
+              fit: "Best fit",
+              annualPremium: "1.06 L",
+              cover: "71 L",
+              term: "20 years",
+              premiumPayingTerm: "20 years",
+              premiumFrequency: "Annual",
+              payout: "Lump sum",
+              survivalBenefit: "None",
+              why: "Strong protection fit with premium aligned to current need.",
+              reasons: [
+                "Pure protection plan aligned to life cover need",
+                "Suitable where family security is the main objective",
+                "Current cover and term map cleanly to customer requirement"
+              ],
+              keyFeatures: [
+                "Long-duration pure protection",
+                "Higher-end positioning",
+                "Useful for larger cover conversations"
+              ],
+              benefits: [
+                { field: "Policy Term", value: "20 years", type: "text", editable: true, modified_by_agent: false },
+                { field: "Basic Cover", value: "71 L", type: "text", editable: true, modified_by_agent: false },
+                { field: "Est. Annual Premium", value: "1.06 L", type: "text", editable: true, modified_by_agent: false },
+                { field: "Premium Paying Term", value: "20 years", type: "text", editable: true, modified_by_agent: false },
+                { field: "Premium Frequency", value: "Annual", type: "option", options: ["Annual", "Semi-annual", "Monthly"], editable: true, modified_by_agent: false },
+                { field: "Payout Structure", value: "Lump sum", type: "text", editable: true, modified_by_agent: false }
+              ],
+              calculation: [
+                "Recommended cover taken from Plan Summary = 71 L",
+                "Term = retirement age 60 minus current age 40 = 20 years",
+                "Indicative premium provided via insurer pricing API"
               ]
-              
             },
-            
+            {
+              id: "e_term",
+              name: "Kotak e-Term Plan",
+              fit: "Strong alternate",
+              annualPremium: "0.94 L",
+              cover: "71 L",
+              term: "20 years",
+              premiumPayingTerm: "20 years",
+              premiumFrequency: "Annual",
+              payout: "Lump sum / income options",
+              survivalBenefit: "None",
+              why: "Economical pure protection option with flexible payout choices.",
+              reasons: [
+                "Lower premium can help if affordability is a concern",
+                "Flexible payout options support different family needs",
+                "Still aligned to same recommended cover and term"
+              ],
+              keyFeatures: [
+                "Competitive premium",
+                "Step-up / step-down flexibility",
+                "Good fit for cost-sensitive discussion"
+              ],
+              benefits: [
+                { field: "Policy Term", value: "20 years", type: "text", editable: true, modified_by_agent: false },
+                { field: "Basic Cover", value: "71 L", type: "text", editable: true, modified_by_agent: false },
+                { field: "Est. Annual Premium", value: "0.94 L", type: "text", editable: true, modified_by_agent: false },
+                { field: "Premium Paying Term", value: "20 years", type: "text", editable: true, modified_by_agent: false },
+                { field: "Premium Frequency", value: "Annual", type: "option", options: ["Annual", "Semi-annual", "Monthly"], editable: true, modified_by_agent: false },
+                { field: "Payout Structure", value: "Lump sum / income", type: "text", editable: true, modified_by_agent: false }
+              ],
+              calculation: [
+                "Same required cover of 71 L used for premium quote",
+                "Term fixed to 20 years based on customer retirement horizon",
+                "Illustrative premium pulled from insurer pricing response"
+              ]
+            }
+          ]
+        },
+        {
+          id: "child_education",
+          category: "Child Education Fund",
+          title: "Child Education Fund",
+          subtitle: "Long-term corpus requirement identified for higher studies goal.",
+          summary: {
+            corpus: "1 Cr",
+            horizon: "18 years",
+            targetYear: "2043"
+          },
+          products: [
+            {
+              id: "e_invest_plus",
+              name: "Kotak e-Invest Plus",
+              fit: "Best fit",
+              annualPremium: "2.35 L",
+              cover: "Goal-linked",
+              term: "18 years",
+              premiumPayingTerm: "18 years",
+              premiumFrequency: "Annual",
+              payout: "Fund value",
+              survivalBenefit: "Fund-linked maturity value",
+              why: "Strong fit for child-focused long-horizon market-linked corpus creation.",
+              reasons: [
+                "Well suited for long-duration child future planning",
+                "Can support goal-led investment discussion",
+                "Balances corpus creation with insurance wrapper"
+              ],
+              keyFeatures: [
+                "Child-focused optioning",
+                "Good long-term market-linked fit",
+                "Useful for goal-linked planning narrative"
+              ],
+              benefits: [
+                { field: "Goal Horizon", value: "18 years", type: "text", editable: true, modified_by_agent: false },
+                { field: "Target Corpus", value: "1 Cr", type: "text", editable: true, modified_by_agent: false },
+                { field: "Est. Annual Premium", value: "2.35 L", type: "text", editable: true, modified_by_agent: false },
+                { field: "Premium Paying Term", value: "18 years", type: "text", editable: true, modified_by_agent: false },
+                { field: "Premium Frequency", value: "Annual", type: "option", options: ["Annual", "Semi-annual", "Monthly"], editable: true, modified_by_agent: false },
+                { field: "Survival / Maturity Benefit", value: "Fund value", type: "text", editable: true, modified_by_agent: false }
+              ],
+              calculation: [
+                "Target corpus = 1 Cr from Plan Summary",
+                "Time horizon = 18 years, target year = 2043",
+                "Premium is indicative and sourced from insurer pricing API / projection engine"
+              ]
+            }
           ]
         }
       ]

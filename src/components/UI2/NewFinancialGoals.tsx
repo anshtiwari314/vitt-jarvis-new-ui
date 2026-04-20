@@ -1,296 +1,441 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Copy, Check } from 'lucide-react';
+import { useAppSelector, useAppDispatch } from '../../store/store';
+import { toggleFinancialGoalCard, updateFinancialGoals } from '../../reducers/salesCopilotReducer';
+import { useData } from '../../context/DataWrapper';
 
-const ICON_STROKE = 1.9;
+// ─── Types ──────────────────────────────────────────────────────────────────
 
-interface StatusStyle {
-  [key: string]: string;
-}
-
-interface BadgeLabel {
-  [key: string]: string;
-}
-
-const STATUS_STYLE: StatusStyle = {
-  active: 'border-[#54B8FF] bg-[#F4FBFF]',
-  candidate: 'border-amber-200 bg-amber-50/70',
-  inactive: 'border-slate-200 bg-white opacity-70',
-};
-
-const BADGE: BadgeLabel = {
-  active: 'Strongly identified',
-  candidate: 'Possible fit',
-  inactive: 'Not identified yet',
-};
-
-interface GoalInput {
-  label: string;
+interface ColField {
+  field: string;
   value: string;
+  type?: string;
+  placeholder?: string;
+  modified_by_agent?: boolean;
 }
 
-interface Goal {
-  name: string;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
-  status: 'active' | 'candidate' | 'inactive';
-  inputs: GoalInput[];
+interface Card {
+  id: string;
+  header: string;
+  sub_header: string;
+  modified_by_agent: boolean;
+  match: string;
+  match_options: string[];
+  cols: ColField[];
 }
 
-interface Category {
-  title: string;
-  goals: Goal[];
+interface GoalSection {
+  section: string;
+  cards: Card[];
 }
 
-const categories: Category[] = [
-  {
-    title: 'Protection Goals',
-    goals: [
-      {
-        name: 'Income Protection',
-        description: 'Protect family income in case of uncertainty.',
-        icon: ShieldIcon,
-        status: 'active',
-        inputs: [
-          { label: 'Coverage (Years)', value: '30' },
-          { label: 'Cover Amount', value: '2 Cr' },
-        ],
-      },
-      {
-        name: 'Large Life Cover',
-        description: 'Assess need for higher cover based on responsibilities.',
-        icon: LifeCoverIcon,
-        status: 'candidate',
-        inputs: [
-          { label: 'Coverage (Years)', value: '30' },
-          { label: 'Cover Amount', value: '' },
-        ],
-      },
-      {
-        name: 'Loan Protection',
-        description: 'Ensure liabilities do not burden family.',
-        icon: HomeIcon,
-        status: 'inactive',
-        inputs: [
-          { label: 'Loan Cover', value: '' },
-          { label: 'Tenure', value: '' },
-        ],
-      },
-    ],
-  },
-  {
-    title: 'Specific Goals',
-    goals: [
-      {
-        name: 'Child Education',
-        description: 'Create corpus for education expenses.',
-        icon: GraduationCapIcon,
-        status: 'active',
-        inputs: [
-          { label: 'Timeframe (Years)', value: '15' },
-          { label: 'Corpus', value: '40 L' },
-        ],
-      },
-      {
-        name: 'Child Marriage',
-        description: 'Plan for future family milestones.',
-        icon: HeartIcon,
-        status: 'inactive',
-        inputs: [
-          { label: 'Timeframe', value: '' },
-          { label: 'Corpus', value: '' },
-        ],
-      },
-    ],
-  },
-  {
-    title: 'Savings & Wealth',
-    goals: [
-      {
-        name: 'Wealth Creation',
-        description: 'Grow money over long term.',
-        icon: TrendingUpIcon,
-        status: 'inactive',
-        inputs: [
-          { label: 'Timeframe', value: '' },
-          { label: 'Investment', value: '' },
-        ],
-      },
-      {
-        name: 'Guaranteed Savings',
-        description: 'Safe and predictable savings.',
-        icon: PiggyBankIcon,
-        status: 'inactive',
-        inputs: [
-          { label: 'Timeframe', value: '' },
-          { label: 'Amount', value: '' },
-        ],
-      },
-      {
-        name: 'Regular Income',
-        description: 'Build a future income stream.',
-        icon: WalletIcon,
-        status: 'candidate',
-        inputs: [
-          { label: 'Start After', value: '' },
-          { label: 'Income', value: '' },
-        ],
-      },
-    ],
-  },
-  {
-    title: 'Retirement & Legacy',
-    goals: [
-      {
-        name: 'Retirement Planning',
-        description: 'Maintain lifestyle post retirement.',
-        icon: UmbrellaIcon,
-        status: 'candidate',
-        inputs: [
-          { label: 'Timeframe (Years)', value: '20' },
-          { label: 'Corpus', value: '1 Cr' },
-        ],
-      },
-      {
-        name: 'Legacy Planning',
-        description: 'Leave wealth for next generation.',
-        icon: LandmarkIcon,
-        status: 'inactive',
-        inputs: [
-          { label: 'Corpus', value: '' },
-          { label: 'Timeframe', value: '' },
-        ],
-      },
-    ],
-  },
-  {
-    title: 'Other Goals',
-    goals: [
-      {
-        name: 'Tax Saving',
-        description: 'Tax-efficient investment planning.',
-        icon: ReceiptIcon,
-        status: 'candidate',
-        inputs: [
-          { label: 'Annual Investment', value: '' },
-          { label: 'Section', value: '80C' },
-        ],
-      },
-      {
-        name: 'Disciplined Saving',
-        description: 'Build structured saving habit.',
-        icon: CalendarIcon,
-        status: 'inactive',
-        inputs: [
-          { label: 'Monthly Saving', value: '' },
-          { label: 'Timeframe', value: '' },
-        ],
-      },
-    ],
-  },
-];
+// ─── Match key helpers ───────────────────────────────────────────────────────
+
+type MatchKey =
+  | 'strongly identified'
+  | 'possible fit'
+  | 'not identified yet'
+  | 'selected by agent'
+  | 'ignored by agent';
+
+const normaliseMatch = (raw?: string): MatchKey => {
+  const s = (raw ?? '').toLowerCase().trim();
+  if (s === 'strongly identified')  return 'strongly identified';
+  if (s === 'selected by agent')    return 'selected by agent';
+  if (s === 'ignored by agent')     return 'ignored by agent';
+  if (s.startsWith('possible'))     return 'possible fit';
+  return 'not identified yet';
+};
+
+// ─── Style maps ──────────────────────────────────────────────────────────────
+// 'selected by agent' → same look as 'strongly identified'
+// 'ignored by agent'  → same look as 'not identified yet'
+
+const CARD_BORDER: Record<MatchKey, string> = {
+  'strongly identified': 'border-[#54B8FF] bg-[#F4FBFF]',
+  'possible fit':        'border-amber-200 bg-amber-50/70',
+  'not identified yet':  'border-slate-200 bg-white',
+  'selected by agent':   'border-[#54B8FF] bg-[#F4FBFF]',
+  'ignored by agent':    'border-slate-200 bg-white',
+};
+
+const BADGE_STYLE: Record<MatchKey, string> = {
+  'strongly identified': 'border-blue-200 text-blue-600 bg-blue-50',
+  'possible fit':        'border-amber-300 text-amber-600 bg-amber-50',
+  'not identified yet':  'border-slate-200 text-slate-500 bg-white',
+  'selected by agent':   'border-blue-200 text-blue-600 bg-blue-50',
+  'ignored by agent':    'border-slate-200 text-slate-500 bg-white',
+};
+
+// Tick circle: filled+coloured when agent has acted on the card
+const TICK_STYLE: Record<MatchKey, string> = {
+  'strongly identified': 'bg-white border-slate-200 text-slate-300',
+  'possible fit':        'bg-white border-amber-300 text-amber-400',
+  'not identified yet':  'bg-white border-slate-200 text-slate-300',
+  'selected by agent':   'bg-[#2EA9FF] border-[#2EA9FF] text-white',   // filled blue
+  'ignored by agent':    'bg-slate-400 border-slate-400 text-white',    // filled grey
+};
+
+
+// ─── Main page ───────────────────────────────────────────────────────────────
 
 export default function FinancialGoalsPage() {
-  return (
-    <div className="min-h-screen bg-[#F5F8FC] text-slate-800">
-      <div className="min-h-screen">
-        <main className="px-8 py-6">
-          <div className="mb-6 text-[22px] font-semibold">
-            Financial Goals{' '}
-            <span className="text-slate-500 font-normal">| Client: Test</span>
-          </div>
+  const dispatch     = useAppDispatch();
+  const { emitModifiedData } = useData();
 
-          <div className="space-y-8">
-            {categories.map((category) => (
-              <div key={category.title}>
-                <div className="mb-3 text-lg font-semibold">
-                  {category.title}
-                </div>
+  const financialGoals = useAppSelector(
+    (state) => state.salesCopilotReducer.salesData.financialGoals as any
+  );
+  const goals: GoalSection[] = financialGoals?.goals ?? [];
+
+  // ── Single card highlight (visual only, no Redux) ──────────────────────
+  // Tracks the one card the user has clicked on to highlight it.
+  // Stored as "<sectionIndex>-<cardId>" so it spans all sections.
+  const [highlightedKey, setHighlightedKey] = useState<string | null>(null);
+
+  const makeKey = (sectionIndex: number, cardId: string) =>
+    `${sectionIndex}-${cardId}`;
+
+  const handleCardBodyClick = (sectionIndex: number, cardId: string) => {
+    const key = makeKey(sectionIndex, cardId);
+    // Toggle: click same card again → deselect; click new card → select it
+    setHighlightedKey((prev) => (prev === key ? null : key));
+  };
+
+  // ── Tick icon click → toggle Redux match ──────────────────────────────
+  const handleTickClick = (
+    e: React.MouseEvent,
+    sectionIndex: number,
+    card: Card
+  ) => {
+    e.stopPropagation(); // don't bubble to card body click
+
+    const currentMatch = normaliseMatch(card.match);
+    const isCurrentlySelected = currentMatch === 'selected by agent';
+    const nextMatch = isCurrentlySelected ? 'ignored by agent' : 'selected by agent';
+    const nextModifiedByAgent = !isCurrentlySelected;
+
+    const updatedFinancialGoals = {
+      ...(financialGoals ?? {}),
+      goals: goals.map((section, idx) => {
+        if (idx !== sectionIndex) return section;
+        return {
+          ...section,
+          cards: section.cards.map((c) =>
+            c.id === card.id
+              ? {
+                  ...c,
+                  modified_by_agent: nextModifiedByAgent,
+                  match: nextMatch,
+                }
+              : c
+          ),
+        };
+      }),
+    };
+
+    dispatch(
+      toggleFinancialGoalCard({
+        sectionIndex,
+        cardId: card.id,
+        modified_by_agent: nextModifiedByAgent,
+        match: nextMatch,
+      })
+    );
+
+    // Tick action should also push full financial goals payload to backend.
+    emitModifiedData({ 'Financial Goals': updatedFinancialGoals });
+  };
+
+  const handleCopy = (value: string) => {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(value ?? '').catch(console.error);
+    } else {
+      // Fallback for non-secure contexts (HTTP)
+      const textArea = document.createElement("textarea");
+      textArea.value = value ?? '';
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {
+        console.error('Fallback copy failed', err);
+      }
+      textArea.remove();
+    }
+  };
+
+  const handleFieldBlur = (
+    sectionIndex: number,
+    cardId: string,
+    colIndex: number,
+    value: string
+  ) => {
+    const currentValue =
+      goals?.[sectionIndex]?.cards?.find((c) => c.id === cardId)?.cols?.[colIndex]?.value ?? '';
+    if (String(currentValue) === String(value ?? '')) {
+      return;
+    }
+    const updatedFinancialGoals = {
+      ...(financialGoals ?? {}),
+      goals: goals.map((section, sIdx) => {
+        if (sIdx !== sectionIndex) return section;
+        return {
+          ...section,
+          cards: section.cards.map((card) => {
+            if (card.id !== cardId) return card;
+            return {
+              ...card,
+              cols: (card.cols ?? []).map((col, cIdx) =>
+                cIdx === colIndex
+                  ? { ...col, value, modified_by_agent: true }
+                  : col
+              ),
+            };
+          }),
+        };
+      }),
+    };
+
+    dispatch(updateFinancialGoals(updatedFinancialGoals));
+    emitModifiedData({ 'Financial Goals': updatedFinancialGoals });
+  };
+
+  // ── Empty state ───────────────────────────────────────────────────────
+  if (goals.length === 0) {
+    return (
+      <div className="w-full text-slate-800">
+        <p className="text-sm text-slate-400">No financial goals loaded yet.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="w-full text-slate-800"
+      onClick={() => setHighlightedKey(null)}
+    >
+      <div className="space-y-8">
+          {goals.map((section, sectionIndex) => {
+            return (
+              <div key={sectionIndex}>
+                <div className="mb-3 text-lg font-semibold">{section.section}</div>
                 <div className="space-y-4">
-                  {[...category.goals]
-                    .sort((a, b) => {
-                      const order = { active: 0, candidate: 1, inactive: 2 };
-                      return order[a.status] - order[b.status];
-                    })
-                    .map((goal) => (
-                      <GoalRow key={goal.name} goal={goal} />
-                    ))}
+                  {section.cards.map((card) => {
+                    const key        = makeKey(sectionIndex, card.id);
+                    const highlighted = highlightedKey === key;
+
+                    return (
+                      <GoalCard
+                        key={card.id}
+                        card={card}
+                        sectionIndex={sectionIndex}
+                        highlighted={highlighted}
+                        onCardBodyClick={handleCardBodyClick}
+                        onTickClick={handleTickClick}
+                        onCopy={handleCopy}
+                        onFieldBlur={handleFieldBlur}
+                      />
+                    );
+                  })}
                 </div>
               </div>
-            ))}
-          </div>
-        </main>
-      </div>
+            );
+          })}
+        </div>
     </div>
   );
 }
 
-interface GoalRowProps {
-  goal: Goal;
+
+// ─── Individual goal card ────────────────────────────────────────────────────
+
+interface GoalCardProps {
+  card: Card;
+  sectionIndex: number;
+  highlighted: boolean;
+  onCardBodyClick: (sectionIndex: number, cardId: string) => void;
+  onTickClick: (e: React.MouseEvent, sectionIndex: number, card: Card) => void;
+  onCopy: (v: string) => void;
+  onFieldBlur: (
+    sectionIndex: number,
+    cardId: string,
+    colIndex: number,
+    value: string
+  ) => void;
 }
 
-function GoalRow({ goal }: GoalRowProps) {
-  const Icon = goal.icon;
+function GoalCard({
+  card,
+  sectionIndex,
+  highlighted,
+  onCardBodyClick,
+  onTickClick,
+  onCopy,
+  onFieldBlur,
+}: GoalCardProps) {
+  const matchKey = normaliseMatch(card.match);
+
   return (
-    <div className={`rounded-[20px] border p-6 ${STATUS_STYLE[goal.status]}`}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-start gap-4">
-          <div className="h-10 w-10 rounded-xl bg-[#E7F6FF] flex items-center justify-center text-[#1E9BF0]">
-            <Icon className="h-5 w-5" />
+    <div
+      className={[
+        'rounded-[20px] border p-4 sm:p-6 cursor-pointer transition-all duration-200',
+        CARD_BORDER[matchKey],
+        // Card-body highlight: a distinct inset ring when this card is selected
+        highlighted ? 'ring-2 ring-offset-1 ring-blue-500 shadow-lg' : '',
+      ].join(' ')}
+      onClick={() => onCardBodyClick(sectionIndex, card.id)}
+    >
+      {/* ── Header row ───────────────────────────────────────────────── */}
+      <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
+        {/* Left Section (Desktop) / Top 2 rows (Mobile) */}
+        <div className="flex flex-col md:flex-row md:items-center gap-3">
+          {/* Icon and Title Container */}
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E7F6FF] text-[#1E9BF0]">
+              <ShieldIcon className="h-5 w-5" />
+            </div>
+            {/* Title only here on mobile, hidden on desktop */}
+            <div className="text-lg font-semibold md:hidden">{card.header}</div>
+            
+            {/* Desktop grouping of Title + Subtitle */}
+            <div className="hidden md:flex flex-col">
+              <div className="text-lg font-semibold leading-tight">{card.header}</div>
+              {card.sub_header && (
+                <div className="text-sm text-slate-500 mt-0.5">
+                  {card.sub_header}
+                </div>
+              )}
+            </div>
           </div>
-          <div>
-            <div className="text-lg font-semibold">{goal.name}</div>
-            <div className="text-sm text-slate-500">{goal.description}</div>
-          </div>
+
+          {/* Subtitle only here on mobile, hidden on desktop */}
+          {card.sub_header && (
+            <div className="text-sm text-slate-500 md:hidden">
+              {card.sub_header}
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-xs px-3 py-1 rounded-full border bg-white">
-            {BADGE[goal.status]}
+        {/* Match badge and Tick icon */}
+        <div className="flex items-center justify-between md:justify-end gap-4">
+          <span
+            className={`rounded-full border px-3 py-1 text-xs whitespace-nowrap ${BADGE_STYLE[matchKey]}`}
+          >
+            {card.match ?? 'Not identified yet'}
           </span>
-          <div
-            className={`h-6 w-6 rounded-full border flex items-center justify-center ${
-              goal.status === 'active'
-                ? 'bg-[#2EA9FF] text-white'
-                : 'bg-white'
-            }`}
+
+          <button
+            type="button"
+            title={
+              matchKey === 'selected by agent'
+                ? 'Unmark (ignore)'
+                : 'Mark as selected by agent'
+            }
+            className={[
+              'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200',
+              TICK_STYLE[matchKey],
+            ].join(' ')}
+            onClick={(e) => onTickClick(e, sectionIndex, card)}
           >
             ✓
-          </div>
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        {goal.inputs.map((input) => (
-          <InputField key={input.label} input={input} />
+      {/* ── Column fields ─────────────────────────────────────────────── */}
+      <div
+        className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+        onClick={(e) => e.stopPropagation()} // typing shouldn't toggle card highlight
+      >
+        {(card.cols ?? []).map((col, colIndex) => (
+          <ColFieldCell
+            key={colIndex}
+            col={col}
+            onCopy={onCopy}
+            onBlur={(value) => onFieldBlur(sectionIndex, card.id, colIndex, value)}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-interface InputFieldProps {
-  input: GoalInput;
-}
+// ─── Column field inside a card ──────────────────────────────────────────────
 
-function InputField({ input }: InputFieldProps) {
+function ColFieldCell({
+  col,
+  onCopy,
+  onBlur,
+}: {
+  col: ColField;
+  onCopy: (v: string) => void;
+  onBlur: (v: string) => void;
+}) {
+  const [localValue, setLocalValue] = useState(col.value ?? '');
+  const [copied, setCopied]         = useState(false);
+
+  useEffect(() => {
+    setLocalValue(col.value ?? '');
+  }, [col.value]);
+
+  const handleCopyClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onCopy(localValue);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+  const handleBlur = () => {
+    if (String(localValue ?? '') !== String(col.value ?? '')) {
+      onBlur(localValue);
+    }
+  };
+
   return (
-    <div>
-      <div className="text-sm text-slate-500 mb-1">{input.label}</div>
-      <input
-        defaultValue={input.value}
-        className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2EA9FF]"
-      />
+    <div className="flex h-full flex-col group relative">
+      <div className="mb-1 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 text-sm text-slate-500">
+          {col.field}
+        </div>
+      </div>
+      <div className="flex flex-1 min-w-0 relative">
+        <input
+          value={localValue}
+          placeholder={col.placeholder ?? ''}
+          onChange={(e) => setLocalValue(e.target.value)}
+          onBlur={handleBlur}
+          className={`flex-1 min-w-0 rounded-lg border px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-[#2EA9FF] border-slate-200 bg-gray-50`}
+        />
+        <button
+          type="button"
+          onClick={handleCopyClick}
+          title="Copy"
+          className="absolute z-20 right-1 p-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
+        </button>
+      </div>
     </div>
   );
 }
 
-interface SvgIconProps {
+// ─── SVG icon ────────────────────────────────────────────────────────────────
+
+const ICON_STROKE = 1.9;
+
+function SvgIcon({
+  children,
+  className = 'h-5 w-5',
+}: {
   children: React.ReactNode;
   className?: string;
-}
-
-function SvgIcon({ children, className = 'h-5 w-5' }: SvgIconProps) {
+}) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -310,94 +455,6 @@ function ShieldIcon(props: { className?: string }) {
   return (
     <SvgIcon {...props}>
       <path d="M12 3 5 6v5c0 5 3 8 7 10 4-2 7-5 7-10V6Z" />
-    </SvgIcon>
-  );
-}
-
-function GraduationCapIcon(props: { className?: string }) {
-  return (
-    <SvgIcon {...props}>
-      <path d="m2 9 10-5 10 5-10 5Z" />
-    </SvgIcon>
-  );
-}
-
-function UmbrellaIcon(props: { className?: string }) {
-  return (
-    <SvgIcon {...props}>
-      <path d="M3 12a9 9 0 0 1 18 0" />
-    </SvgIcon>
-  );
-}
-
-function LifeCoverIcon(props: { className?: string }) {
-  return (
-    <SvgIcon {...props}>
-      <path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6Z" />
-    </SvgIcon>
-  );
-}
-
-function HomeIcon(props: { className?: string }) {
-  return (
-    <SvgIcon {...props}>
-      <path d="m3 11 9-7 9 7" />
-    </SvgIcon>
-  );
-}
-
-function HeartIcon(props: { className?: string }) {
-  return (
-    <SvgIcon {...props}>
-      <path d="M12 21s-6-4.5-9-8.5S5.5 3 12 8s9-2 9 4.5S12 21 12 21Z" />
-    </SvgIcon>
-  );
-}
-
-function TrendingUpIcon(props: { className?: string }) {
-  return (
-    <SvgIcon {...props}>
-      <path d="M4 16 10 10l4 4 6-7" />
-    </SvgIcon>
-  );
-}
-
-function PiggyBankIcon(props: { className?: string }) {
-  return (
-    <SvgIcon {...props}>
-      <path d="M18 11a6 6 0 0 0-6-5H8" />
-    </SvgIcon>
-  );
-}
-
-function WalletIcon(props: { className?: string }) {
-  return (
-    <SvgIcon {...props}>
-      <path d="M4 8h16v8H4z" />
-    </SvgIcon>
-  );
-}
-
-function LandmarkIcon(props: { className?: string }) {
-  return (
-    <SvgIcon {...props}>
-      <path d="M3 9l9-5 9 5" />
-    </SvgIcon>
-  );
-}
-
-function ReceiptIcon(props: { className?: string }) {
-  return (
-    <SvgIcon {...props}>
-      <path d="M7 3h10v18l-2-1-2 1-2-1-2 1-2-1-2 1z" />
-    </SvgIcon>
-  );
-}
-
-function CalendarIcon(props: { className?: string }) {
-  return (
-    <SvgIcon {...props}>
-      <path d="M3 5h18v16H3z" />
     </SvgIcon>
   );
 }

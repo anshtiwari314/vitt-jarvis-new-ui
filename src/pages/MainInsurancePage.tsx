@@ -9,6 +9,7 @@ import Liabilities from '../components/UI2/Liabilities'
 import FinancialGoals from '../components/UI2/FinancialGoals';
 import PlanSummary from '../components/UI2/PlanSummary'
 import Recommendations from '../components/UI2/Recommendations';
+import RecommendationCategoryPage from '../components/UI2/RecommendationCategoryPage';
 import NewFinancialGoals from '../components/UI2/NewFinancialGoals'
 
 import SideNavigation from '../components/UI2/SideNavigation'
@@ -116,18 +117,22 @@ console.log(salesData.planSummary,"the plan summarey in main page");
 
  
     //based on RecomendationSelected we will filter data
-    // let filteredRecommendations = [];
     let filteredRecommendations:any = [];
+    let recommendationCategoryData: any = null;
 
-if (RecomendationSelected) {
-  const matched = mockData.find(
-    (item) => item.planName === RecomendationSelected
-  );
-
-  if (matched) {
-    filteredRecommendations = matched.planDetails; 
-  }
-}
+    if (typeof currentNavigation === 'string' && currentNavigation.startsWith('Recommendations::')) {
+      const parts = currentNavigation.split('::');
+      const categoryKey = parts[1] || null;
+      const cats = (mockData as any)?.categories || [];
+      recommendationCategoryData = cats.find((c: any) => c.category === categoryKey) || null;
+    } else if (RecomendationSelected && Array.isArray(mockData)) {
+      const matched = mockData.find(
+        (item: any) => item.planName === RecomendationSelected
+      );
+      if (matched) {
+        filteredRecommendations = matched.planDetails;
+      }
+    }
 
 console.log("Filtered Recommendations:", filteredRecommendations);
     
@@ -162,9 +167,9 @@ console.log("Filtered Recommendations:", filteredRecommendations);
         case 'Financial Goals':
             return <NewFinancialGoals />
         case 'Assets':
-            return <Assets data={salesData.assets} formatCurrency={formatCurrency} />;
+            return <Assets data={(salesData as any).financialReview?.assets} formatCurrency={formatCurrency} />;
         case 'Liabilities':
-            return <Liabilities data={salesData.liabilities} formatCurrency={formatCurrency} />;
+            return <Liabilities data={(salesData as any).financialReview?.liabilities} formatCurrency={formatCurrency} />;
         // case 'Financial Goals':
         //     return <FinancialGoals data={salesData.financialGoals} formatCurrency={formatCurrency} />;
         case 'Plan Summary':
@@ -172,6 +177,9 @@ console.log("Filtered Recommendations:", filteredRecommendations);
         case 'Recommendations':
             return <Recommendations data={filteredRecommendations} formatCurrency={formatCurrency} />;
         default:
+            if (typeof currentNavigation === 'string' && currentNavigation.startsWith('Recommendations::')) {
+                return <RecommendationCategoryPage category={recommendationCategoryData} />;
+            }
             return <BasicInfo data={salesData.basicInfo} />; // Default to Basic Info
     }
 };
@@ -211,18 +219,18 @@ console.log("Filtered Recommendations:", filteredRecommendations);
     },[qpState])
   return (
     
-    <div className="bg-slate-50 text-slate-800 antialiased">
+    <div className="bg-slate-50 text-slate-800 antialiased overflow-x-hidden">
         <div className="flex h-screen overflow-hidden">
             <SideNavigation/>
             <SideBarMobile />
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col min-w-0">
                 
                 <Header/>
                 <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
                     {/* <!-- Main Content --> */}
-                    <main 
+                    <main
                     className="
-                        order-2 flex min-w-0 flex-1 flex-col overflow-y-auto bg-slate-100 px-3 py-1 pb-5 sm:p-6
+                        order-2 flex min-w-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto bg-slate-100 px-3 py-1 pb-5 sm:p-6
                         lg:order-1 lg:basis-[62%]
                       "
                     >
