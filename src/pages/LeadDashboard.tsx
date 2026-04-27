@@ -1017,7 +1017,7 @@ function LeadDashboard() {
 
   return (
     <DataContext.Provider value={{ base_url, getFormData, formData }}>
-      <div className="min-h-screen bg-slate-100 font-sans">
+      <div className="h-full overflow-y-auto bg-slate-100 font-sans">
         {/* <Sidebar links={mylink} /> */}
         <div style={{  }} className="mx-0 lg:mx-[8rem]">
           <div className="py-6">

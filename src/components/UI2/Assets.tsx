@@ -124,19 +124,77 @@ function EditableTextAreaField({
   onCommit: (value: string) => void;
 }) {
   const [localValue, setLocalValue] = useState(initialValue);
+  const [isHighlighted, setIsHighlighted] = useState(false);
+  const highlightTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
   React.useEffect(() => {
     setLocalValue(initialValue);
   }, [initialValue]);
 
+  const triggerHighlight = () => {
+    setIsHighlighted(true);
+    if (highlightTimeout.current) clearTimeout(highlightTimeout.current);
+    highlightTimeout.current = setTimeout(() => setIsHighlighted(false), 10000);
+  };
+
   return (
     <div className="relative">
       <textarea
-        className={className}
+        className={`${className} transition-all duration-300 ${isHighlighted ? 'border-sky-400 ring-1 ring-sky-200 shadow-[0_0_4px_rgba(56,189,248,0.2)]' : ''}`}
         rows={rows}
         value={localValue}
         placeholder={placeholder}
-        onChange={(e) => setLocalValue(e.target.value)}
+        onChange={(e) => {
+          setLocalValue(e.target.value);
+          triggerHighlight();
+        }}
+        onBlur={() => {
+          if (localValue !== initialValue) {
+            onCommit(localValue);
+          }
+        }}
+      />
+      <CopyButton value={localValue} />
+    </div>
+  );
+}
+
+function EditableInputField({
+  initialValue,
+  placeholder,
+  className,
+  onCommit,
+}: {
+  initialValue: string;
+  placeholder: string;
+  className: string;
+  onCommit: (value: string) => void;
+}) {
+  const [localValue, setLocalValue] = useState(initialValue);
+  const [isHighlighted, setIsHighlighted] = useState(false);
+  const highlightTimeout = React.useRef<NodeJS.Timeout | null>(null);
+
+  React.useEffect(() => {
+    setLocalValue(initialValue);
+  }, [initialValue]);
+
+  const triggerHighlight = () => {
+    setIsHighlighted(true);
+    if (highlightTimeout.current) clearTimeout(highlightTimeout.current);
+    highlightTimeout.current = setTimeout(() => setIsHighlighted(false), 10000);
+  };
+
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        className={`${className} transition-all duration-300 ${isHighlighted ? 'border-sky-400 ring-1 ring-sky-200 shadow-[0_0_4px_rgba(56,189,248,0.2)]' : ''}`}
+        value={localValue}
+        placeholder={placeholder}
+        onChange={(e) => {
+          setLocalValue(e.target.value);
+          triggerHighlight();
+        }}
         onBlur={() => {
           if (localValue !== initialValue) {
             onCommit(localValue);
@@ -194,20 +252,16 @@ export default function Assets({ data, formatCurrency }: Props) {
           {/* Monthly Income */}
           <div>
             <AgentLabel label={boxA?.heading?.sub_header} />
-            <div className="relative">
-              <div className={`p-2 pr-9 font-semibold text-slate-800 rounded-md border border-transparent`}>
-                {typeof boxA?.heading?.sub_header_data === 'number'
+            <EditableInputField
+              initialValue={
+                typeof boxA?.heading?.sub_header_data === 'number'
                   ? boxA.heading.sub_header_data.toLocaleString('en-IN')
-                  : boxA?.heading?.sub_header_data ?? ''}
-              </div>
-              <CopyButton
-                value={
-                  typeof boxA?.heading?.sub_header_data === 'number'
-                    ? boxA.heading.sub_header_data.toLocaleString('en-IN')
-                    : safeText(boxA?.heading?.sub_header_data)
-                }
-              />
-            </div>
+                  : safeText(boxA?.heading?.sub_header_data)
+              }
+              placeholder=""
+              className={`w-full p-2 pr-9 border rounded-md focus:outline-none focus:ring-1 focus:ring-sky-200 border-slate-300 bg-slate-50`}
+              onCommit={(value) => updateField(boxA?.heading?.sub_header, value)}
+            />
           </div>
 
           {/* Savings text area */}
@@ -216,7 +270,7 @@ export default function Assets({ data, formatCurrency }: Props) {
             <EditableTextAreaField
               initialValue={safeText(boxA?.text_area?.text_area_value)}
               placeholder={boxA?.text_area?.placeholder ?? ''}
-              className={`w-full p-2 pr-9 border rounded-md border-slate-300 bg-slate-50`}
+              className={`w-full p-2 pr-9 border rounded-md focus:outline-none focus:ring-1 focus:ring-sky-200 border-slate-300 bg-slate-50`}
               onCommit={(value) => updateField(boxA?.text_area?.text_area_header, value)}
             />
           </div>
@@ -235,7 +289,7 @@ export default function Assets({ data, formatCurrency }: Props) {
             <EditableTextAreaField
               initialValue={safeText(boxB?.text_area_1?.text_area_valueA)}
               placeholder={boxB?.text_area_1?.placeholder ?? ''}
-              className={`w-full p-2 pr-9 border rounded-md border-slate-300 bg-slate-50`}
+              className={`w-full p-2 pr-9 border rounded-md focus:outline-none focus:ring-1 focus:ring-sky-200 border-slate-300 bg-slate-50`}
               onCommit={(value) => updateField(boxB?.text_area_1?.text_area_headerA, value)}
             />
           </div>
@@ -246,7 +300,7 @@ export default function Assets({ data, formatCurrency }: Props) {
             <EditableTextAreaField
               initialValue={safeText(boxB?.text_area_2?.text_area_valueB)}
               placeholder={boxB?.text_area_2?.placeholder ?? ''}
-              className={`w-full p-2 pr-9 border rounded-md border-slate-300 bg-slate-50`}
+              className={`w-full p-2 pr-9 border rounded-md focus:outline-none focus:ring-1 focus:ring-sky-200 border-slate-300 bg-slate-50`}
               onCommit={(value) => updateField(boxB?.text_area_2?.text_area_headerB, value)}
             />
           </div>

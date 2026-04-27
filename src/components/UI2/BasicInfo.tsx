@@ -213,11 +213,19 @@ function FieldCell({
 }) {
   const [localValue, setLocalValue] = useState(field.value ?? '');
   const [copied, setCopied] = useState(false);
+  const [isHighlighted, setIsHighlighted] = useState(false);
+  const highlightTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
   // Sync if the Redux value changes from the backend
   useEffect(() => {
     setLocalValue(field.value ?? '');
   }, [field.value]);
+
+  const triggerHighlight = () => {
+    setIsHighlighted(true);
+    if (highlightTimeout.current) clearTimeout(highlightTimeout.current);
+    highlightTimeout.current = setTimeout(() => setIsHighlighted(false), 10000);
+  };
 
   const handleCopyClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -231,9 +239,9 @@ function FieldCell({
   };
 
   const baseInputClass =
-    'w-full min-w-0 flex-1 rounded-md border p-2.5 text-sm outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100';
+    'w-full min-w-0 flex-1 rounded-md border p-2.5 text-sm outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-1 focus:ring-blue-50';
 
-  const inputClass = `${baseInputClass} border-gray-200 bg-gray-50`;
+  const inputClass = `${baseInputClass} border-gray-200 bg-gray-50 transition-all duration-300 ${isHighlighted ? 'border-sky-400 ring-1 ring-sky-200 shadow-[0_0_4px_rgba(56,189,248,0.2)]' : ''}`;
 
   return (
     // h-full + flex col ensures cell stretches to row height
@@ -253,7 +261,10 @@ function FieldCell({
             value={localValue}
             rows={5}
             placeholder={field.placeholder ?? ''}
-            onChange={(e) => setLocalValue(e.target.value)}
+            onChange={(e) => {
+              setLocalValue(e.target.value);
+              triggerHighlight();
+            }}
             onBlur={handleBlur}
             className={`${inputClass} pr-9 min-h-[120px] resize-none`}
           />
@@ -263,6 +274,7 @@ function FieldCell({
               value={localValue}
               onChange={(e) => {
                 setLocalValue(e.target.value);
+                triggerHighlight();
                 onBlur(field.field, e.target.value);
               }}
               className={`${inputClass} cursor-pointer appearance-none pr-9`}
@@ -282,7 +294,10 @@ function FieldCell({
             type="text"
             value={localValue}
             placeholder={field.placeholder ?? ''}
-            onChange={(e) => setLocalValue(e.target.value)}
+            onChange={(e) => {
+              setLocalValue(e.target.value);
+              triggerHighlight();
+            }}
             onBlur={handleBlur}
             className={`${inputClass} pr-9`}
           />

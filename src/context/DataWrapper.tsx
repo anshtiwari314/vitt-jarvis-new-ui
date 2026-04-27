@@ -47,6 +47,11 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   const [socket, setSocket] = useState<Socket | null>(null)
   const [isSocketConnected,setIsSocketConnected] = useState(false)
 const [pref_language,setPref_language]=useState("English")
+  const [hotPageLoading, setHotPageLoading] = useState<Record<string, boolean>>({
+    "Financial Goals": false,
+    "Plan Summary": false,
+    Recommendations: false,
+  })
   const navigation =
     useAppSelector((state) => state.salesCopilotReducer.navigation) || "Basic Info"
   const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
@@ -108,9 +113,11 @@ const [pref_language,setPref_language]=useState("English")
         break
       case "financial-goals":
         dispatch(updateFinancialGoals(data.financialGoals))
+        setHotPageLoading((prev) => ({ ...prev, "Financial Goals": false }))
         break
       case "plan-summary":
         dispatch(updatePlanSummary(data.planSummary))
+        setHotPageLoading((prev) => ({ ...prev, "Plan Summary": false }))
         break
       case "recommendations":
         console.log('recommendation data from backend',data)
@@ -283,6 +290,10 @@ useEffect(()=>{
   useEffect(() => {
     if (!socket) {
       return
+    }
+
+    if (navigation === "Financial Goals" || navigation === "Plan Summary") {
+      setHotPageLoading((prev) => ({ ...prev, [navigation]: true }))
     }
 
     const data = {
@@ -605,7 +616,8 @@ useEffect(()=>{
     recommendationsGenerated,setRecommendationsGenerated,
     pref_language,setPref_language,
     audioRef, audioUrl, setAudioUrl, audioQueueRef, isAudioStillPlaying, isAudioPlayingState,
-    speakerEnabled, setSpeakerEnabled
+    speakerEnabled, setSpeakerEnabled,
+    hotPageLoading
   }
   return (
     <Context.Provider value={values}>

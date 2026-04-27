@@ -11,9 +11,15 @@ import { updatePref_language } from "../../reducers/salesCopilotReducer"
 import { TailSpin } from "react-loading-icons"
 import { Flag, X, Mic, MicOff } from "lucide-react"
 import { useDispatch } from "react-redux";
+// import {
+//   useConnectionQuality,
+//   defaultHealthUrl,
+//   NetworkStatusIcon,
+//   NetworkStatusBanner,
+// } from "./NetworkMonitor"
 
 export default function Header() {
-  const { socket, isAudioPlayingState, audioRef, speakerEnabled, setSpeakerEnabled } = useData()
+  const { socket, isAudioPlayingState, audioRef, speakerEnabled, setSpeakerEnabled, isSocketConnected } = useData()
   const dispatch = useAppDispatch()
   //@ts-ignore
   const { setCurrentUser } = useAuth()
@@ -39,6 +45,9 @@ export default function Header() {
 
   // Flag modal state
   const [flagOpen, setFlagOpen] = useState(false)
+
+  // Connectivity check (pings google favicon + server /health every 15s)
+  // const networkStatus = useConnectionQuality(defaultHealthUrl(), 15000)
 
   // Timer - runs ONLY when VAD2.listening is true
   useEffect(() => {
@@ -111,14 +120,22 @@ export default function Header() {
     Recommendations: "Recommendations",
   }
 
+  const resolvePageTitle = (nav: string) => {
+    if (typeof nav === "string" && nav.startsWith("Recommendations::")) {
+      return "Recommendations"
+    }
+    return pageDetails[nav] || "Dashboard"
+  }
+
+  console.log('manual vad initially',VAD2,manualVadStatus)
   return (
     <>
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white p-4">
+      <header className="lg:sticky top-0 z-10 border-b border-slate-200 bg-white p-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           {/* Left: Title  name vad play logo*/}
           <div className="flex items-center gap-3">
                   <h2 className="text-xl font-bold text-slate-800 md:text-2xl">
-                    {pageDetails[currentNavigation] || "Dashboard"}
+                    {resolvePageTitle(currentNavigation)}
                   </h2>
 
                   {clientName && (
@@ -148,13 +165,13 @@ export default function Header() {
               {VAD2 !== undefined && VAD2.loading === false ? (
                 <button
                   className={`h-full px-3 md:px-4 flex items-center justify-center rounded-lg transition-all duration-200 shadow-sm ${
-                    VAD2.listening 
+                    manualVadStatus
                       ? "text-sky-600 bg-white shadow-[0_0_10px_rgba(2,132,199,0.3)] relative z-10" 
                       : "text-slate-600 bg-slate-100 hover:bg-slate-200"
                   }`}
-                  onClick={() => setManualVadStatus(!VAD2.listening)}
+                  onClick={() => setManualVadStatus(!manualVadStatus)}
                 >
-                  {VAD2.listening ? (
+                  {manualVadStatus ? (
                     <Mic className="w-5 h-4 md:w-7 md:h-7" />
                   ) : (
                     <MicOff className="w-5 h-4 md:w-7 md:h-7" />
@@ -231,6 +248,9 @@ export default function Header() {
               ))}
             </select>
 
+            {/* Network status icon */}
+            {/* <NetworkStatusIcon {...networkStatus} /> */}
+
             {/* Flag Button */}
             <button
               onClick={() => setFlagOpen(true)}
@@ -254,6 +274,8 @@ export default function Header() {
 
       {/* Flag Modal */}
       {flagOpen && <FlagModal onClose={() => setFlagOpen(false)} onSubmit={handleFlag} />}
+
+      {/* <NetworkStatusBanner {...networkStatus} /> */}
     </>
   )
 }
@@ -303,7 +325,7 @@ function FlagModal({ onClose, onSubmit }: FlagModalProps) {
               placeholder="Add your comment here..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              className="min-h-[120px] w-full resize-none rounded-md border border-slate-300 px-3 py-3 text-base outline-none focus:ring-2 focus:ring-slate-400"
+              className="min-h-[120px] w-full resize-none rounded-md border border-slate-300 px-3 py-3 text-base outline-none focus:ring-1 focus:ring-slate-300"
               autoFocus
             />
 

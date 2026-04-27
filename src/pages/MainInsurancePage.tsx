@@ -18,8 +18,19 @@ import Header from '../components/UI2/Header'
 import RightPanel from '../components/UI2/RightPanel'
 import { useDispatch } from 'react-redux';
 import { setQP } from '../reducers/queryparamReducer';
+import { useData } from '../context/DataWrapper';
+
+function HotPageLoader() {
+    return (
+        <div className="flex flex-1 flex-col items-center justify-center w-full min-h-[50vh] py-16 px-4 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500 mb-4"></div>
+            <p className="text-sm text-slate-500">please wait while we are retrieving the updated info</p>
+        </div>
+    )
+}
 
 export default function App() {
+   const { isSocketConnected, hotPageLoading } = useData();
    const { navigation: currentNavigation, salesData ,RecomendationSelected} = useAppSelector((state) => state.salesCopilotReducer)
    console.log("Current Navigation:", currentNavigation);
    console.log("Sales Datain main page:", salesData.recommendations);
@@ -165,7 +176,7 @@ console.log("Filtered Recommendations:", filteredRecommendations);
         case 'Basic Info':
             return <BasicInfo data={salesData.basicInfo} />;
         case 'Financial Goals':
-            return <NewFinancialGoals />
+            return hotPageLoading?.['Financial Goals'] ? <HotPageLoader /> : <NewFinancialGoals />
         case 'Assets':
             return <Assets data={(salesData as any).financialReview?.assets} formatCurrency={formatCurrency} />;
         case 'Liabilities':
@@ -173,9 +184,13 @@ console.log("Filtered Recommendations:", filteredRecommendations);
         // case 'Financial Goals':
         //     return <FinancialGoals data={salesData.financialGoals} formatCurrency={formatCurrency} />;
         case 'Plan Summary':
-            return <PlanSummary data={salesData.planSummary} formatCurrency={formatCurrency} />;
+            return hotPageLoading?.['Plan Summary']
+                ? <HotPageLoader />
+                : <PlanSummary data={salesData.planSummary} formatCurrency={formatCurrency} />;
         case 'Recommendations':
-            return <Recommendations data={filteredRecommendations} formatCurrency={formatCurrency} />;
+            return hotPageLoading?.['Recommendations']
+                ? <HotPageLoader />
+                : <Recommendations data={filteredRecommendations} formatCurrency={formatCurrency} />;
         default:
             if (typeof currentNavigation === 'string' && currentNavigation.startsWith('Recommendations::')) {
                 return <RecommendationCategoryPage category={recommendationCategoryData} />;
@@ -219,31 +234,42 @@ console.log("Filtered Recommendations:", filteredRecommendations);
     },[qpState])
   return (
     
-    <div className="bg-slate-50 text-slate-800 antialiased overflow-x-hidden">
-        <div className="flex h-screen overflow-hidden">
+    <div className="bg-slate-50 text-slate-800 antialiased" style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
+        {!isSocketConnected && (
+          <div
+            role="alert"
+            className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-700"
+            style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)' }}
+          >
+            <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+            disconnected to server &amp; reconnecting ...
+          </div>
+        )}
+        <div className="flex lg:h-full lg:overflow-hidden" style={{ width: '100%', height: '100%' }}>
             <SideNavigation/>
             <SideBarMobile />
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto thin-scrollbar lg:overflow-hidden">
                 
                 <Header/>
-                <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
+                <div className="flex flex-1 flex-col lg:flex-row lg:overflow-hidden">
                     {/* <!-- Main Content --> */}
                     <main
                     className="
-                        order-2 flex min-w-0 w-full flex-1 flex-col overflow-x-hidden overflow-y-auto bg-slate-100 px-3 py-1 pb-5 sm:p-6
-                        lg:order-1 lg:basis-[62%]
+                        order-2 flex min-w-0 w-full flex-1 flex-col overflow-x-hidden bg-slate-100 px-3 py-1 pb-5 sm:p-6
+                        lg:order-1 lg:basis-[62%] lg:overflow-y-auto thin-scrollbar
                       "
                     >
                         {renderContent()}
                     </main>
 
                     {/* <!-- AI Cues Sidebar --> */}
-                    <aside 
+                    <aside
                     className="
-                        order-1 w-full flex-shrink-0 border-slate-200 bg-white
-                        lg:order-2 lg:h-full lg:w-[38%] lg:border-l lg:shadow-none
+                        order-1 w-full flex-shrink-0 border-slate-200 bg-white overflow-x-hidden
+                        sticky top-0 z-20 border-b lg:border-b-0 lg:static
+                        lg:order-2 lg:h-full lg:w-[38%] lg:border-l lg:shadow-none lg:overflow-y-auto thin-scrollbar
                       "
-                    style={{overflow:'hidden'}}>
+                    >
                     <RightPanel/>
                     </aside>
                 </div>

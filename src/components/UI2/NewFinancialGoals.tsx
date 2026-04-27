@@ -380,10 +380,18 @@ function ColFieldCell({
 }) {
   const [localValue, setLocalValue] = useState(col.value ?? '');
   const [copied, setCopied]         = useState(false);
+  const [isHighlighted, setIsHighlighted] = useState(false);
+  const highlightTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setLocalValue(col.value ?? '');
   }, [col.value]);
+
+  const triggerHighlight = () => {
+    setIsHighlighted(true);
+    if (highlightTimeout.current) clearTimeout(highlightTimeout.current);
+    highlightTimeout.current = setTimeout(() => setIsHighlighted(false), 10000);
+  };
 
   const handleCopyClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -408,9 +416,12 @@ function ColFieldCell({
         <input
           value={localValue}
           placeholder={col.placeholder ?? ''}
-          onChange={(e) => setLocalValue(e.target.value)}
+          onChange={(e) => {
+            setLocalValue(e.target.value);
+            triggerHighlight();
+          }}
           onBlur={handleBlur}
-          className={`flex-1 min-w-0 rounded-lg border px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-[#2EA9FF] border-slate-200 bg-gray-50`}
+          className={`flex-1 min-w-0 rounded-lg border px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-1 focus:ring-sky-200 border-slate-200 bg-gray-50 transition-all duration-300 ${isHighlighted ? 'border-sky-400 ring-1 ring-sky-200 shadow-[0_0_4px_rgba(56,189,248,0.2)]' : ''}`}
         />
         <button
           type="button"

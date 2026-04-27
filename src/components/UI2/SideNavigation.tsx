@@ -71,7 +71,7 @@ export default function SideNavigation(){
                     <div id="current-time" className="text-sm text-slate-500"></div>
                 </div>
             </div>
-            <nav className="flex-1 overflow-y-auto px-3 py-4">
+            <nav className="overflow-y-auto px-3 py-4" style={{ height: '50vh' }}>
                 <div className="space-y-1">
 
                     {/* Basic Info */}

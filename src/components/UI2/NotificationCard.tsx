@@ -63,7 +63,7 @@ export default function NotificationCard({card}){
                     key={idx}
                     onClick={() => handleOption(option)}
                     className={`px-5 py-2.5 text-sm font-medium text-white ${option.toLowerCase()==='yes' ? 'bg-blue-800':'bg-red-500'} rounded-lg
-                              hover:${option.toLowerCase()==='yes'?'bg-blue-700':'bg-red-700'} focus:ring-4 focus:outline-none focus:${option.toLowerCase()==='yes'?'ring-blue-300':'ring-red-300'}
+                              hover:${option.toLowerCase()==='yes'?'bg-blue-700':'bg-red-700'} focus:ring-1 focus:outline-none focus:${option.toLowerCase()==='yes'?'ring-blue-300':'ring-red-300'}
                               shadow-md hover:shadow-lg transition-all duration-200 ease-in-out
                               transform hover:scale-105 active:scale-100`}
                 >

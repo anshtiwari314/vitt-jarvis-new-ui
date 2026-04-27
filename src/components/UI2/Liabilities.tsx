@@ -84,10 +84,18 @@ function EditableInputField({
   onCommit: (value: string) => void;
 }) {
   const [localValue, setLocalValue] = useState(initialValue);
+  const [isHighlighted, setIsHighlighted] = useState(false);
+  const highlightTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
   React.useEffect(() => {
     setLocalValue(initialValue);
   }, [initialValue]);
+
+  const triggerHighlight = () => {
+    setIsHighlighted(true);
+    if (highlightTimeout.current) clearTimeout(highlightTimeout.current);
+    highlightTimeout.current = setTimeout(() => setIsHighlighted(false), 10000);
+  };
 
   return (
     <div className="relative w-full">
@@ -95,8 +103,11 @@ function EditableInputField({
         type="text"
         value={localValue}
         placeholder={placeholder}
-        className={className}
-        onChange={(e) => setLocalValue(e.target.value)}
+        className={`${className} transition-all duration-300 ${isHighlighted ? 'border-sky-400 ring-1 ring-sky-200 shadow-[0_0_4px_rgba(56,189,248,0.2)]' : ''}`}
+        onChange={(e) => {
+          setLocalValue(e.target.value);
+          triggerHighlight();
+        }}
         onBlur={() => {
           if (localValue !== initialValue) {
             onCommit(localValue);
@@ -145,10 +156,10 @@ export default function Liabilities({ data, formatCurrency }: Props) {
     setTimeout(() => setCopiedCell((prev) => (prev === key ? null : prev)), 1200);
   };
 
-  const renderBox = (box: BoxData, colSpan = 2) => (
+  const renderBox = (box: BoxData, gridClass = "grid-cols-1 sm:grid-cols-2") => (
     <div className="bg-white p-6 rounded-xl shadow-sm border border-sky-500">
       <h3 className="text-lg font-semibold text-slate-700 mb-4">{box.header}</h3>
-      <div className={`grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-${colSpan}`}>
+      <div className={`grid gap-x-6 gap-y-4 text-sm ${gridClass}`}>
         {(box.data ?? []).map((item, i) => (
           <div key={i} className="relative">
             <div className="mb-1 flex items-center gap-1.5">
@@ -157,7 +168,7 @@ export default function Liabilities({ data, formatCurrency }: Props) {
             <EditableInputField
               initialValue={renderValue(item.value)}
               placeholder={item.placeholder ?? ''}
-              className={`w-full p-2 pr-9 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#2EA9FF] border-slate-300 bg-slate-50`}
+              className={`w-full p-2 pr-9 border rounded-md focus:outline-none focus:ring-1 focus:ring-sky-200 border-slate-300 bg-slate-50`}
               onCommit={(value) => updateField(item.field, value)}
             />
           </div>
@@ -170,10 +181,10 @@ export default function Liabilities({ data, formatCurrency }: Props) {
     <div className="space-y-6">
 
       {/* Monthly Outflow */}
-      {renderBox(data.boxA, 2)}
+      {renderBox(data.boxA, "grid-cols-1 sm:grid-cols-2")}
 
       {/* Home Loan Details */}
-      {renderBox(data.boxB, 3)}
+      {renderBox(data.boxB, "grid-cols-1 sm:grid-cols-2")}
 
       {/* Other Loans Table */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-sky-500">

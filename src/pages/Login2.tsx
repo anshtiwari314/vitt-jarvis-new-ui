@@ -125,9 +125,17 @@ export default function Login() {
 
   return (
     // Main wrapper with a light gray background
-    <div className="flex items-center justify-center min-h-screen bg-slate-50 font-sans">
+    <div
+      className="bg-slate-50 font-sans flex items-center justify-center h-full"
+      style={{
+        width: '100%',
+        height: '100%',
+      }}
+    >
       {/* Login card with white background and shadow */}
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg">
+      <div
+        className="w-full max-w-md p-8 space-y-6 bg-white rounded-xl shadow-lg"
+      >
         {/* Header */}
         <div className="text-center">
           <h1 className="text-3xl font-bold text-slate-800">Sign In</h1>

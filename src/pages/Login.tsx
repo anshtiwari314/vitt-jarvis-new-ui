@@ -112,8 +112,28 @@ export default function Login() {
     }
 
   return (
-    <div className="auth-wrapper">
-        <div  className="auth-container">
+    <div
+        className="auth-wrapper"
+        style={{
+            width: '100%',
+            height: '100vh',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            background: 'linear-gradient(164deg, rgba(117,35,246,1) 0%, rgba(76,2,193,1) 35%, rgba(132,0,255,1) 100%)',
+        }}
+    >
+        <div
+            className="auth-container"
+            style={{
+                padding: '2rem',
+                textAlign: 'center',
+                border: '1px solid rgba(255,255,255,0.18)',
+                borderRadius: '0.5rem',
+                boxShadow: '0 8px 32px 0 rgba(31,38,135,0.37)',
+                background: 'rgba(255,255,255,0.08)',
+            }}
+        >
                 <h1 style={{color:"tomato",fontSize:"2.5rem",textDecoration:"underline"}}>{error}</h1>
                 <h2 className="auth-heading" style={{fontSize:"3rem",color:"white"}}>Login</h2>
                 <div >

@@ -178,14 +178,14 @@ export default function RecommendationCategoryPage({ category }: Props) {
                       <td className="px-4 py-4 align-top">
                         <button
                           onClick={() => setSelectedId(product.id)}
-                          className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition ${
+                          title={isSelected ? "Selected" : "Select"}
+                          className={`inline-flex items-center justify-center rounded-xl border p-2 transition ${
                             isSelected
                               ? "border-[#54B8FF] bg-[#EEF8FF] text-[#1689DA]"
                               : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                           }`}
                         >
                           <CheckIcon className="h-4 w-4" />
-                          {isSelected ? "Selected" : "Select"}
                         </button>
                       </td>
                     </tr>
@@ -221,14 +221,14 @@ export default function RecommendationCategoryPage({ category }: Props) {
                     </div>
                     <button
                       onClick={() => setSelectedId(product.id)}
-                      className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition ${
+                      title={isSelected ? "Selected" : "Select"}
+                      className={`inline-flex items-center justify-center rounded-xl border p-2 transition ${
                         isSelected
                           ? "border-[#54B8FF] bg-[#EEF8FF] text-[#1689DA]"
                           : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                       }`}
                     >
                       <CheckIcon className="h-4 w-4" />
-                      {isSelected ? "Selected" : "Select"}
                     </button>
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -285,9 +285,9 @@ export default function RecommendationCategoryPage({ category }: Props) {
             )}
 
             {/* Key features + reasons */}
-            <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[1fr_1fr]">
+            <div className="mt-5 flex flex-col gap-5">
               {selected.keyFeatures && selected.keyFeatures.length > 0 && (
-                <div className="rounded-[16px] border border-slate-200 bg-white p-4">
+                <div className="w-full rounded-[16px] border border-slate-200 bg-white p-4">
                   <div className="mb-3 text-sm font-semibold text-slate-700">Key features</div>
                   <div className="space-y-2">
                     {selected.keyFeatures.map((feature) => (
@@ -300,7 +300,7 @@ export default function RecommendationCategoryPage({ category }: Props) {
                 </div>
               )}
               {selected.reasons && selected.reasons.length > 0 && (
-                <div className="rounded-[16px] border border-slate-200 bg-white p-4">
+                <div className="w-full rounded-[16px] border border-slate-200 bg-white p-4">
                   <div className="mb-3 text-sm font-semibold text-slate-700">
                     Why this product seems fit
                   </div>
@@ -372,7 +372,7 @@ function BenefitCell({ benefit }: { benefit: Benefit }) {
   const editable = benefit.editable !== false
 
   const baseInputClass =
-    "w-full min-w-0 rounded-md border p-2 text-sm outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
+    "w-full min-w-0 rounded-md border p-2 text-sm outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-1 focus:ring-blue-50"
   const inputClass = `${baseInputClass} border-slate-200 bg-white`
 
   const wrapperClass = `rounded-[16px] border p-4 border-slate-200 bg-white`

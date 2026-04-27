@@ -215,7 +215,7 @@ function ColCell({
   }, [col.value])
 
   const baseInputClass =
-    "w-full min-w-0 flex-1 rounded-md border p-2.5 text-sm outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100"
+    "w-full min-w-0 flex-1 rounded-md border p-2.5 text-sm outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-1 focus:ring-blue-50"
   const inputClass = `${baseInputClass} border-gray-200 bg-gray-50`
 
   const handleCopyClick = (e: React.MouseEvent) => {

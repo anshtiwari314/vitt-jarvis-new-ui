@@ -32,7 +32,7 @@ export default function VadWrapper({children}){
     const [userSpeaking,setUserSpeaking] = useState(false)
     const [vadStatus,setVadStatus] = useState(false)
     const vadRef = useRef({ oldVadrecordingStatus:false,myVad:null })
-    const [manualVadStatus,setManualVadStatus] = useState(true)
+    const [manualVadStatus,setManualVadStatus] = useState(false)
 
     const initReqStatusRef = useRef(false);
     const isQuestionLoaderRunsFirstTime = useRef(true)
@@ -334,7 +334,7 @@ export default function VadWrapper({children}){
 
         
         //|| VAD2?.vadOptions ===undefined
-        if (typeof VAD2 !== "object" )
+        if (typeof VAD2 !== "object" && VAD2?.loading)
         return ;
 
         if(manualVadStatus===true){
@@ -352,19 +352,11 @@ export default function VadWrapper({children}){
       },[manualVadStatus])
     
       useEffect(()=>{
+        // don't run pause until vad2 finishes loading otherwise it will misbehave
+        if(VAD2.loading)
+          return ;
+        VAD2?.pause();
 
-        let timeout ;
-        if(!VAD2.loading){
-          console.log('manual-vad-stopping')
-          setManualVadStatus(false)
-          // timeout = setTimeout(()=>{
-            
-          // },3000)
-        }
-
-        return ()=> {
-         timeout && clearTimeout(timeout)
-        }
       },[VAD2?.loading])
     
 
