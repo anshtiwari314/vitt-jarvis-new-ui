@@ -216,16 +216,22 @@ function FieldCell({
   const [isHighlighted, setIsHighlighted] = useState(false);
   const highlightTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
-  // Sync if the Redux value changes from the backend
-  useEffect(() => {
-    setLocalValue(field.value ?? '');
-  }, [field.value]);
-
   const triggerHighlight = () => {
     setIsHighlighted(true);
     if (highlightTimeout.current) clearTimeout(highlightTimeout.current);
     highlightTimeout.current = setTimeout(() => setIsHighlighted(false), 10000);
   };
+
+  // Sync if the Redux value changes from the backend; highlight when the
+  // incoming value differs from the value already shown locally (i.e. the
+  // change came from ai_suggestion_res, not from the user's own typing).
+  useEffect(() => {
+    const next = field.value ?? '';
+    if (next !== localValue) {
+      triggerHighlight();
+      setLocalValue(next);
+    }
+  }, [field.value]);
 
   const handleCopyClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -309,7 +315,7 @@ function FieldCell({
             type="button"
             onClick={handleCopyClick}
             title="Copy"
-            className={`absolute z-20 right-1 p-2 text-gray-400 hover:text-gray-600 transition-colors ${
+            className={`absolute z-10 right-1 p-2 text-gray-400 hover:text-gray-600 transition-colors ${
               field.type === 'text-area' ? 'top-1' : 'top-1/2 -translate-y-1/2'
             }`}
           >

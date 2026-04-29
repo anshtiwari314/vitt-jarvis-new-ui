@@ -266,7 +266,7 @@ console.log("Filtered Recommendations:", filteredRecommendations);
                     <aside
                     className="
                         order-1 w-full flex-shrink-0 border-slate-200 bg-white overflow-x-hidden
-                        sticky top-0 z-20 border-b lg:border-b-0 lg:static
+                        sticky top-0 z-30 border-b lg:border-b-0 lg:static
                         lg:order-2 lg:h-full lg:w-[38%] lg:border-l lg:shadow-none lg:overflow-y-auto thin-scrollbar
                       "
                     >

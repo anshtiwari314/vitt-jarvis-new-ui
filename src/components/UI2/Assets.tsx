@@ -103,7 +103,7 @@ function CopyButton({ value }: { value: string }) {
       type="button"
       onClick={handleCopy}
       title="Copy"
-      className="absolute z-20 right-1 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 transition-colors"
+      className="absolute z-10 right-1 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 transition-colors"
     >
       {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
     </button>
@@ -127,15 +127,20 @@ function EditableTextAreaField({
   const [isHighlighted, setIsHighlighted] = useState(false);
   const highlightTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
-  React.useEffect(() => {
-    setLocalValue(initialValue);
-  }, [initialValue]);
-
   const triggerHighlight = () => {
     setIsHighlighted(true);
     if (highlightTimeout.current) clearTimeout(highlightTimeout.current);
     highlightTimeout.current = setTimeout(() => setIsHighlighted(false), 10000);
   };
+
+  // Highlight when the value changes from outside (ai_suggestion_res), not on
+  // local typing (where localValue already matches the incoming prop).
+  React.useEffect(() => {
+    if (initialValue !== localValue) {
+      triggerHighlight();
+      setLocalValue(initialValue);
+    }
+  }, [initialValue]);
 
   return (
     <div className="relative">
@@ -174,15 +179,20 @@ function EditableInputField({
   const [isHighlighted, setIsHighlighted] = useState(false);
   const highlightTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
-  React.useEffect(() => {
-    setLocalValue(initialValue);
-  }, [initialValue]);
-
   const triggerHighlight = () => {
     setIsHighlighted(true);
     if (highlightTimeout.current) clearTimeout(highlightTimeout.current);
     highlightTimeout.current = setTimeout(() => setIsHighlighted(false), 10000);
   };
+
+  // Highlight when the value changes from outside (ai_suggestion_res), not on
+  // local typing (where localValue already matches the incoming prop).
+  React.useEffect(() => {
+    if (initialValue !== localValue) {
+      triggerHighlight();
+      setLocalValue(initialValue);
+    }
+  }, [initialValue]);
 
   return (
     <div className="relative">

@@ -334,7 +334,7 @@ export default function VadWrapper({children}){
 
         
         //|| VAD2?.vadOptions ===undefined
-        if (typeof VAD2 !== "object" && VAD2?.loading)
+        if (typeof VAD2 !== "object" || VAD2?.loading)
         return ;
 
         if(manualVadStatus===true){
@@ -353,7 +353,7 @@ export default function VadWrapper({children}){
     
       useEffect(()=>{
         // don't run pause until vad2 finishes loading otherwise it will misbehave
-        if(VAD2.loading)
+        if(VAD2?.loading)
           return ;
         VAD2?.pause();
 

@@ -285,7 +285,7 @@ function ColCell({
             type="button"
             onClick={handleCopyClick}
             title="Copy"
-            className={`absolute z-20 right-1 p-2 text-gray-400 hover:text-gray-600 transition-colors ${
+            className={`absolute z-10 right-1 p-2 text-gray-400 hover:text-gray-600 transition-colors ${
               col.type === "text-area" ? "top-1" : "top-1/2 -translate-y-1/2"
             }`}
           >

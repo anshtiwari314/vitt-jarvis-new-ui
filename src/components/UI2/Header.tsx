@@ -9,7 +9,7 @@ import { useData } from "../../context/DataWrapper"
 import playSound from "../../assets/sound-play.gif"
 import { updatePref_language } from "../../reducers/salesCopilotReducer"
 import { TailSpin } from "react-loading-icons"
-import { Flag, X, Mic, MicOff } from "lucide-react"
+import { Flag, X, Mic, MicOff, AudioLines } from "lucide-react"
 import { useDispatch } from "react-redux";
 // import {
 //   useConnectionQuality,
@@ -45,6 +45,9 @@ export default function Header() {
 
   // Flag modal state
   const [flagOpen, setFlagOpen] = useState(false)
+
+  // Speaking-indicator GIF preload state — show fallback icon until first load
+  const [speakGifLoaded, setSpeakGifLoaded] = useState(false)
 
   // Connectivity check (pings google favicon + server /health every 15s)
   // const networkStatus = useConnectionQuality(defaultHealthUrl(), 15000)
@@ -144,12 +147,20 @@ export default function Header() {
                     </p>
                   )}
 
-                  {VAD2?.userSpeaking && (
-                    <img
-                      src={playSound || "/placeholder.svg"}
-                      alt="User Speaking"
-                      className="w-16 h-8 object-contain"
-                    />
+                  {/* Desktop: VAD speaking icon inline with title.
+                      Mobile shows it next to the hamburger floater (SideBarMobile). */}
+                  {VAD2?.userSpeaking && manualVadStatus === true && (
+                    <>
+                      {!speakGifLoaded && (
+                        <AudioLines className="hidden md:block w-8 h-8 text-sky-500 animate-pulse" />
+                      )}
+                      <img
+                        src={playSound}
+                        alt="User Speaking"
+                        onLoad={() => setSpeakGifLoaded(true)}
+                        className={`${speakGifLoaded ? "hidden md:block" : "hidden"} w-16 h-8 object-contain`}
+                      />
+                    </>
                   )}
                 </div>
 

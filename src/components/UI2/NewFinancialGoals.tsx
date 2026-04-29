@@ -383,15 +383,21 @@ function ColFieldCell({
   const [isHighlighted, setIsHighlighted] = useState(false);
   const highlightTimeout = React.useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    setLocalValue(col.value ?? '');
-  }, [col.value]);
-
   const triggerHighlight = () => {
     setIsHighlighted(true);
     if (highlightTimeout.current) clearTimeout(highlightTimeout.current);
     highlightTimeout.current = setTimeout(() => setIsHighlighted(false), 10000);
   };
+
+  // Highlight when the value changes from outside (ai_suggestion_res), not on
+  // local typing (where localValue already matches the incoming prop).
+  useEffect(() => {
+    const next = col.value ?? '';
+    if (next !== localValue) {
+      triggerHighlight();
+      setLocalValue(next);
+    }
+  }, [col.value]);
 
   const handleCopyClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -427,7 +433,7 @@ function ColFieldCell({
           type="button"
           onClick={handleCopyClick}
           title="Copy"
-          className="absolute z-20 right-1 p-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+          className="absolute z-10 right-1 p-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
         >
           {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
         </button>

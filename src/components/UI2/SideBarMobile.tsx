@@ -3,6 +3,8 @@ import { useAppDispatch, useAppSelector } from '../../store/store';
 import { setNavigation } from '../../reducers/salesCopilotReducer';
 import { useData } from '../../context/DataWrapper';
 import { useVad } from '../../context/VadWrapper';
+import playSound from '../../assets/sound-play.gif';
+import { AudioLines } from 'lucide-react';
 
 export default function SideBarMobile() {
   const dispatch = useAppDispatch();
@@ -11,9 +13,12 @@ export default function SideBarMobile() {
   // --- Real State (from SideNavigation) ---
   const currentNavigation = useAppSelector(state => state.salesCopilotReducer.navigation);
   const { recommendationsGenerated } = useData();
+  // @ts-ignore — VadContext is loosely typed
+  const { VAD2, manualVadStatus } = useVad();
   // --- End of Real State ---
   const [recommendationsOpen, setRecommendationsOpen] = useState(false);
   const [financialReviewOpen, setFinancialReviewOpen] = useState(false);
+  const [speakGifLoaded, setSpeakGifLoaded] = useState(false);
   // --- Draggable Button State ---
   const [position, setPosition] = useState({ x: typeof window !== 'undefined' ? window.innerWidth - 60 : 16, y: 80 });
   const [isDragging, setIsDragging] = useState(false);
@@ -157,7 +162,7 @@ export default function SideBarMobile() {
 
   return (
     <div>
-      {/* --- Hamburger Trigger Button --- */}
+      {/* --- Hamburger Trigger Button (with VAD speaking icon to its left) --- */}
       <button
         ref={buttonRef}
         onMouseDown={handleDragStart}
@@ -176,14 +181,30 @@ export default function SideBarMobile() {
           cursor: isDragging ? 'grabbing' : 'grab'
         }}
       >
+        {VAD2?.userSpeaking && manualVadStatus === true && (
+          <>
+            {!speakGifLoaded && (
+              <AudioLines className="absolute right-full top-1/2 -translate-y-1/2 mr-2 w-8 h-8 text-sky-500 animate-pulse pointer-events-none" />
+            )}
+            <img
+              src={playSound}
+              alt="User Speaking"
+              onLoad={() => setSpeakGifLoaded(true)}
+              className={`absolute right-full top-1/2 -translate-y-1/2 mr-2 w-16 h-8 object-contain pointer-events-none ${speakGifLoaded ? '' : 'hidden'}`}
+            />
+          </>
+        )}
         <svg className="w-6 h-6 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7" />
         </svg>
       </button>
 
-      {/* --- Mobile Sidebar Panel --- */}
+      {/* --- Mobile Sidebar Panel ---
+          h-dvh (dynamic viewport height) instead of h-screen so the panel
+          never extends under the mobile browser's address bar — otherwise
+          the bottom (System Status) gets cropped. */}
       <aside
-        className={`fixed top-0 left-0 z-40 w-screen h-screen bg-white flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:hidden`}
+        className={`fixed top-0 left-0 z-40 w-screen h-dvh bg-white flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:hidden`}
       >
         {/* Top Section with Close Button & Date */}
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
@@ -223,8 +244,9 @@ export default function SideBarMobile() {
           <h1 className="text-lg font-bold text-slate-800">Life Ins AI Copilot</h1>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-2 space-y-1">
+        {/* Navigation — scrolls when content overflows so SystemStatus stays
+            visible at the bottom. min-h-0 lets the flex item shrink. */}
+        <nav className="flex-1 min-h-0 overflow-y-auto thin-scrollbar p-2 space-y-1">
             {/* Basic Info */}
             <button
                 className={`flex items-center gap-3 w-full px-3 py-2.5 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 text-sm ${currentNavigation === 'Basic Info' ? 'active-nav-item' : ''}`}
