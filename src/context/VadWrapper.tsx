@@ -12,6 +12,53 @@ import { useAppSelector } from '../store/store';
 //import useRequest from '../hooks/requests';
 
 const VadContext = createContext('vadContext')
+const WS2_URL = "https://1888-103-173-124-150.ngrok-free.app"
+
+function createPageSessionId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID()
+  }
+  return `session-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+/** Peak-normalize float PCM so |max sample| reaches this (just under 1.0 avoids int16/WAV edge clipping). */
+const SPEECH_PEAK_TARGET = 0.98
+const SPEECH_PEAK_FLOOR = 1e-8
+
+function normalizeFloat32PcmPeak(
+  audio: Float32Array,
+  targetPeak = SPEECH_PEAK_TARGET
+): Float32Array {
+  let peak = 0
+  for (let i = 0; i < audio.length; i++) {
+    const a = Math.abs(audio[i]!)
+    if (a > peak) peak = a
+  }
+  const out = new Float32Array(audio.length)
+  if (peak <= SPEECH_PEAK_FLOOR) {
+    out.set(audio)
+    return out
+  }
+  
+  // Calculate the standard normalization scale
+  let scale = targetPeak / peak
+  
+  // If the audio is quiet (peak is low, meaning scale is high), 
+  // multiply the scale factor by 2 to boost it even more.
+  // Note: This WILL cause clipping for some samples, but will make quiet audio much louder.
+  if (scale > 2.0) {
+     scale = scale * 2.0
+  }
+
+  for (let i = 0; i < audio.length; i++) {
+    // Apply the scale, but hard-clip at -1.0 and 1.0 to prevent WAV encoding distortion
+    let val = audio[i]! * scale
+    if (val > 0.99) val = 0.99
+    if (val < -0.99) val = -0.99
+    out[i] = val
+  }
+  return out
+}
 
 export function useVad(){
     return useContext(VadContext)
@@ -22,11 +69,17 @@ export default function VadWrapper({children}){
     const oneWayUrl = ''
     const ngrokServerUrl = ''
     const {socket,isSocketConnected,setMsgLoading,audioRef,isAudioStillPlaying,audioQueueRef} = useData()
+    const { currentUser } = useAuth() as any
     const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
     
     //const {currentUser} = useAuth()
     const [vadRecordingOn,setVadRecordingOn] = useState<boolean>(false);
     let recordingStatus = useRef(false);
+    const ws2Ref = useRef<WebSocket | null>(null)
+    const pageSessionIdRef = useRef("")
+    if (!pageSessionIdRef.current) {
+      pageSessionIdRef.current = createPageSessionId()
+    }
 
     const [vadInstance,setVadInstance] = useState(null)
     const [userSpeaking,setUserSpeaking] = useState(false)
@@ -52,24 +105,30 @@ export default function VadWrapper({children}){
 
     console.log('vad wrapper',roomId)
 
+  function getSessionId(data:any) {
+    return data?.sessionid || currentUser?.sessionuid || currentUser?.sessionid || pageSessionIdRef.current
+  }
+
   async function processAudioToBase64(audio,url,data){
     console.log("vad stopped")
     const wavBuffer = utils.encodeWAV(audio)
-      // const base64 = utils.arrayBufferToBase64(wavBuffer)
-      // console.log("hello world",base64)
+      const wavBase64 = utils.arrayBufferToBase64(wavBuffer)
 
          // let wavBlob =processingToWav(audio)
       let wavBlob = new Blob([wavBuffer], { type: 'audio/wav' })
       let mp3Blob = await WavToMp3(wavBlob)
       
       //generate base64 of that blob 
-      let base64data = await generateBase64(mp3Blob)
+      let base64data = await generateBase64(mp3Blob) as string
 
+      const sessionid = getSessionId(data)
+      const timeStamp = getTimeStamp()
 
       data = {
         ...data,
+        sessionid,
         audiomessage:base64data.split(',')[1],
-        timeStamp:getTimeStamp()
+        timeStamp
       }
 
 
@@ -79,7 +138,104 @@ export default function VadWrapper({children}){
       console.log("from inside send to server[DEBUGGGG]", data);
       socket.emit("ai_suggestion_req_ins_v2", data);
 
+      const ws2Payload = {
+        ...data,
+        audiomessage: wavBase64,
+        audioFormat: "wav",
+        mimeType: "audio/wav"
+      }
+
+      if (ws2Ref.current?.readyState === WebSocket.OPEN) {
+        ws2Ref.current.send(
+          JSON.stringify({
+            event: "stopAudio",
+            payload: ws2Payload
+          })
+        )
+      } else {
+        console.warn("ws2 socket not connected, skipping stopAudio emit")
+      }
+
 }
+
+    useEffect(()=>{
+      let shouldReconnect = true
+      let reconnectAttempts = 0
+      let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+      let activeWs: WebSocket | null = null
+
+      function messageHandler(event: MessageEvent) {
+        try {
+          const data = JSON.parse(event.data)
+          if (data?.ok === false) {
+            console.warn("ws2 request failed", data)
+          }
+        } catch (error) {
+          console.warn("ws2 invalid message", error)
+        }
+      }
+
+      function scheduleReconnect() {
+        if (!shouldReconnect || reconnectTimer) return
+        const delayMs = Math.min(1000 * Math.max(1, reconnectAttempts), 5000)
+        reconnectTimer = setTimeout(() => {
+          reconnectTimer = null
+          connectWs2()
+        }, delayMs)
+        console.log(`ws2 reconnect scheduled in ${delayMs}ms`)
+      }
+
+      function connectWs2() {
+        if (!shouldReconnect) return
+
+        const ws2 = new WebSocket(WS2_URL)
+        activeWs = ws2
+        ws2Ref.current = ws2
+
+        function connected() {
+          reconnectAttempts = 0
+          console.log("ws2 connected")
+        }
+
+        function disconnected(event: CloseEvent) {
+          if (ws2Ref.current === ws2) {
+            ws2Ref.current = null
+          }
+          console.log("ws2 disconnected")
+          if (event?.reason) {
+            console.log("ws2 disconnect reason", event.reason)
+          }
+          if (shouldReconnect) {
+            reconnectAttempts += 1
+            scheduleReconnect()
+          }
+        }
+
+        function connectError(event: Event) {
+          console.warn("ws2 connection error", event)
+        }
+
+        ws2.addEventListener("open", connected)
+        ws2.addEventListener("close", disconnected)
+        ws2.addEventListener("error", connectError)
+        ws2.addEventListener("message", messageHandler)
+      }
+
+      connectWs2()
+
+      return () => {
+        shouldReconnect = false
+        if (reconnectTimer) {
+          clearTimeout(reconnectTimer)
+          reconnectTimer = null
+        }
+        if (activeWs) {
+          activeWs.close()
+          activeWs = null
+        }
+        ws2Ref.current = null
+      }
+    },[])
 
     // useEffect(()=>{
     //   console.log('socket is connected',socket)
@@ -215,7 +371,11 @@ export default function VadWrapper({children}){
               speech_stop_time:`${speechStopDate.toLocaleDateString()} ${speechStopDate.toLocaleTimeString()}:${speechStopDate.getMilliseconds()}`
             }
 
-          processAudioToBase64(audio,oneWayUrl,data)
+          const normalized =
+            audio instanceof Float32Array
+              ? normalizeFloat32PcmPeak(audio)
+              : audio
+          processAudioToBase64(normalized, oneWayUrl, data)
         }
       })
 
@@ -240,7 +400,11 @@ export default function VadWrapper({children}){
             // mob: currentUser.userid,
             // userid:currentUser.userid
         }
-        processAudioToBase64(audio,oneWayUrl,data)
+        const normalized =
+          audio instanceof Float32Array
+            ? normalizeFloat32PcmPeak(audio)
+            : audio
+        processAudioToBase64(normalized, oneWayUrl, data)
         
         
     }
@@ -253,22 +417,22 @@ export default function VadWrapper({children}){
     }
     /** automatic vad new  */
 
-    useEffect(()=>{
-      if(vadInstance!==null)
-        return ;
-
-      let intervalId = setInterval(()=>{
-        VAD(start,stop).then((myVad)=>{
-          if(myVad===null)
-            return ;
-          vadRef.current.myVad = myVad
-          setVadInstance(myVad)
-          clearInterval(intervalId)
-        })
-      },1000)
-
-      return ()=>{clearInterval(intervalId)}
-    },[])
+    // useEffect(()=>{
+    //   if(vadInstance!==null)
+    //     return ;
+    //
+    //   let intervalId = setInterval(()=>{
+    //     VAD(start,stop).then((myVad)=>{
+    //       if(myVad===null)
+    //         return ;
+    //       vadRef.current.myVad = myVad
+    //       setVadInstance(myVad)
+    //       clearInterval(intervalId)
+    //     })
+    //   },1000)
+    //
+    //   return ()=>{clearInterval(intervalId)}
+    // },[])
 
     useEffect(()=>{
       if(vadInstance===null)
