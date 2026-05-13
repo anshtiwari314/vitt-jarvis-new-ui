@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useAppSelector } from '../store/store';
 // import '../css/All.css'
 // import '../css/msg.css'
@@ -14,7 +14,7 @@ import NewFinancialGoals from '../components/UI2/NewFinancialGoals'
 
 import SideNavigation from '../components/UI2/SideNavigation'
 import SideBarMobile from '../components/UI2/SideBarMobile'
-import Header from '../components/UI2/Header'
+import Header, { MobileHeaderControls } from '../components/UI2/Header'
 import RightPanel from '../components/UI2/RightPanel'
 import { useDispatch } from 'react-redux';
 import { setQP } from '../reducers/queryparamReducer';
@@ -29,8 +29,52 @@ function HotPageLoader() {
     )
 }
 
+/**
+ * Transparent toast that appears for 10s whenever `recommendationsGenerated`
+ * flips from false → true. Sits above all UI (z-[80]) on both mobile and
+ * desktop, and complements the persistent indicator already rendered in the
+ * side navigations.
+ */
+function RecommendationsGeneratedToast() {
+    const { recommendationsGenerated } = useData();
+    const [visible, setVisible] = useState(false);
+    const prevRef = useRef(false);
+
+    useEffect(() => {
+        if (recommendationsGenerated && !prevRef.current) {
+            setVisible(true);
+            const timer = setTimeout(() => setVisible(false), 10000);
+            prevRef.current = recommendationsGenerated;
+            return () => clearTimeout(timer);
+        }
+        prevRef.current = recommendationsGenerated;
+    }, [recommendationsGenerated]);
+
+    if (!visible) return null;
+
+    return (
+        <div
+            role="status"
+            aria-live="polite"
+            className="fixed bottom-5 left-5 z-[9999] flex items-center gap-3 rounded-lg border px-4 py-3 text-green-900 shadow-md backdrop-blur-sm pointer-events-none"
+            style={{
+                backgroundColor: 'rgba(34, 197, 94, 0.15)',
+                borderColor: 'rgba(34, 197, 94, 0.3)',
+            }}
+        >
+            <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+            </span>
+            <div className="flex flex-col">
+                <strong className="text-sm font-medium">Recommendations Generated</strong>
+            </div>
+        </div>
+    );
+}
+
 export default function App() {
-   const { isSocketConnected, hotPageLoading } = useData();
+   const { isSocketConnected, hotPageLoading, languageChangeLoading } = useData();
    const { navigation: currentNavigation, salesData ,RecomendationSelected} = useAppSelector((state) => state.salesCopilotReducer)
    console.log("Current Navigation:", currentNavigation);
    console.log("Sales Datain main page:", salesData.recommendations);
@@ -235,6 +279,7 @@ console.log("Filtered Recommendations:", filteredRecommendations);
   return (
     
     <div className="bg-slate-50 text-slate-800 antialiased" style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
+        <RecommendationsGeneratedToast />
         {!isSocketConnected && (
           <div
             role="alert"
@@ -249,25 +294,61 @@ console.log("Filtered Recommendations:", filteredRecommendations);
             <SideNavigation/>
             <SideBarMobile />
             <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto thin-scrollbar lg:overflow-hidden">
-                
-                <Header/>
+
+                {/* Mobile/tablet sticky wrapper that bundles the title bar (Header),
+                    the mobile icons strip and the AI Cues panel so they stick together
+                    as one unit and don't overlap.
+                    On desktop (lg+): wrapper becomes static; mobile-only children hide
+                    themselves; Header remains visible and handles its own stickiness. */}
+                <div className="sticky top-0 z-40 bg-white shadow-sm lg:static lg:z-auto lg:shadow-none">
+                    <Header/>
+                    <div className="lg:hidden">
+                        <MobileHeaderControls/>
+                        <div className="border-b border-slate-200 bg-white">
+                            <RightPanel/>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="flex flex-1 flex-col lg:flex-row lg:overflow-hidden">
-                    {/* <!-- Main Content --> */}
+                    {/* <!-- Main Content -->
+                        `z-0` makes main its own stacking context at z-0, so the
+                        loading overlay and any fields/content inside main can never
+                        paint above the sticky wrapper (z-40) holding the header,
+                        icons strip and AI Cues panel. */}
                     <main
                     className="
-                        order-2 flex min-w-0 w-full flex-1 flex-col overflow-x-hidden bg-slate-100 px-3 py-1 pb-5 sm:p-6
+                        relative z-0 flex min-w-0 w-full flex-1 flex-col overflow-x-hidden bg-slate-100 px-3 py-1 pb-5 sm:p-6
                         lg:order-1 lg:basis-[62%] lg:overflow-y-auto thin-scrollbar
                       "
                     >
+                        {(() => {
+                          const sectionKey =
+                            typeof currentNavigation === 'string' &&
+                            currentNavigation.startsWith('Recommendations::')
+                              ? 'Recommendations'
+                              : currentNavigation
+                          if (!languageChangeLoading?.[sectionKey]) return null
+                          return (
+                            <div
+                              className="
+                                fixed inset-0 z-10 bg-white/60 backdrop-blur-sm
+                                flex flex-col items-center justify-center px-4 text-center
+                              "
+                            >
+                              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500 mb-4"></div>
+                              <p className="text-sm text-slate-500">changing language, please wait</p>
+                            </div>
+                          )
+                        })()}
                         {renderContent()}
                     </main>
 
-                    {/* <!-- AI Cues Sidebar --> */}
+                    {/* <!-- AI Cues Sidebar (Desktop only — on mobile this renders inside the sticky header above) --> */}
                     <aside
                     className="
-                        order-1 w-full flex-shrink-0 border-slate-200 bg-white overflow-x-hidden
-                        sticky top-0 z-30 border-b lg:border-b-0 lg:static
-                        lg:order-2 lg:h-full lg:w-[38%] lg:border-l lg:shadow-none lg:overflow-y-auto thin-scrollbar
+                        hidden flex-shrink-0 border-slate-200 bg-white overflow-x-hidden
+                        lg:flex lg:order-2 lg:h-full lg:w-[38%] lg:border-l lg:shadow-none lg:overflow-y-auto thin-scrollbar
                       "
                     >
                     <RightPanel/>

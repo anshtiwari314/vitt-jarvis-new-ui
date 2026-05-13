@@ -46,6 +46,27 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
 
   const [socket, setSocket] = useState<Socket | null>(null)
   const [isSocketConnected,setIsSocketConnected] = useState(false)
+  // Per-section loading flags shown while a language switch is in flight.
+  // Each section clears independently when its `ai_suggestion_res` arrives.
+  const LANGUAGE_LOADING_SECTIONS = [
+    "Basic Info",
+    "Assets",
+    "Liabilities",
+    "Financial Goals",
+    "Plan Summary",
+    "Recommendations",
+  ] as const
+  const buildLanguageLoadingMap = (value: boolean) =>
+    LANGUAGE_LOADING_SECTIONS.reduce<Record<string, boolean>>((acc, key) => {
+      acc[key] = value
+      return acc
+    }, {})
+  const [languageChangeLoading, setLanguageChangeLoading] = useState<Record<string, boolean>>(
+    buildLanguageLoadingMap(false)
+  )
+  function startLanguageChangeLoading() {
+    setLanguageChangeLoading(buildLanguageLoadingMap(true))
+  }
 const [pref_language,setPref_language]=useState("English")
   const [hotPageLoading, setHotPageLoading] = useState<Record<string, boolean>>({
     "Financial Goals": false,
@@ -106,22 +127,27 @@ const [pref_language,setPref_language]=useState("English")
       case "basic-info":
         console.log(data,"in the basic section info");
         dispatch(updateBasicInfo(data.basicInfo))
+        setLanguageChangeLoading((prev) => ({ ...prev, "Basic Info": false }))
         break
       case "financial-review":
         console.log('receiving financial-review data',data)
         dispatch(updateFinancialReview(data.financialReview))
+        setLanguageChangeLoading((prev) => ({ ...prev, "Assets": false, "Liabilities": false }))
         break
       case "financial-goals":
         dispatch(updateFinancialGoals(data.financialGoals))
         setHotPageLoading((prev) => ({ ...prev, "Financial Goals": false }))
+        setLanguageChangeLoading((prev) => ({ ...prev, "Financial Goals": false }))
         break
       case "plan-summary":
         dispatch(updatePlanSummary(data.planSummary))
         setHotPageLoading((prev) => ({ ...prev, "Plan Summary": false }))
+        setLanguageChangeLoading((prev) => ({ ...prev, "Plan Summary": false }))
         break
       case "recommendations":
         console.log('recommendation data from backend',data)
         dispatch(updateRecommendations(data.recommendations))
+        setLanguageChangeLoading((prev) => ({ ...prev, "Recommendations": false }))
         break
       // case "follow-up-qn":
       //   dispatch(updateFollowUpQn(data.followUpQn))
@@ -175,6 +201,9 @@ const [pref_language,setPref_language]=useState("English")
     //return null;
 
     dispatch(initSalesState(data))
+    // Fallback: if a full reload comes back via questions_loader_res,
+    // clear language-change loading for every section.
+    setLanguageChangeLoading(buildLanguageLoadingMap(false))
   }
 
   // Keep speakerEnabledRef in sync so socket callbacks always read the latest value
@@ -516,6 +545,64 @@ useEffect(()=>{
     socket?.emit('ai_suggestion_req_ins_v2', ob)
   }
 
+  function buildUpdatedTableCell(prevCell: any, value: string) {
+    const prev =
+      prevCell !== null && typeof prevCell === 'object'
+        ? prevCell
+        : { value: prevCell, is_copyable: true, is_editable: true }
+    return { ...prev, value, modified_by_agent: true }
+  }
+
+  function applyTableEdit(table: any, rowIndex: number, colIndex: number, value: string) {
+    if (!table || !Array.isArray(table.table_values)) return null
+    const newValues = table.table_values.map((row: any[], r: number) =>
+      r !== rowIndex
+        ? row
+        : row.map((cell: any, c: number) =>
+            c !== colIndex ? cell : buildUpdatedTableCell(cell, value)
+          )
+    )
+    return { ...table, table_values: newValues }
+  }
+
+  function updateTableCell(rowIndex: number, colIndex: number, value: string) {
+    let modified_data: Record<string, any> = {}
+
+    switch (navigation) {
+      case 'Basic Info': {
+        const basicInfo = salesCopilotState.salesData.basicInfo
+        const updatedTable = applyTableEdit(basicInfo?.table, rowIndex, colIndex, value)
+        if (!updatedTable) return
+        const updated = { ...basicInfo, table: updatedTable }
+        dispatch(updateBasicInfo(updated))
+        modified_data = { [navigation]: updated }
+        break
+      }
+      case 'Assets': {
+        const assets = salesCopilotState.salesData.financialReview?.assets
+        const updatedTable = applyTableEdit(assets?.table, rowIndex, colIndex, value)
+        if (!updatedTable) return
+        const updated = { ...assets, table: updatedTable }
+        dispatch(updateAssets(updated))
+        modified_data = { [navigation]: updated }
+        break
+      }
+      case 'Liabilities': {
+        const liab = salesCopilotState.salesData.financialReview?.liabilities
+        const updatedTable = applyTableEdit(liab?.table, rowIndex, colIndex, value)
+        if (!updatedTable) return
+        const updated = { ...liab, table: updatedTable }
+        dispatch(updateLiabilities(updated))
+        modified_data = { [navigation]: updated }
+        break
+      }
+      default:
+        return
+    }
+
+    emitModifiedData(modified_data)
+  }
+
   // --- Audio event listeners ---
   useEffect(() => {
     const audioElem = audioRef.current
@@ -612,12 +699,13 @@ useEffect(()=>{
     //ngrokServerUrl: "http://localhost:5000",
     setMsgLoading: (loading: boolean) => console.log("Loading:", loading),
     oneWayUrl: "wss://recruito.vitti.insure",
-    toggleNotificationModal,setToggleNotificationModal,updateField,emitModifiedData,
+    toggleNotificationModal,setToggleNotificationModal,updateField,emitModifiedData,updateTableCell,
     recommendationsGenerated,setRecommendationsGenerated,
     pref_language,setPref_language,
     audioRef, audioUrl, setAudioUrl, audioQueueRef, isAudioStillPlaying, isAudioPlayingState,
     speakerEnabled, setSpeakerEnabled,
-    hotPageLoading
+    hotPageLoading,
+    languageChangeLoading, startLanguageChangeLoading
   }
   return (
     <Context.Provider value={values}>

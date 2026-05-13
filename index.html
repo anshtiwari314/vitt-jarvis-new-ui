@@ -9,8 +9,11 @@
       (function () {
         var ua = navigator.userAgent || "";
         var isLinuxDesktop = /Linux/.test(ua) && !/Android/.test(ua);
+        var isWindows = /Windows/.test(ua);
         if (isLinuxDesktop) {
           document.documentElement.style.zoom = "1.25";
+        } else if (isWindows) {
+          document.documentElement.style.zoom = "0.9";
         }
       })();
     </script>

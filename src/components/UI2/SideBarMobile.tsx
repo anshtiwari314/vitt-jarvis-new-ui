@@ -20,7 +20,7 @@ export default function SideBarMobile() {
   const [financialReviewOpen, setFinancialReviewOpen] = useState(false);
   const [speakGifLoaded, setSpeakGifLoaded] = useState(false);
   // --- Draggable Button State ---
-  const [position, setPosition] = useState({ x: typeof window !== 'undefined' ? window.innerWidth - 60 : 16, y: 80 });
+  const [position, setPosition] = useState({ x: typeof window !== 'undefined' ? window.innerWidth * 0.9 - 40 : 16, y: typeof window !== 'undefined' ? window.innerHeight * 0.9 - 40 : 80 });
   const [isDragging, setIsDragging] = useState(false);
   const [hasDragged, setHasDragged] = useState(false);
   const [dragStart, setDragStart] = useState({ pointerX: 0, pointerY: 0, buttonX: 0, buttonY: 0 });
@@ -107,23 +107,14 @@ export default function SideBarMobile() {
     setIsDragging(false);
   }, []);
 
-  // --- Date/Time Handler (from SideBarMobile, using mobile-specific IDs) ---
-  const updateDateTime = () => {
-    const now = new Date();
-    const dateEl = document.getElementById('current-date-mobile');
-    const timeEl = document.getElementById('current-time-mobile');
-    if (dateEl) dateEl.textContent = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    if (timeEl) timeEl.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-  };
-
   // --- Effects (from SideBarMobile) ---
   useEffect(() => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      // Position at the right edge, just below the header
+      // Position 10% away from bottom and 10% away from right
       setPosition({ 
-        x: window.innerWidth - rect.width - 16, 
-        y: 80 
+        x: window.innerWidth * 0.90 - rect.width, 
+        y: window.innerHeight * 0.90 - rect.height 
       });
     }
   }, []);
@@ -151,29 +142,27 @@ export default function SideBarMobile() {
     };
   }, [isDragging, handleDragMove, handleDragEnd]);
 
-  // Only update time if the panel is open
-  useEffect(() => {
-    if (isOpen) {
-      updateDateTime();
-      const interval = setInterval(updateDateTime, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [isOpen]);
-
   return (
     <div>
-      {/* --- Hamburger Trigger Button (with VAD speaking icon to its left) --- */}
+      {/* --- Floating Trigger Button ---
+          Acts as a hamburger when the popup is closed and as a close (X) icon
+          when the popup is open. Stays visible above the popup (z-[70]) so the
+          user can dismiss the menu by tapping it again. */}
       <button
         ref={buttonRef}
         onMouseDown={handleDragStart}
         onTouchStart={handleDragStart}
         onClick={() => {
           if (!hasDragged) {
-            setIsOpen(true);
+            setIsOpen(prev => !prev);
           }
         }}
-        className={`lg:hidden fixed z-50 bg-white p-2 rounded-lg shadow-lg border border-slate-200 transition-opacity duration-300 ${isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-        aria-label="Open navigation"
+        className={`lg:hidden fixed z-[70] bg-sky-500 p-3 rounded-full border border-white/40 transition-shadow duration-200 ${
+          isOpen
+            ? 'shadow-none'
+            : 'shadow-[0_-1px_3px_rgba(255,255,255,0.6),0_2px_4px_rgba(0,0,0,0.35)] hover:shadow-[0_-1px_4px_rgba(255,255,255,0.7),0_3px_6px_rgba(0,0,0,0.45)]'
+        }`}
+        aria-label={isOpen ? 'Close navigation' : 'Open navigation'}
         style={{
           left: `${position.x}px`,
           top: `${position.y}px`,
@@ -194,59 +183,40 @@ export default function SideBarMobile() {
             />
           </>
         )}
-        <svg className="w-6 h-6 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7" />
-        </svg>
+        {isOpen ? (
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7" />
+          </svg>
+        )}
       </button>
 
-      {/* --- Mobile Sidebar Panel ---
-          h-dvh (dynamic viewport height) instead of h-screen so the panel
-          never extends under the mobile browser's address bar — otherwise
-          the bottom (System Status) gets cropped. */}
-      <aside
-        className={`fixed top-0 left-0 z-40 w-screen h-dvh bg-white flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:hidden`}
-      >
-        {/* Top Section with Close Button & Date */}
-        <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-          <button
-            onClick={() => setIsOpen(false)}
-            className="text-slate-500 hover:text-sky-600"
-            aria-label="Close navigation"
+      {/* --- Mobile Sidebar Popup ---
+          Centered modal instead of a slide-in drawer. Backdrop dims the page and
+          taps to dismiss; the floating button (above, z-[70]) doubles as an X. */}
+      {isOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-[60] bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setIsOpen(false)}
+          aria-modal="true"
+          role="dialog"
+        >
+          <div
+            className="relative w-full max-w-xs h-[60dvh] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
           >
-            <svg className="w-7 h-7 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          <div className="text-right">
-            <div id="current-date-mobile" className="font-semibold text-slate-700"></div>
-            <div id="current-time-mobile" className="text-sm text-slate-500"></div>
-          </div>
-        </div>
+            {/* Popup Title Bar */}
+            <div className="px-5 py-4 border-b border-slate-200 flex-shrink-0">
+              <h2 className="text-base font-bold text-slate-800">Navigation</h2>
+            </div>
 
-        {/* AI Copilot Header */}
-        <div className="flex items-center gap-3 p-4 border-b border-slate-200">
-          <div className="bg-blue-500 p-2 rounded-lg">
-            <svg
-  xmlns="http://www.w3.org/2000/svg"
-  width="20"
-  height="20"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="white"
-  strokeWidth="2"
-  strokeLinecap="round"
-  strokeLinejoin="round"
->
-  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-  <path d="M12 11.1c-1.9-1.8-4.6-.9-4.6 1.4 0 1.9 4.6 4.1 4.6 4.1s4.6-2.2 4.6-4.1c0-2.3-2.7-3.2-4.6-1.4z"/>
-</svg>
-          </div>
-          <h1 className="text-lg font-bold text-slate-800">Life Ins AI Copilot</h1>
-        </div>
-
-        {/* Navigation — scrolls when content overflows so SystemStatus stays
-            visible at the bottom. min-h-0 lets the flex item shrink. */}
-        <nav className="flex-1 min-h-0 overflow-y-auto thin-scrollbar p-2 space-y-1">
+            {/* Navigation — scrolls when content overflows.
+                Extra bottom padding gives breathing room so users can tell the
+                list has ended and there's no hidden content below. */}
+            <nav className="flex-1 min-h-0 overflow-y-auto thin-scrollbar px-3 pt-3 pb-8 space-y-1">
             {/* Basic Info */}
             <button
                 className={`flex items-center gap-3 w-full px-3 py-2.5 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 text-sm ${currentNavigation === 'Basic Info' ? 'active-nav-item' : ''}`}
@@ -333,115 +303,20 @@ export default function SideBarMobile() {
                     </div>
                 )}
             </div>
-        </nav>
+            </nav>
 
-        {/* Recommendations Status (Using real data) */}
-        {recommendationsGenerated && (
-          <div className="p-4 border-t border-slate-200">
-            <div className="flex items-center text-slate-500 text-sm">
-              <div className="w-2.5 h-2.5 mr-2 rounded-full bg-green-400"></div>
-              Recommendations Generated
-            </div>
+            {/* Recommendations Status (Using real data) */}
+            {recommendationsGenerated && (
+              <div className="p-4 border-t border-slate-200 flex-shrink-0">
+                <div className="flex items-center text-slate-500 text-sm">
+                  <div className="w-2.5 h-2.5 mr-2 rounded-full bg-green-400"></div>
+                  Recommendations Generated
+                </div>
+              </div>
+            )}
           </div>
-        )}
-
-        {/* System Status (Using real component) */}
-        <SystemStatus />
-
-      </aside>
+        </div>
+      )}
     </div>
   );
 }
-
-
-// --- SystemStatus Component (Copied from SideNavigation) ---
-// This component now has access to the useVad hook provided by its parent's context
-const SystemStatus = () => {
-  const [isActive, setIsActive] = useState(false);
-  const intervalRef = useRef(null);
-  const currentIndexRef = useRef(-1);
-
-  const { VAD2 } = useVad();
-  
-  const audioRef = useRef(null);
-  const transcriptionRef = useRef(null);
-  const processingRef = useRef(null);
-
-  const indicatorRefs = [audioRef, transcriptionRef, processingRef];
-
-  const startAnimation = () => {
-    setIsActive(true);
-  };
-
-  const stopAnimation = () => {
-    setIsActive(false);
-    clearInterval(intervalRef.current);
-    currentIndexRef.current = -1;
-    indicatorRefs.forEach(ref => {
-      if (ref.current) {
-        ref.current.classList.remove('bg-green-500');
-        ref.current.classList.add('bg-gray-300');
-      }
-    });
-  };
-
-  useEffect(() => {
-    if (isActive) {
-      intervalRef.current = setInterval(() => {
-        currentIndexRef.current = (currentIndexRef.current + 1) % (indicatorRefs.length + 1);
-
-        indicatorRefs.forEach((ref, index) => {
-          if (ref.current) {
-            if (index < currentIndexRef.current) {
-              ref.current.classList.remove('bg-gray-300');
-              ref.current.classList.add('bg-green-500');
-            } else {
-              ref.current.classList.remove('bg-green-500');
-              ref.current.classList.add('bg-gray-300');
-            }
-          }
-        });
-      }, 1000);
-    } else {
-      clearInterval(intervalRef.current);
-    }
-    return () => clearInterval(intervalRef.current);
-  }, [isActive]);
-
-  useEffect(() => {
-    if (VAD2?.listening) {
-      startAnimation();
-    } else {
-      stopAnimation();
-    }
-  }, [VAD2]);
-  
-  return (
-    <div className="p-4 border-t border-slate-200">
-      <h3 className="text-sm font-semibold text-slate-600 mb-3">System Status</h3>
-      <div className="space-y-2 text-sm">
-        <div className="flex items-center text-slate-500">
-          <div
-            ref={audioRef}
-            className="status-indicator w-2.5 h-2.5 rounded-full mr-2 transition-colors bg-gray-300"
-          ></div>
-          Audio Streaming
-        </div>
-        <div className="flex items-center text-slate-500">
-          <div
-            ref={transcriptionRef}
-            className="status-indicator w-2.5 h-2.5 rounded-full mr-2 transition-colors bg-gray-300"
-          ></div>
-          Live Transcription
-        </div>
-        <div className="flex items-center text-slate-500">
-          <div
-            ref={processingRef}
-            className="status-indicator w-2.5 h-2.5 rounded-full mr-2 transition-colors bg-gray-300"
-          ></div>
-          AI Processing
-        </div>
-      </div>
-    </div>
-  );
-};

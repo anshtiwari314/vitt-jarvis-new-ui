@@ -400,13 +400,14 @@ const initialCopilotState = {
     "financialReview": {
       "assets": {
         "boxA": {
-          "heading": { "header": "", "sub_header": "", "sub_header_data": 0, "modified_by_agent": false },
-          "text_area": { "text_area_header": "", "text_area_value": "", "placeholder": "", "modified_by_agent": false }
+          "header": "",
+          "sub_header": { "field": "", "value": "", "type": "text", "modified_by_agent": false, "is_copyable": true, "is_editable": true },
+          "text_area": { "text_area_header": "", "text_area_value": "", "placeholder": "", "modified_by_agent": false, "is_copyable": true, "is_editable": true }
         },
         "boxB": {
           "header": "",
-          "text_area_1": { "text_area_headerA": "", "text_area_valueA": "", "placeholder": "", "modified_by_agent": false },
-          "text_area_2": { "text_area_headerB": "", "text_area_valueB": "", "placeholder": "", "modified_by_agent": false }
+          "text_area_1": { "text_area_headerA": "", "text_area_valueA": "", "placeholder": "", "modified_by_agent": false, "is_copyable": true, "is_editable": true },
+          "text_area_2": { "text_area_headerB": "", "text_area_valueB": "", "placeholder": "", "modified_by_agent": false, "is_copyable": true, "is_editable": true }
         },
         "table": { "header": "", "table_header": [], "table_values": [] }
       },

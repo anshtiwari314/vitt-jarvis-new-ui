@@ -9,6 +9,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { useData } from '../../context/DataWrapper';
+import TableCell, { type TableCellRaw } from './TableCell';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -19,6 +20,8 @@ type FieldItem = {
   options?: string[];
   placeholder?: string;
   modified_by_agent?: boolean;
+  is_copyable?: boolean;
+  is_editable?: boolean;
 };
 
 type BoxData = {
@@ -29,7 +32,7 @@ type BoxData = {
 type TableData = {
   header: string;
   table_header: string[];
-  table_values: any[][];
+  table_values: TableCellRaw[][];
 };
 
 type BasicInfoData = {
@@ -244,10 +247,13 @@ function FieldCell({
     onBlur(field.field, localValue);
   };
 
+  const isEditable = field.is_editable !== false;
+  const isCopyable = field.is_copyable !== false;
+
   const baseInputClass =
     'w-full min-w-0 flex-1 rounded-md border p-2.5 text-sm outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-1 focus:ring-blue-50';
 
-  const inputClass = `${baseInputClass} border-gray-200 bg-gray-50 transition-all duration-300 ${isHighlighted ? 'border-sky-400 ring-1 ring-sky-200 shadow-[0_0_4px_rgba(56,189,248,0.2)]' : ''}`;
+  const inputClass = `${baseInputClass} border-gray-200 bg-gray-50 transition-all duration-300 ${isHighlighted ? 'border-sky-400 ring-1 ring-sky-200 shadow-[0_0_4px_rgba(56,189,248,0.2)]' : ''} ${!isEditable ? 'cursor-default opacity-70' : ''}`;
 
   return (
     // h-full + flex col ensures cell stretches to row height
@@ -267,6 +273,8 @@ function FieldCell({
             value={localValue}
             rows={5}
             placeholder={field.placeholder ?? ''}
+            readOnly={!isEditable}
+            disabled={!isEditable}
             onChange={(e) => {
               setLocalValue(e.target.value);
               triggerHighlight();
@@ -278,6 +286,7 @@ function FieldCell({
           <div className="relative flex-1 min-w-0">
             <select
               value={localValue}
+              disabled={!isEditable}
               onChange={(e) => {
                 setLocalValue(e.target.value);
                 triggerHighlight();
@@ -300,6 +309,8 @@ function FieldCell({
             type="text"
             value={localValue}
             placeholder={field.placeholder ?? ''}
+            readOnly={!isEditable}
+            disabled={!isEditable}
             onChange={(e) => {
               setLocalValue(e.target.value);
               triggerHighlight();
@@ -308,9 +319,9 @@ function FieldCell({
             className={`${inputClass} pr-9`}
           />
         )}
-        
+
         {/* Copy button */}
-        {field.type !== 'option' && (
+        {field.type !== 'option' && isCopyable && (
           <button
             type="button"
             onClick={handleCopyClick}
@@ -330,6 +341,7 @@ function FieldCell({
 // ─── Family structure table ──────────────────────────────────────────────────
 
 function FamilyTable({ table }: { table: TableData }) {
+  const { updateTableCell } = useData();
   const [copiedCell, setCopiedCell] = useState<string | null>(null);
   const copyCell = (key: string, value: string) => {
     const text = value ?? '';
@@ -361,18 +373,23 @@ function FamilyTable({ table }: { table: TableData }) {
             <label className="text-sm text-slate-500">
               Members
             </label>
-            {/* <button className="flex items-center gap-1 text-xs font-semibold text-[#2EA9FF] hover:text-[#1E9BF0] transition-colors">
-              <Plus size={14} /> Add Member
-            </button> */}
           </div>
       </div>
       <div className="overflow-x-auto rounded-lg border border-blue-100 bg-white shadow-sm">
-        <table className="w-full min-w-[420px] text-left text-sm">
+        {/*
+          `table-fixed` + an explicit `width: 100/N %` per <th> divides
+          the table into N equal-width columns. This is the contract that
+          TableCell relies on for column-wise width sync (see the docblock
+          at the top of TableCell.tsx) — every editable field in the same
+          column ends up identical width, so copy icons align vertically.
+        */}
+        <table className="w-full min-w-[420px] table-fixed text-left text-sm">
           <thead className="border-b border-blue-100 bg-[#f1f5f9]">
             <tr>
-              {(table.table_header ?? []).map((h, i) => (
+              {(table.table_header ?? []).map((h, i, arr) => (
                 <th
                   key={i}
+                  style={{ width: `${100 / arr.length}%` }}
                   className="px-4 py-2 font-semibold capitalize text-gray-600"
                 >
                   {h}
@@ -387,24 +404,24 @@ function FamilyTable({ table }: { table: TableData }) {
                 className="transition-colors hover:bg-blue-50/30"
               >
                 {row.map((cell, j) => (
-                  <td key={j} className="px-4 py-2.5 text-gray-700">
-                    <div className="flex items-center gap-2">
-                      <span>{cell}</span>
-                      {cell !== null && cell !== undefined && String(cell) !== '' && (
-                        <button
-                          type="button"
-                          onClick={() => copyCell(`basic-${i}-${j}`, String(cell))}
-                          className="rounded p-1 text-slate-400 hover:text-slate-600"
-                          title="Copy"
-                        >
-                          {copiedCell === `basic-${i}-${j}` ? (
-                            <Check size={14} className="text-green-500" />
-                          ) : (
-                            <Copy size={14} />
-                          )}
-                        </button>
-                      )}
-                    </div>
+                  // `align-top` anchors short-content cells to the top
+                  // of the row so they line up with the first line of a
+                  // wrapped neighbour. Without this, <td>'s default
+                  // `vertical-align: middle` would center short cells
+                  // against the tallest wrapped cell — copy icons would
+                  // still align horizontally, but the rows would look
+                  // ragged. (See height-sync §3 in TableCell.tsx.)
+                  <td key={j} className="px-4 py-2.5 align-top text-gray-700">
+                    <TableCell
+                      cell={cell}
+                      rowIndex={i}
+                      colIndex={j}
+                      copyCellKey={`basic-${i}-${j}`}
+                      copiedCell={copiedCell}
+                      onCopy={copyCell}
+                      onCommit={updateTableCell}
+                      align="left"
+                    />
                   </td>
                 ))}
               </tr>

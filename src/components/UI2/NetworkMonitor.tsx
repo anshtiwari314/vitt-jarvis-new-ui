@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   AlertTriangle,
   WifiOff,
@@ -142,42 +143,95 @@ function StatusIconGlyph({ status, className }: { status: NetworkConnStatus; cla
   return <Signal className={className} />;
 }
 
-export function NetworkStatusIcon({ status, internetLatency, serverLatency }: NetworkStatus) {
+export function NetworkStatusIcon({ status, internetLatency, serverLatency, variant = 'default' }: NetworkStatus & { variant?: 'default' | 'bare' }) {
   const meta = STATUS_META[status];
   const formatLatency = (v: number | "Timeout") => (v === "Timeout" ? "Timeout" : `${v}ms`);
 
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState<{ top: number; right: number } | null>(null);
+
+  const updateCoords = useCallback(() => {
+    const btn = buttonRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    setCoords({
+      top: rect.bottom + 8,
+      right: Math.max(8, window.innerWidth - rect.right),
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    updateCoords();
+    const onScrollOrResize = () => updateCoords();
+    window.addEventListener("scroll", onScrollOrResize, true);
+    window.addEventListener("resize", onScrollOrResize);
+    return () => {
+      window.removeEventListener("scroll", onScrollOrResize, true);
+      window.removeEventListener("resize", onScrollOrResize);
+    };
+  }, [open, updateCoords]);
+
+  const showPopover = () => setOpen(true);
+  const hidePopover = () => setOpen(false);
+
+  const popover =
+    open && coords && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            style={{ position: "fixed", top: coords.top, right: coords.right, zIndex: 10001 }}
+            className="w-60"
+            onMouseEnter={showPopover}
+            onMouseLeave={hidePopover}
+          >
+            <div className="rounded-lg border border-white/40 bg-white/95 backdrop-blur-md shadow-lg px-3 py-2.5 text-xs text-slate-700">
+              <div className="flex items-center gap-2 font-semibold text-slate-800">
+                <span className={`inline-block h-2 w-2 rounded-full ${meta.dot}`} />
+                {meta.label}
+              </div>
+              <div className="mt-2 space-y-1 font-mono">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Internet</span>
+                  <span>{formatLatency(internetLatency)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Server</span>
+                  <span>{formatLatency(serverLatency)}</span>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
+
+  const isBare = variant === 'bare';
+
   return (
-    <div className="relative group h-10 md:h-12 flex items-center">
+    <div className={`relative flex items-center ${isBare ? '' : 'h-10 md:h-12'}`}>
       <button
+        ref={buttonRef}
         type="button"
         aria-label={meta.label}
-        className={`h-full px-3 md:px-4 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 transition shadow-sm ${meta.tint}`}
+        onMouseEnter={showPopover}
+        onMouseLeave={hidePopover}
+        onFocus={showPopover}
+        onBlur={hidePopover}
+        onClick={() => setOpen((v) => !v)}
+        className={
+          isBare
+            ? `flex items-center justify-center ${meta.tint}`
+            : `h-full px-3 md:px-4 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 transition shadow-sm ${meta.tint}`
+        }
       >
         <span className="relative flex items-center">
-          <StatusIconGlyph status={status} className="w-5 h-5 md:w-6 md:h-6" />
+          <StatusIconGlyph status={status} className={isBare ? 'w-5 h-5' : 'w-5 h-5 md:w-6 md:h-6'} />
           <span className={`absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full ring-2 ring-white ${meta.dot}`} />
         </span>
       </button>
 
-      {/* Hover popover */}
-      <div className="pointer-events-none absolute right-0 top-full mt-2 z-50 w-60 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150">
-        <div className="rounded-lg border border-white/40 bg-white/70 backdrop-blur-md shadow-lg px-3 py-2.5 text-xs text-slate-700">
-          <div className="flex items-center gap-2 font-semibold text-slate-800">
-            <span className={`inline-block h-2 w-2 rounded-full ${meta.dot}`} />
-            {meta.label}
-          </div>
-          <div className="mt-2 space-y-1 font-mono">
-            <div className="flex justify-between">
-              <span className="text-slate-500">Internet</span>
-              <span>{formatLatency(internetLatency)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">Server</span>
-              <span>{formatLatency(serverLatency)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      {popover}
     </div>
   );
 }

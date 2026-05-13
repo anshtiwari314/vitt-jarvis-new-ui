@@ -288,7 +288,7 @@ export default function RecommendationCategoryPage({ category }: Props) {
             <div className="mt-5 flex flex-col gap-5">
               {selected.keyFeatures && selected.keyFeatures.length > 0 && (
                 <div className="w-full rounded-[16px] border border-slate-200 bg-white p-4">
-                  <div className="mb-3 text-sm font-semibold text-slate-700">Key features</div>
+                  <div className="mb-3 text-sm font-semibold text-slate-700">Key Advantages</div>
                   <div className="space-y-2">
                     {selected.keyFeatures.map((feature) => (
                       <div key={feature} className="flex gap-2 text-sm text-slate-600">

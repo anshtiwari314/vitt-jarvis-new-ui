@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Copy, Check } from "lucide-react";
 import { useData } from "../../context/DataWrapper";
+import TableCell, { type TableCellRaw } from "./TableCell";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -10,6 +11,8 @@ interface FieldItem {
   type?: string;
   placeholder?: string;
   modified_by_agent?: boolean;
+  is_copyable?: boolean;
+  is_editable?: boolean;
 }
 
 interface BoxData {
@@ -20,7 +23,7 @@ interface BoxData {
 interface TableData {
   header: string;
   table_header: string[];
-  table_values: (string | number | null | undefined)[][];
+  table_values: TableCellRaw[][];
 }
 
 interface Props {
@@ -77,11 +80,15 @@ function EditableInputField({
   placeholder,
   className,
   onCommit,
+  isEditable = true,
+  isCopyable = true,
 }: {
   initialValue: string;
   placeholder: string;
   className: string;
   onCommit: (value: string) => void;
+  isEditable?: boolean;
+  isCopyable?: boolean;
 }) {
   const [localValue, setLocalValue] = useState(initialValue);
   const [isHighlighted, setIsHighlighted] = useState(false);
@@ -108,7 +115,9 @@ function EditableInputField({
         type="text"
         value={localValue}
         placeholder={placeholder}
-        className={`${className} transition-all duration-300 ${isHighlighted ? 'border-sky-400 ring-1 ring-sky-200 shadow-[0_0_4px_rgba(56,189,248,0.2)]' : ''}`}
+        readOnly={!isEditable}
+        disabled={!isEditable}
+        className={`${className} transition-all duration-300 ${isHighlighted ? 'border-sky-400 ring-1 ring-sky-200 shadow-[0_0_4px_rgba(56,189,248,0.2)]' : ''} ${!isEditable ? 'cursor-default opacity-70' : ''}`}
         onChange={(e) => {
           setLocalValue(e.target.value);
           triggerHighlight();
@@ -119,13 +128,13 @@ function EditableInputField({
           }
         }}
       />
-      <CopyButton value={localValue} />
+      {isCopyable && <CopyButton value={localValue} />}
     </div>
   );
 }
 
 export default function Liabilities({ data, formatCurrency }: Props) {
-  const { updateField } = useData();
+  const { updateField, updateTableCell } = useData();
   const [copiedCell, setCopiedCell] = useState<string | null>(null);
 
   if (!data) {
@@ -175,6 +184,8 @@ export default function Liabilities({ data, formatCurrency }: Props) {
               placeholder={item.placeholder ?? ''}
               className={`w-full p-2 pr-9 border rounded-md focus:outline-none focus:ring-1 focus:ring-sky-200 border-slate-300 bg-slate-50`}
               onCommit={(value) => updateField(item.field, value)}
+              isEditable={item.is_editable !== false}
+              isCopyable={item.is_copyable !== false}
             />
           </div>
         ))}
@@ -206,36 +217,30 @@ export default function Liabilities({ data, formatCurrency }: Props) {
           {(data.table?.table_values ?? []).map((row, rowIndex) => (
             <div
               key={rowIndex}
-              className="grid gap-3 p-3 rounded-md bg-slate-50"
+              // `items-start` anchors all cells in the row to the top.
+              // When one cell wraps onto multiple lines (because its
+              // content exceeded the per-field max-width inside
+              // TableCell), the short cells stay aligned with the first
+              // line instead of getting vertically centred.
+              // `minmax(0,1fr)` (not `auto`) is what enforces equal
+              // column widths so the copy icons line up vertically per
+              // column — see the layout contract in TableCell.tsx.
+              className="grid items-start gap-3 p-3 rounded-md bg-slate-50"
               style={{ gridTemplateColumns: `repeat(${data.table?.table_header?.length ?? 3}, minmax(0,1fr))` }}
             >
-              {row?.map((cell, colIdx) => {
-                const cellValue =
-                  cell === null || cell === undefined || cell === ''
-                    ? ''
-                    : typeof cell === 'number' && colIdx > 0
-                    ? cell
-                    : String(cell);
-                return (
-                  <div key={colIdx} className={`flex items-center gap-2 ${colIdx === 0 ? '' : 'justify-end text-right'}`}>
-                    <span dangerouslySetInnerHTML={{ __html: String(cellValue) }} />
-                    {String(cellValue) && (
-                      <button
-                        type="button"
-                        onClick={() => copyCell(`liab-${rowIndex}-${colIdx}`, String(cellValue).replace(/<[^>]+>/g, ''))}
-                        className="rounded p-1 text-slate-400 hover:text-slate-600"
-                        title="Copy"
-                      >
-                        {copiedCell === `liab-${rowIndex}-${colIdx}` ? (
-                          <Check size={14} className="text-green-500" />
-                        ) : (
-                          <Copy size={14} />
-                        )}
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+              {row?.map((cell, colIdx) => (
+                <TableCell
+                  key={colIdx}
+                  cell={cell}
+                  rowIndex={rowIndex}
+                  colIndex={colIdx}
+                  copyCellKey={`liab-${rowIndex}-${colIdx}`}
+                  copiedCell={copiedCell}
+                  onCopy={copyCell}
+                  onCommit={updateTableCell}
+                  align={colIdx === 0 ? 'left' : 'right'}
+                />
+              ))}
             </div>
           ))}
         </div>
