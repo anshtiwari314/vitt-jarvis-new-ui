@@ -12,7 +12,7 @@ import { useAppSelector } from '../store/store';
 //import useRequest from '../hooks/requests';
 
 const VadContext = createContext('vadContext')
-const WS2_URL = "https://1888-103-173-124-150.ngrok-free.app"
+const WS2_URL = "wss://a34a-103-173-124-195.ngrok-free.app"
 
 function createPageSessionId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -21,43 +21,57 @@ function createPageSessionId() {
   return `session-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 }
 
-/** Peak-normalize float PCM so |max sample| reaches this (just under 1.0 avoids int16/WAV edge clipping). */
-const SPEECH_PEAK_TARGET = 0.98
-const SPEECH_PEAK_FLOOR = 1e-8
+/** 
+ * Dynamic Range Compressor & Limiter
+ * Reduces the volume of loud peaks and applies makeup gain to boost quiet sounds,
+ * preventing clipping while maximizing perceived loudness.
+ */
+function compressFloat32Pcm(audio: Float32Array, sampleRate = 16000): Float32Array {
+  const thresholdDB = -20; // Compress anything louder than -20 dBFS
+  const ratio = 4; // 4:1 compression ratio (squash loud parts)
+  const attackTime = 0.005; // 5ms attack
+  const releaseTime = 0.050; // 50ms release
+  const makeupGainDB = 12; // Boost everything by 12 dB after compression
 
-function normalizeFloat32PcmPeak(
-  audio: Float32Array,
-  targetPeak = SPEECH_PEAK_TARGET
-): Float32Array {
-  let peak = 0
-  for (let i = 0; i < audio.length; i++) {
-    const a = Math.abs(audio[i]!)
-    if (a > peak) peak = a
-  }
-  const out = new Float32Array(audio.length)
-  if (peak <= SPEECH_PEAK_FLOOR) {
-    out.set(audio)
-    return out
-  }
-  
-  // Calculate the standard normalization scale
-  let scale = targetPeak / peak
-  
-  // If the audio is quiet (peak is low, meaning scale is high), 
-  // multiply the scale factor by 2 to boost it even more.
-  // Note: This WILL cause clipping for some samples, but will make quiet audio much louder.
-  if (scale > 2.0) {
-     scale = scale * 2.0
-  }
+  const alphaAttack = Math.exp(-1 / (sampleRate * attackTime));
+  const alphaRelease = Math.exp(-1 / (sampleRate * releaseTime));
+
+  const out = new Float32Array(audio.length);
+  let envelope = 0;
+
+  const thresholdLinear = Math.pow(10, thresholdDB / 20);
+  const makeupGainLinear = Math.pow(10, makeupGainDB / 20);
 
   for (let i = 0; i < audio.length; i++) {
-    // Apply the scale, but hard-clip at -1.0 and 1.0 to prevent WAV encoding distortion
-    let val = audio[i]! * scale
-    if (val > 0.99) val = 0.99
-    if (val < -0.99) val = -0.99
-    out[i] = val
+    const absSample = Math.abs(audio[i]!);
+
+    // Smooth envelope follower
+    if (absSample > envelope) {
+      envelope = alphaAttack * envelope + (1 - alphaAttack) * absSample;
+    } else {
+      envelope = alphaRelease * envelope + (1 - alphaRelease) * absSample;
+    }
+
+    // Calculate gain reduction
+    let gainLinear = 1.0;
+    if (envelope > thresholdLinear) {
+      const envDB = 20 * Math.log10(envelope || 1e-8);
+      const overThreshold = envDB - thresholdDB;
+      const gainReductionDB = overThreshold * (1 - 1 / ratio);
+      gainLinear = Math.pow(10, -gainReductionDB / 20);
+    }
+
+    // Apply gain reduction and makeup gain
+    let val = audio[i]! * gainLinear * makeupGainLinear;
+
+    // Hard limiter to absolutely prevent clipping in WAV encoder
+    if (val > 0.99) val = 0.99;
+    if (val < -0.99) val = -0.99;
+
+    out[i] = val;
   }
-  return out
+
+  return out;
 }
 
 export function useVad(){
@@ -370,12 +384,15 @@ export default function VadWrapper({children}){
                
               speech_stop_time:`${speechStopDate.toLocaleDateString()} ${speechStopDate.toLocaleTimeString()}:${speechStopDate.getMilliseconds()}`
             }
+            // don't remove this line 
+            
+          // const processedAudio =
+          //   audio instanceof Float32Array
+          //     ? compressFloat32Pcm(audio)
+          //     : audio
 
-          const normalized =
-            audio instanceof Float32Array
-              ? normalizeFloat32PcmPeak(audio)
-              : audio
-          processAudioToBase64(normalized, oneWayUrl, data)
+          const processedAudio = audio
+          processAudioToBase64(processedAudio, oneWayUrl, data)
         }
       })
 
@@ -400,11 +417,11 @@ export default function VadWrapper({children}){
             // mob: currentUser.userid,
             // userid:currentUser.userid
         }
-        const normalized =
+        const processedAudio =
           audio instanceof Float32Array
-            ? normalizeFloat32PcmPeak(audio)
+            ? compressFloat32Pcm(audio)
             : audio
-        processAudioToBase64(normalized, oneWayUrl, data)
+        processAudioToBase64(processedAudio, oneWayUrl, data)
         
         
     }
