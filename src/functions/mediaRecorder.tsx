@@ -151,3 +151,80 @@ export function startMediaRecorder(args){
      mediaRecorder.start()
      
    }
+
+/** Records one chunk (default 4s). Stops early and fires onChunk when recordingStatus becomes false. */
+export function startMediaRecorderChunk(args: {
+  stream: MediaStream
+  durationMs: number
+  recordingStatus: { current: boolean }
+  onChunk: (blob: Blob) => void | Promise<void>
+}): Promise<void> {
+  const { stream, durationMs, recordingStatus, onChunk } = args
+
+  return new Promise((resolve, reject) => {
+    const chunks: BlobPart[] = []
+    let mediaRecorder: MediaRecorder
+
+    try {
+      mediaRecorder = new MediaRecorder(stream, {
+        audioBitsPerSecond: 32000,
+      })
+    } catch (error) {
+      reject(error)
+      return
+    }
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunks.push(e.data)
+    }
+
+    const durationTimeout = setTimeout(() => {
+      if (mediaRecorder.state === "recording") mediaRecorder.stop()
+    }, durationMs)
+
+    function stopRecordingEarly() {
+      if (mediaRecorder.state !== "recording") return
+      if (typeof mediaRecorder.requestData === "function") {
+        mediaRecorder.requestData()
+      }
+      mediaRecorder.stop()
+    }
+
+    const pauseCheckInterval = setInterval(() => {
+      if (!recordingStatus.current) {
+        clearTimeout(durationTimeout)
+        clearInterval(pauseCheckInterval)
+        stopRecordingEarly()
+      }
+    }, 200)
+
+    mediaRecorder.onstop = async () => {
+      clearTimeout(durationTimeout)
+      clearInterval(pauseCheckInterval)
+      try {
+        if (chunks.length > 0) {
+          const blob = new Blob(chunks, {
+            type: mediaRecorder.mimeType || "audio/webm",
+          })
+          await onChunk(blob)
+        }
+      } finally {
+        resolve()
+      }
+    }
+
+    mediaRecorder.onerror = () => {
+      clearTimeout(durationTimeout)
+      clearInterval(pauseCheckInterval)
+      reject(new Error("MediaRecorder error"))
+    }
+
+    try {
+      mediaRecorder.start()
+    } catch (error) {
+      clearTimeout(durationTimeout)
+      clearInterval(pauseCheckInterval)
+      reject(error)
+    }
+  })
+}

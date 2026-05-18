@@ -1,5 +1,5 @@
 import React, {createContext, useContext,useEffect,useState,useRef } from 'react'
-import { startMediaRecorder,startMediaRecorder2 } from '../functions/mediaRecorder';
+import { startMediaRecorder,startMediaRecorder2, startMediaRecorderChunk } from '../functions/mediaRecorder';
 import { getTimeStamp,getOldTimeStamp,generateBase64 } from '../functions/generalFn';
 import WavToMp3 from '../functions/wavToMp3';
 import { useData } from './DataWrapper';
@@ -12,7 +12,7 @@ import { useAppSelector } from '../store/store';
 //import useRequest from '../hooks/requests';
 
 const VadContext = createContext('vadContext')
-const WS2_URL = "wss://a34a-103-173-124-195.ngrok-free.app"
+const MIC_CHUNK_INTERVAL_MS = 4000
 
 function createPageSessionId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -89,7 +89,6 @@ export default function VadWrapper({children}){
     //const {currentUser} = useAuth()
     const [vadRecordingOn,setVadRecordingOn] = useState<boolean>(false);
     let recordingStatus = useRef(false);
-    const ws2Ref = useRef<WebSocket | null>(null)
     const pageSessionIdRef = useRef("")
     if (!pageSessionIdRef.current) {
       pageSessionIdRef.current = createPageSessionId()
@@ -100,6 +99,9 @@ export default function VadWrapper({children}){
     const [vadStatus,setVadStatus] = useState(false)
     const vadRef = useRef({ oldVadrecordingStatus:false,myVad:null })
     const [manualVadStatus,setManualVadStatus] = useState(false)
+    const manualMicRecordingRef = useRef(false)
+    const micStreamRef = useRef<MediaStream | null>(null)
+    const micSessionIdRef = useRef(0)
 
     const initReqStatusRef = useRef(false);
     const isQuestionLoaderRunsFirstTime = useRef(true)
@@ -123,133 +125,42 @@ export default function VadWrapper({children}){
     return data?.sessionid || currentUser?.sessionuid || currentUser?.sessionid || pageSessionIdRef.current
   }
 
+  async function emitAudioPayload(
+    partialData: Record<string, unknown>,
+    audiomessage: string
+  ) {
+    const sessionid = getSessionId(partialData)
+    const timeStamp = getTimeStamp()
+
+    const data = {
+      ...partialData,
+      sessionid,
+      audiomessage,
+      timeStamp,
+    }
+
+    console.log("from inside send to server[DEBUGGGG]", data)
+    socket.emit("ai_suggestion_req_ins_v2", data)
+  }
+
+  async function sendMediaRecorderBlobToServer(
+    blob: Blob,
+    partialData: Record<string, unknown>
+  ) {
+    const base64data = (await generateBase64(blob)) as string
+    const audioBase64 = base64data.split(",")[1]
+    await emitAudioPayload(partialData, audioBase64)
+  }
+
   async function processAudioToBase64(audio,url,data){
     console.log("vad stopped")
     const wavBuffer = utils.encodeWAV(audio)
-      const wavBase64 = utils.arrayBufferToBase64(wavBuffer)
+    const wavBlob = new Blob([wavBuffer], { type: "audio/wav" })
+    const mp3Blob = await WavToMp3(wavBlob)
+    const base64data = (await generateBase64(mp3Blob)) as string
 
-         // let wavBlob =processingToWav(audio)
-      let wavBlob = new Blob([wavBuffer], { type: 'audio/wav' })
-      let mp3Blob = await WavToMp3(wavBlob)
-      
-      //generate base64 of that blob 
-      let base64data = await generateBase64(mp3Blob) as string
-
-      const sessionid = getSessionId(data)
-      const timeStamp = getTimeStamp()
-
-      data = {
-        ...data,
-        sessionid,
-        audiomessage:base64data.split(',')[1],
-        timeStamp
-      }
-
-
-      //let resp = await PostReq(url,data)
-      //console.log('resp',resp)
-      //return resp
-      console.log("from inside send to server[DEBUGGGG]", data);
-      socket.emit("ai_suggestion_req_ins_v2", data);
-
-      const ws2Payload = {
-        ...data,
-        audiomessage: wavBase64,
-        audioFormat: "wav",
-        mimeType: "audio/wav"
-      }
-
-      if (ws2Ref.current?.readyState === WebSocket.OPEN) {
-        ws2Ref.current.send(
-          JSON.stringify({
-            event: "stopAudio",
-            payload: ws2Payload
-          })
-        )
-      } else {
-        console.warn("ws2 socket not connected, skipping stopAudio emit")
-      }
-
-}
-
-    useEffect(()=>{
-      let shouldReconnect = true
-      let reconnectAttempts = 0
-      let reconnectTimer: ReturnType<typeof setTimeout> | null = null
-      let activeWs: WebSocket | null = null
-
-      function messageHandler(event: MessageEvent) {
-        try {
-          const data = JSON.parse(event.data)
-          if (data?.ok === false) {
-            console.warn("ws2 request failed", data)
-          }
-        } catch (error) {
-          console.warn("ws2 invalid message", error)
-        }
-      }
-
-      function scheduleReconnect() {
-        if (!shouldReconnect || reconnectTimer) return
-        const delayMs = Math.min(1000 * Math.max(1, reconnectAttempts), 5000)
-        reconnectTimer = setTimeout(() => {
-          reconnectTimer = null
-          connectWs2()
-        }, delayMs)
-        console.log(`ws2 reconnect scheduled in ${delayMs}ms`)
-      }
-
-      function connectWs2() {
-        if (!shouldReconnect) return
-
-        const ws2 = new WebSocket(WS2_URL)
-        activeWs = ws2
-        ws2Ref.current = ws2
-
-        function connected() {
-          reconnectAttempts = 0
-          console.log("ws2 connected")
-        }
-
-        function disconnected(event: CloseEvent) {
-          if (ws2Ref.current === ws2) {
-            ws2Ref.current = null
-          }
-          console.log("ws2 disconnected")
-          if (event?.reason) {
-            console.log("ws2 disconnect reason", event.reason)
-          }
-          if (shouldReconnect) {
-            reconnectAttempts += 1
-            scheduleReconnect()
-          }
-        }
-
-        function connectError(event: Event) {
-          console.warn("ws2 connection error", event)
-        }
-
-        ws2.addEventListener("open", connected)
-        ws2.addEventListener("close", disconnected)
-        ws2.addEventListener("error", connectError)
-        ws2.addEventListener("message", messageHandler)
-      }
-
-      connectWs2()
-
-      return () => {
-        shouldReconnect = false
-        if (reconnectTimer) {
-          clearTimeout(reconnectTimer)
-          reconnectTimer = null
-        }
-        if (activeWs) {
-          activeWs.close()
-          activeWs = null
-        }
-        ws2Ref.current = null
-      }
-    },[])
+    await emitAudioPayload(data, base64data.split(",")[1])
+  }
 
     // useEffect(()=>{
     //   console.log('socket is connected',socket)
@@ -385,14 +296,15 @@ export default function VadWrapper({children}){
               speech_stop_time:`${speechStopDate.toLocaleDateString()} ${speechStopDate.toLocaleTimeString()}:${speechStopDate.getMilliseconds()}`
             }
             // don't remove this line 
-            
+
           // const processedAudio =
           //   audio instanceof Float32Array
           //     ? compressFloat32Pcm(audio)
           //     : audio
 
-          const processedAudio = audio
-          processAudioToBase64(processedAudio, oneWayUrl, data)
+          //for compression (limiter logic)
+          //const processedAudio = audio
+          //processAudioToBase64(processedAudio, oneWayUrl, data)
         }
       })
 
@@ -531,6 +443,86 @@ export default function VadWrapper({children}){
           VAD2?.pause()
         }
       },[manualVadStatus])
+
+      useEffect(() => {
+        if (typeof VAD2 !== "object" || VAD2?.loading) return
+
+        if (!manualVadStatus) {
+          manualMicRecordingRef.current = false
+          return
+        }
+
+        manualMicRecordingRef.current = true
+        const sessionId = ++micSessionIdRef.current
+        let cancelled = false
+
+        async function sendMicChunkToServer(blob: Blob) {
+          try {
+            setMsgLoading(true)
+            const speechStopDate = new Date()
+            await sendMediaRecorderBlobToServer(blob, {
+              roomid: roomId,
+              jobid: "job_1234",
+              agentid: "agt_85641",
+              name: name,
+              agent_name:
+                JSON.parse(localStorage.getItem("agent_name") || "{}")
+                  ?.agent_name || "",
+              speech_stop_time: `${speechStopDate.toLocaleDateString()} ${speechStopDate.toLocaleTimeString()}:${speechStopDate.getMilliseconds()}`,
+            })
+          } catch (error) {
+            console.warn("sendMicChunkToServer failed", error)
+          }
+        }
+
+        async function runChunkLoop(stream: MediaStream) {
+          while (
+            !cancelled &&
+            manualMicRecordingRef.current &&
+            micSessionIdRef.current === sessionId &&
+            stream.active
+          ) {
+            try {
+              await startMediaRecorderChunk({
+                stream,
+                durationMs: MIC_CHUNK_INTERVAL_MS,
+                recordingStatus: manualMicRecordingRef,
+                onChunk: sendMicChunkToServer,
+              })
+            } catch (error) {
+              console.warn("MediaRecorder chunk failed", error)
+              break
+            }
+          }
+        }
+
+        navigator.mediaDevices
+          .getUserMedia({ audio: true })
+          .then((stream) => {
+            if (
+              cancelled ||
+              !manualMicRecordingRef.current ||
+              micSessionIdRef.current !== sessionId
+            ) {
+              stream.getTracks().forEach((track) => track.stop())
+              return
+            }
+            micStreamRef.current = stream
+            runChunkLoop(stream)
+          })
+          .catch((error) => {
+            console.warn("mic stream for MediaRecorder failed", error)
+          })
+
+        return () => {
+          cancelled = true
+          manualMicRecordingRef.current = false
+          micSessionIdRef.current += 1
+          const stream = micStreamRef.current
+          micStreamRef.current = null
+          stream?.getTracks().forEach((track) => track.stop())
+        }
+      }, [manualVadStatus, VAD2?.loading, roomId, name])
     
       useEffect(()=>{
         // don't run pause until vad2 finishes loading otherwise it will misbehave
