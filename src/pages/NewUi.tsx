@@ -398,9 +398,10 @@ function NewUi({sidebarRef,btnRef,wasClosedByUserRef}) {
           className="cues-container"
           style={{
             width: "100%",
-            height:'80vh',
+            height:'72vh',
+            maxHeight:'72vh',
             backgroundColor: "#F7F7FB",
-            overflowY: "scroll",
+            overflowY: "auto",
           }}
           ref={cuesContainerRef}
         >

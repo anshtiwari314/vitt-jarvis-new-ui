@@ -48,11 +48,10 @@ h1{
     font-size: 3.5rem;
 }
 .msg-loader-wrapper{
-    padding:2rem 0;
+    padding:0;
     width:100%;
     display: flex;
-    justify-content: center;
-    /* border:0.1rem solid tomato; */
+    align-self: stretch;
 }
 .msg-loader{
     height:5rem;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useData } from '../context/DataWrapper';
 import Msg from './Msg';
 
@@ -6,21 +6,16 @@ export default function MsgWrapper() {
     //@ts-ignore
     const {data,msgLoading} = useData()
     const messages = Array.isArray(data) ? data : []
-    const orderedMessages = messages.slice().reverse() // show newest messages first
   return (
-            <div style={{ padding: "1rem", textAlign: "left" }}>
+            <div className="msg-list">
               {msgLoading ? (
                 <div className='msg-loader-wrapper'>
-                  <img
-                    src="https://media.tenor.com/On7kvXhzml4AAAAj/loading-gif.gif"
-                    className='msg-loader'
-                  />
+                  <div className='msg-loader-skeleton' aria-label="Loading message" />
                 </div>
               ) : null}
-              {orderedMessages.map((e:any)=>{
+              {messages.map((e:any)=>{
                 return <Msg e={e} key={e.id}/>
               })}
             </div>
-            
   )
 }

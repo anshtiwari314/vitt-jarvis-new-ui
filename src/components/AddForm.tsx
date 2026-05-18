@@ -71,7 +71,7 @@ export default function AddForm({e,Component}:{e:any,Component:React.ReactNode})
   },[val])
 
   return (
-    <div className='second form' style={{borderColor:e.color}}>
+    <div className='form'>
         <div className='content'>
             <div className='label-box'>
                 <p>{e.label}</p>

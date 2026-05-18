@@ -1,6 +1,18 @@
 import {v4 as uuidv4} from 'uuid'
 import { getCurrentFormattedTime } from './generalFn'
 
+export function resolvePlayableAudiourl(data: any): string | null {
+    const base64 = data?.audiobase64 != null ? String(data.audiobase64).trim() : ''
+    if (base64.length >= 16) {
+        return `data:audio/wav;base64,${base64}`
+    }
+    const url = data?.audio_url != null ? String(data.audio_url).trim() : ''
+    if (url.length > 0) {
+        return url
+    }
+    return null
+}
+
 export function handleData(data:any){
     console.log('handleData',data)
     //setMsgLoading(false)
@@ -8,7 +20,7 @@ export function handleData(data:any){
     //@ts-ignore
     let obj:Data = {}
 // "sessionid": <str>, "audiofiletimestamp": <str>
-    let audiourl = null
+    let audiourl: string | null = null
 
     
     if(data?.loading){
@@ -21,17 +33,7 @@ export function handleData(data:any){
 
     data.msg_receiving_timestamp = getCurrentFormattedTime()
 
-    if(data?.audio_url!==null){
-        //audioUrlRef.current = data.audiourl
-       // setAudioUrlFlag(prev=>!prev)
-        //setAudioUrl('https://files.gospeljingle.com/uploads/music/2023/04/Taylor_Swift_-_August.mp3')
-       // setAudioUrl(data.audiourl)
-       audiourl = data.audio_url
-      }
-    if(data?.audiobase64 && data?.audiobase64!==null){
-        audiourl = `data:audio/wav;base64,${data.audiobase64}`
-        //setAudioUrl(`data:audio/mpeg;base64,${data.audiobase64}`)
-    }
+    audiourl = resolvePlayableAudiourl(data)
     if(data?.imageurl){
         //@ts-ignore
         obj["id"]= uuidv4()
@@ -99,11 +101,9 @@ export function handleData(data:any){
         obj["audiofiletimestamp"] = data?.audiofiletimestamp
         obj["istranscription"] = data?.istranscription
         obj["msg_receiving_timestamp"] = data?.msg_receiving_timestamp
-        if (data?.audio_url) {
-            obj["audio_url"] = data.audio_url
-        }
-        if (data?.audiobase64) {
-            obj["audio_url"] = `data:audio/wav;base64,${data.audiobase64}`
+        const msgAudioUrl = resolvePlayableAudiourl(data)
+        if (msgAudioUrl) {
+            obj["audio_url"] = msgAudioUrl
         }
         arr = [...arr, obj]
         //@ts-ignore

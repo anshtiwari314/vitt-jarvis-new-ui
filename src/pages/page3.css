@@ -53,8 +53,14 @@
     text-align: center;
     padding: 3.1px;
   }
-  .cues-container {
-    height: 74%;
+  .cues-container--compact {
+    height: 72vh;
+    max-height: 72vh;
+  }
+
+  .cues-container--expanded {
+    height: 80vh;
+    max-height: 80vh;
   }
 
   .main-content {

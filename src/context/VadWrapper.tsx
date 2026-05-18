@@ -52,7 +52,8 @@ export function VadWrapper({children}){
     const vadMicStreamRef = useRef<MediaStream | null>(null)
     const vad2FrameCounterRef = useRef(0)
 
-    const VAD2_TARGET_MIN_SPEECH_MS = 2000
+    //setting for around 1.4sec of audio filter
+    const VAD2_TARGET_MIN_SPEECH_MS = 1000
     const VAD2_FRAME_SAMPLES = 512
     const VAD2_MIN_SPEECH_FRAMES = Math.max(
       1,
@@ -166,9 +167,11 @@ export function VadWrapper({children}){
         modelURL:`./silero_vad.onnx`,
         positiveSpeechThreshold: 0.8,
         submitUserSpeechOnPause:true,
-        model:"v5" as const,
+        //model:"v5" as const,
         frameSamples: VAD2_FRAME_SAMPLES,
         minSpeechFrames: VAD2_MIN_SPEECH_FRAMES,
+        redemptionFrames:8,
+
         getStream: async () => {
           const stream = await navigator.mediaDevices.getUserMedia({
             audio: {

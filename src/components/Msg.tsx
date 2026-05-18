@@ -1,10 +1,16 @@
 import React,{useEffect, useState,useRef} from 'react'
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+    faClipboardQuestion,
+    faExclamation,
+    faForwardFast,
+    faCircleQuestion,
+    faPen,
+} from '@fortawesome/free-solid-svg-icons'
 import AddImageMsg from './AddImageMsg'
 import AddOnlySuggestiveMsg from './AddOnlySuggestiveMsg'
 import AddTextMsg from './AddTextMsg'
 import AddForm,{ InputForm,RadioForm } from './AddForm'
-import Parser from 'html-react-parser';
 import AddTableMsg from './AddTableMsg'
 
 
@@ -12,27 +18,28 @@ function IconColor(identiyingColor:string){
     if(identiyingColor==='red')
     return '#D60000'
     else if(identiyingColor === 'green')
-    return 'green'
+    return '#16a34a'
     else if(identiyingColor === 'yellow')
-    return 'yellow'
+    return '#ca8a04'
     else if(identiyingColor === 'blue')
     return '#7D11E9'
     else if(identiyingColor==='pink')
     return '#D60067'
 }
-function IconName(identiyingColor:string){
-    //console.log(identiyingColor)
-    if(identiyingColor==='red')
-        return 'fa-solid fa-clipboard-question'
-    else if(identiyingColor === 'green')
-        return 'fa-solid fa-exclamation';
-    else if(identiyingColor === 'yellow')
-        return 'fa-solid fa-forward-fast';
-    else if(identiyingColor === 'blue')
+function MsgIcon({ iconColor }: { iconColor: string }) {
+    let icon = faCircleQuestion
+    if (iconColor === 'red') icon = faClipboardQuestion
+    else if (iconColor === 'green') icon = faExclamation
+    else if (iconColor === 'yellow') icon = faForwardFast
+    else if (iconColor === 'pink') icon = faPen
 
-        return 'fa-solid fa-circle-question';
-    else if(identiyingColor==='pink' )
-        return 'fa-regular fa-pen-to-square';
+    return (
+        <FontAwesomeIcon
+            icon={icon}
+            className="msg-card__icon-glyph"
+            style={{ color: IconColor(iconColor) }}
+        />
+    )
 }
 function MsgTypeSelector({e}:{e:any}){
     if(e.type ==="TextMsg")
@@ -68,28 +75,30 @@ function handleFeedback(e:any,url:string){
            console.log("res from feedback server",res)
            return res.json()
         }).then((result)=>{
-          
-          // //setMsg((prev)=>[...prev,...result])
           console.log(result)
         })
 }
 
-function enumIcons(color:string){
-    if(color==='red')
-        return '<i class="fa-solid fa-clipboard-question" style="color:#D60000;"></i>'
-    else if(color === 'green')
-        return '<i class="fa-solid fa-exclamation" style="color:green;"></i>';
-    else if(color === 'yellow')
-        return '<i class="fa-solid fa-forward-fast" style="color:yellow;"></i>';
-    else if(color === 'blue')
-        return '<i class="fa-solid fa-circle-question" style="color:#7D11E9;"></i>'
-    else if(color==='pink')
-        return '<i class="fa-regular fa-pen-to-square" style="color:#D60067;"></i>'
+function FeedbackToggle({checked, onToggle, onActivate}:{checked:boolean, onToggle:()=>void, onActivate:()=>void}) {
+    return (
+        <label className="msg-feedback-toggle" title="Mark as reviewed">
+            <input
+                className="response-radio"
+                type="checkbox"
+                checked={checked}
+                onChange={() => {
+                    onActivate()
+                    onToggle()
+                }}
+            />
+            <span className="msg-feedback-toggle__track">
+                <i className={checked ? "fa-solid fa-check" : "fa-regular fa-circle"} />
+            </span>
+        </label>
+    )
 }
 
 export default function Msg({e}:{e:any}) {
-    //console.log(e)
-    //console.log(IconName(e.iconColor))
     const [checked,setChecked] = useState<boolean>(false)
     let radioRef = useRef(false)
 
@@ -106,61 +115,32 @@ export default function Msg({e}:{e:any}) {
         }
     },[checked])
 
-    // function handleClick(){
+    const colorMod = e.iconColor ? `msg--${e.iconColor}` : 'msg--blue'
 
-    // }
   return (
-      // https://media.tenor.com/On7kvXhzml4AAAAj/loading-gif.gif
-     
-    <div className='msg' style={{border:'0.1rem solid red'}}>
-            {/* <h5>{e.similarity_query}</h5> */}
-            <div className='wrapper' style={{marginBottom:"0.5rem"}}>
-                <div className='first v-center h-center' style={{opacity:0}}>   
-                    <i 
-                    className={`${IconName(e.iconColor)?.toString()}`} 
-                    style={{color:IconColor(e.iconColor)?.toString()}}
-                    
-                    ></i>
-                </div>
-                <div style={{flex:"0.8"}}>
-                    <h5 >{e.similarity_query}</h5> 
-                </div>
-                <div className='third v-center h-center' style={{opacity:0}}>
-                    <input
-                        className="response-radio" 
-                        onClick={()=>setChecked(prev=>!prev)}
-                        onChange={()=>{radioRef.current=true}}
-                        checked={checked}
-                        type="radio" 
-                        style={{accentColor:"rgb(125, 17, 233)"}}/>
-                </div>
+    <article className={`msg ${colorMod}`}>
+        <div className="msg-card">
+            <div className="msg-card__icon">
+                <MsgIcon iconColor={e.iconColor} />
             </div>
-            <div className='wrapper'>
-                <span className='first v-center h-center'>
-                    <i 
-                    className={`${IconName(e.iconColor)?.toString()}`} 
-                    style={{color:IconColor(e.iconColor)?.toString()}}
-                    
-                    ></i>
-                    {/* @ts-ignore */}
-                    {/* {Parser(enumIcons(e.color)?.toString())} */}
-                </span>
+
+            <div className="msg-card__body">
+                {e.similarity_query ? (
+                    <p className="msg-card__query">{e.similarity_query}</p>
+                ) : null}
+                <div className="msg-card__content">
                     <MsgTypeSelector e={e}/>
-                    {/* <AddTableMsg/> */}
-                {/* <div className='second'>i am text div</div> */}
-                <span className='third v-center h-center'>
-                    <input
-                        className="response-radio" 
-                        onClick={()=>{setChecked(prev=>!prev)}}
-                        onChange={()=>{radioRef.current=true}}
-                        checked={checked}
-                        type="radio" 
-                        style={{accentColor:"rgb(125, 17, 233)"}}/>
-                </span>
+                </div>
             </div>
-    </div>
 
-    
-
+            <div className="msg-card__feedback">
+                <FeedbackToggle
+                    checked={checked}
+                    onToggle={() => setChecked(prev => !prev)}
+                    onActivate={() => { radioRef.current = true }}
+                />
+            </div>
+        </div>
+    </article>
   )
 }

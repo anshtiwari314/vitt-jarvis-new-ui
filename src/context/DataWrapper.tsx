@@ -9,7 +9,7 @@ import { xhrUploadFile } from '../functions/requests';
 
 import { startMediaRecorder,startMediaRecorder2 } from '../functions/mediaRecorder';
 import { getTimeStamp,getOldTimeStamp, getCurrentFormattedTime } from '../functions/generalFn';
-import {handleData } from '../functions/incomingDataPreprocessing'
+import {handleData, resolvePlayableAudiourl } from '../functions/incomingDataPreprocessing'
 
 import Meeting from '../assets/Meeting.svg'
 import Home from '../assets/Home.svg'
@@ -100,6 +100,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     let audioUrlRef = useRef(null)
     const [audioUrlFlag,setAudioUrlFlag] = useState<boolean>(false)
     const [audioUrl,setAudioUrl] = useState('')
+    const [isGlobalAudioPlaying, setIsGlobalAudioPlaying] = useState(false);
     const audioUnlockedRef = useRef(false)
     const pendingAutoplayRef = useRef(false)
 
@@ -327,9 +328,11 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
     function handlePlay(){
       //console.log(`%c audio play event ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
       isAudioStillPlaying.current = true
+      setIsGlobalAudioPlaying(true);
     }
     function handlePause(){
       //console.log(`%c audio paused ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
+      setIsGlobalAudioPlaying(false);
     }
     function handleEnded(){
       //console.log(`%c audio ended ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
@@ -341,6 +344,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         setResetAudioPlayerState(uuidv4())
       } else {
         isAudioStillPlaying.current = false
+        setIsGlobalAudioPlaying(false);
         setAudioUrl('')
       }
       
@@ -378,13 +382,23 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
   },[])
 
 
+  function playNextQueuedAudio() {
+    const nextAudio = audioQueueRef.current.shift();
+    if (nextAudio) {
+      isAudioStillPlaying.current = true
+      setAudioUrl(nextAudio)
+      setResetAudioPlayerState(uuidv4())
+    } else {
+      isAudioStillPlaying.current = false
+      setAudioUrl('')
+    }
+  }
+
   useEffect(()=>{
     let audioElem = audioRef.current;
     if(!audioElem) return;
     if(audioUrl === '') return;
 
-    //console.log(`%c audioArr ${audioArr} ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
-    
     function handleCanPlayThough(){
       console.log(`%c audio started ${new Date().toLocaleTimeString()}`,'background-color:teal;color:white')
       const playPromise = audioElem.play();
@@ -396,10 +410,14 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
       }
     }
 
-    
-    audioElem.addEventListener("canplaythrough",handleCanPlayThough);
+    function handleAudioError() {
+      console.warn('Audio failed to load, skipping:', audioUrl)
+      playNextQueuedAudio()
+    }
 
-    console.log('just before changing audio url')
+    audioElem.addEventListener("canplaythrough",handleCanPlayThough);
+    audioElem.addEventListener('error', handleAudioError);
+
     audioElem.autoplay = true;
     audioElem.preload = 'auto';
     audioElem.src = audioUrl;
@@ -413,6 +431,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
 
     return ()=>{
       audioElem.removeEventListener("canplaythrough",handleCanPlayThough);
+      audioElem.removeEventListener('error', handleAudioError);
     }
 
   },[audioUrl,resetAudioPlayerState])
@@ -578,7 +597,7 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
                   is_outgoing: false,
                   msg_receiving_timestamp: getCurrentFormattedTime(),
                 }
-                setData(prev => [...prev, newCuesItem])
+                setData(prev => [newCuesItem, ...prev])
                 return
               }
 
@@ -604,12 +623,13 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
               
               setData(prev=>[...arr,...prev])
               
-              if (audiourl) {
+              const playableUrl = audiourl ?? resolvePlayableAudiourl(result)
+              if (playableUrl) {
                 if (isAudioStillPlaying.current) {
-                  audioQueueRef.current = [...audioQueueRef.current, audiourl]
+                  audioQueueRef.current = [...audioQueueRef.current, playableUrl]
                 } else {
                   isAudioStillPlaying.current = true
-                  setAudioUrl(audiourl)
+                  setAudioUrl(playableUrl)
                   setResetAudioPlayerState(uuidv4())
                 }
               }
@@ -760,8 +780,9 @@ export default function DataWrapper({children}:{children:React.ReactNode}) {
         audioUrl,setAudioUrl,
         recordingActive,setRecordingActive,tabs,activeTab,setActiveTab,
         ngrokServerUrl,setNgrokServerUrl,oneWayUrl,isFilesLoaded,recordingServerUrl,setRecordingServerUrl,
-        toggleChunking,setToggleChunking,toggleContinuousChunking,setToggleContinuousChunking,audioQueueRef,isAudioStillPlaying
-    }), [data, SESSION_ID, msgLoading, yamnetModelDownloading, whisperModelDownloading, audioArr, audioUrlFlag, audioUrl, recordingActive, activeTab, ngrokServerUrl, oneWayUrl, recordingServerUrl, toggleChunking, toggleContinuousChunking, manualVadRecordingOn, socketUrl, pendingSocketUrl]) // Added dependencies for useMemo
+        toggleChunking,setToggleChunking,toggleContinuousChunking,setToggleContinuousChunking,audioQueueRef,isAudioStillPlaying,
+        isGlobalAudioPlaying
+    }), [data, SESSION_ID, msgLoading, yamnetModelDownloading, whisperModelDownloading, audioArr, audioUrlFlag, audioUrl, recordingActive, activeTab, ngrokServerUrl, oneWayUrl, recordingServerUrl, toggleChunking, toggleContinuousChunking, manualVadRecordingOn, socketUrl, pendingSocketUrl, isGlobalAudioPlaying]) // Added dependencies for useMemo
     
   return (
     //@ts-ignore

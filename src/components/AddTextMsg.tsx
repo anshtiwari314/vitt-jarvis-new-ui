@@ -1,45 +1,29 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import Parser from 'html-react-parser'
-
+import MessageAudioPlayer from './MessageAudioPlayer'
 
 export default function AddTextMsg({e}:{e:any}) {
 
   const [toggle,setToggle] = useState(false)
+  const isLong = e.content.split(" ").length > 100
 
   return (
-    <div className='second text-msg' style={{borderColor:e.color,border:'0.1rem solid tomato'}}>
-
-        <span>
-        {e.content.split(" ").length > 100 ? 
-          Parser(e.content.split(" ").slice(0,100).join(" ")+"...."):
-          Parser(e.content)}
-        </span>
-        {
-          toggle===true && 
-          <span>{
-          e.content.split(" ").length > 100 ? 
-          Parser(e.content.split(" ").slice(100,e.content.length).join(" ")):
-          ''
-          }
-          </span>
-        }
-        {/* <div className='extra'>
-            
-        </div> */}
-        <a onClick={()=>setToggle(p=>!p)} style={{display:e.content.split(" ").length < 100 ? "none":""}}>
-          {toggle===false  ? "Read more" : "Read less"}
-        </a>
+    <div className={`text-msg${e.audio_url ? ' text-msg--audio' : ''}`}>
+        <div className="text-msg__body">
+          {isLong
+            ? Parser(e.content.split(" ").slice(0, 100).join(" ") + "....")
+            : Parser(e.content)}
+          {toggle && isLong && (
+            <span>{Parser(e.content.split(" ").slice(100).join(" "))}</span>
+          )}
+        </div>
+        {isLong && (
+          <a className="text-msg__read-more" onClick={() => setToggle(p => !p)}>
+            {toggle ? "Show less" : "Read more"}
+          </a>
+        )}
         {e.audio_url ? (
-          <audio
-            controls
-            src={e.audio_url}
-            style={{
-              width: "100%",
-              marginTop: "0.75rem",
-              borderRadius: "0.6rem",
-              background: "rgba(255,255,255,0.05)",
-            }}
-          />
+          <MessageAudioPlayer messageAudioUrl={e.audio_url} />
         ) : null}
     </div>
   )
