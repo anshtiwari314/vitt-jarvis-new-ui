@@ -8,11 +8,14 @@ import { useMicVAD, utils} from "@ricky0123/vad-react"
 //import { } from "@ricky0123/vad-react"
 import { PostReq } from '../functions/requests';
 import { useAppSelector } from '../store/store';
+import { createPcmChunkStreamer, encodeFloat32ToPcm16Base64Chunks } from '../lib/pcmChunkStreamer';
 //import { processAudioToBase64 } from '../functions/generalFn';
 //import useRequest from '../hooks/requests';
 
 const VadContext = createContext('vadContext')
-const MIC_CHUNK_INTERVAL_MS = 4000
+const MIC_CHUNK_INTERVAL_MS = 200
+const PCM_SAMPLE_RATE = 16000
+const PCM_CHUNK_SIZE_BYTES = 8000
 
 function createPageSessionId() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -101,6 +104,7 @@ export default function VadWrapper({children}){
     const [manualVadStatus,setManualVadStatus] = useState(false)
     const manualMicRecordingRef = useRef(false)
     const micStreamRef = useRef<MediaStream | null>(null)
+    const pcmStreamerRef = useRef<{ stop: () => Promise<void> } | null>(null)
     const micSessionIdRef = useRef(0)
 
     const initReqStatusRef = useRef(false);
@@ -127,7 +131,8 @@ export default function VadWrapper({children}){
 
   async function emitAudioPayload(
     partialData: Record<string, unknown>,
-    audiomessage: string
+    audiomessage: string,
+    audioMeta: Record<string, unknown> = {}
   ) {
     const sessionid = getSessionId(partialData)
     const timeStamp = getTimeStamp()
@@ -137,6 +142,11 @@ export default function VadWrapper({children}){
       sessionid,
       audiomessage,
       timeStamp,
+      audio_encoding: "pcm_s16le",
+      audio_format: "pcm16",
+      sample_rate: PCM_SAMPLE_RATE,
+      channels: 1,
+      ...audioMeta,
     }
 
     console.log("from inside send to server[DEBUGGGG]", data)
@@ -154,12 +164,20 @@ export default function VadWrapper({children}){
 
   async function processAudioToBase64(audio,url,data){
     console.log("vad stopped")
-    const wavBuffer = utils.encodeWAV(audio)
-    const wavBlob = new Blob([wavBuffer], { type: "audio/wav" })
-    const mp3Blob = await WavToMp3(wavBlob)
-    const base64data = (await generateBase64(mp3Blob)) as string
+    const pcmChunks = encodeFloat32ToPcm16Base64Chunks(audio, {
+      inputSampleRate: PCM_SAMPLE_RATE,
+      outputSampleRate: PCM_SAMPLE_RATE,
+      chunkSizeBytes: PCM_CHUNK_SIZE_BYTES,
+    })
 
-    await emitAudioPayload(data, base64data.split(",")[1])
+    for (let i = 0; i < pcmChunks.length; i += 1) {
+      await emitAudioPayload(data, pcmChunks[i], {
+        chunk_bytes: i === pcmChunks.length - 1
+          ? undefined
+          : PCM_CHUNK_SIZE_BYTES,
+        is_final_chunk: i === pcmChunks.length - 1,
+      })
+    }
   }
 
     // useEffect(()=>{
@@ -456,11 +474,11 @@ export default function VadWrapper({children}){
         const sessionId = ++micSessionIdRef.current
         let cancelled = false
 
-        async function sendMicChunkToServer(blob: Blob) {
+        async function sendMicChunkToServer(chunkBase64: string, byteLength: number, isFinal: boolean) {
           try {
             setMsgLoading(true)
             const speechStopDate = new Date()
-            await sendMediaRecorderBlobToServer(blob, {
+            await emitAudioPayload({
               roomid: roomId,
               jobid: "job_1234",
               agentid: "agt_85641",
@@ -469,36 +487,18 @@ export default function VadWrapper({children}){
                 JSON.parse(localStorage.getItem("agent_name") || "{}")
                   ?.agent_name || "",
               speech_stop_time: `${speechStopDate.toLocaleDateString()} ${speechStopDate.toLocaleTimeString()}:${speechStopDate.getMilliseconds()}`,
+            }, chunkBase64, {
+              chunk_bytes: byteLength,
+              is_final_chunk: isFinal,
             })
           } catch (error) {
             console.warn("sendMicChunkToServer failed", error)
           }
         }
 
-        async function runChunkLoop(stream: MediaStream) {
-          while (
-            !cancelled &&
-            manualMicRecordingRef.current &&
-            micSessionIdRef.current === sessionId &&
-            stream.active
-          ) {
-            try {
-              await startMediaRecorderChunk({
-                stream,
-                durationMs: MIC_CHUNK_INTERVAL_MS,
-                recordingStatus: manualMicRecordingRef,
-                onChunk: sendMicChunkToServer,
-              })
-            } catch (error) {
-              console.warn("MediaRecorder chunk failed", error)
-              break
-            }
-          }
-        }
-
         navigator.mediaDevices
           .getUserMedia({ audio: true })
-          .then((stream) => {
+          .then(async (stream) => {
             if (
               cancelled ||
               !manualMicRecordingRef.current ||
@@ -508,16 +508,38 @@ export default function VadWrapper({children}){
               return
             }
             micStreamRef.current = stream
-            runChunkLoop(stream)
+            pcmStreamerRef.current = createPcmChunkStreamer({
+              stream,
+              outputSampleRate: PCM_SAMPLE_RATE,
+              chunkSizeBytes: PCM_CHUNK_SIZE_BYTES,
+              onChunk: async (chunkBase64, meta) => {
+                if (
+                  cancelled ||
+                  !manualMicRecordingRef.current ||
+                  micSessionIdRef.current !== sessionId
+                ) {
+                  return
+                }
+                await sendMicChunkToServer(chunkBase64, meta.byteLength, meta.isFinal)
+              },
+              onError: (error) => {
+                console.warn("PCM streamer failed", error)
+              },
+            })
           })
           .catch((error) => {
-            console.warn("mic stream for MediaRecorder failed", error)
+            console.warn("mic stream for PCM capture failed", error)
           })
 
         return () => {
           cancelled = true
           manualMicRecordingRef.current = false
           micSessionIdRef.current += 1
+          const streamer = pcmStreamerRef.current
+          pcmStreamerRef.current = null
+          streamer?.stop().catch((error) => {
+            console.warn("PCM streamer stop failed", error)
+          })
           const stream = micStreamRef.current
           micStreamRef.current = null
           stream?.getTracks().forEach((track) => track.stop())

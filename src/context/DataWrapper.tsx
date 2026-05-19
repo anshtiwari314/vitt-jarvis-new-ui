@@ -1,7 +1,6 @@
 import React from "react"
 import { useState, createContext, useContext, useEffect, useRef } from "react"
 import { v4 as uuidv4 } from 'uuid'
-import { io, type Socket } from "socket.io-client"
 import {
   initSalesState,
   updateBasicInfo,
@@ -21,6 +20,7 @@ import {
 import { useDispatch } from "react-redux"
 import { useAppSelector } from "../store/store"
 import {config as AppConfig} from '../configuration.js'
+import { createAppWebSocket, type AppWebSocket } from "../lib/websocketClient"
 // interface DataContextType {
 //   socket: Socket | null
 //   setSocket: (socket: Socket | null) => void
@@ -44,7 +44,7 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   const dispatch = useDispatch()
   console.log("DataWrapper mounted")
 
-  const [socket, setSocket] = useState<Socket | null>(null)
+  const [socket, setSocket] = useState<AppWebSocket | null>(null)
   const [isSocketConnected,setIsSocketConnected] = useState(false)
   // Per-section loading flags shown while a language switch is in flight.
   // Each section clears independently when its `ai_suggestion_res` arrives.
@@ -267,15 +267,14 @@ useEffect(()=>{
         //const socketUrl = 'https://0be7987cc39f.ngrok-free.app'
         
         const socketUrl = AppConfig.wsUrl
-
-        const tempSocket = io(socketUrl)
+        const tempSocket = createAppWebSocket(socketUrl, AppConfig.wsEndpoint)
 
         //console.log('Socket has been created',tempSocket)
 
 
         function connected() {
            // console.log("Socket is connected",tempSocket?.id);
-            tempSocket.emit("connected",tempSocket.id);
+            tempSocket.emit("connected",{ socket_id: tempSocket.id });
             setIsSocketConnected(true)
             //   if (firstTimeConnectRef.current === true) {
             //     console.log("socket 1st connect triggered");
