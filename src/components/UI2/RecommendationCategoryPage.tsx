@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { ChevronDown, Copy, Check } from "lucide-react"
 import { useData } from "../../context/DataWrapper"
 
@@ -364,16 +364,28 @@ function BenefitCell({ benefit }: { benefit: Benefit }) {
   const { updateField } = useData()
   const [local, setLocal] = useState<string>(benefit.value ?? "")
   const [copied, setCopied] = useState(false)
+  const [isHighlighted, setIsHighlighted] = useState(false)
+  const highlightTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const triggerHighlight = () => {
+    setIsHighlighted(true)
+    if (highlightTimeout.current) clearTimeout(highlightTimeout.current)
+    highlightTimeout.current = setTimeout(() => setIsHighlighted(false), 10000)
+  }
 
   useEffect(() => {
-    setLocal(benefit.value ?? "")
+    const next = benefit.value ?? ""
+    if (next !== local) {
+      triggerHighlight()
+      setLocal(next)
+    }
   }, [benefit.value])
 
   const editable = benefit.editable !== false
 
   const baseInputClass =
-    "w-full min-w-0 rounded-md border p-2 text-sm outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-1 focus:ring-blue-50"
-  const inputClass = `${baseInputClass} border-slate-200 bg-white`
+    "w-full min-w-0 rounded-md border p-2 text-sm outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-1 focus:ring-blue-50"
+  const inputClass = `${baseInputClass} border-slate-200 bg-white transition-all duration-300 ${isHighlighted ? 'border-sky-400 ring-1 ring-sky-200 shadow-[0_0_4px_rgba(56,189,248,0.2)]' : ''}`
 
   const wrapperClass = `rounded-[16px] border p-4 border-slate-200 bg-white`
   const handleCopy = async () => {
@@ -426,6 +438,7 @@ function BenefitCell({ benefit }: { benefit: Benefit }) {
               value={local}
               onChange={(e) => {
                 setLocal(e.target.value)
+                triggerHighlight()
               }}
               onBlur={() => commitIfChanged(local)}
               className={`${inputClass} cursor-pointer appearance-none pr-8`}
@@ -444,7 +457,10 @@ function BenefitCell({ benefit }: { benefit: Benefit }) {
           <input
             type="text"
             value={local}
-            onChange={(e) => setLocal(e.target.value)}
+            onChange={(e) => {
+              setLocal(e.target.value)
+              triggerHighlight()
+            }}
             onBlur={() => commitIfChanged(local)}
             className={`${inputClass} mt-2`}
           />

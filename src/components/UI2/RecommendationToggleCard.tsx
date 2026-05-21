@@ -209,14 +209,26 @@ function ColCell({
 }) {
   const [local, setLocal] = useState(safe(col.value))
   const [copiedLocal, setCopiedLocal] = useState(false)
+  const [isHighlighted, setIsHighlighted] = useState(false)
+  const highlightTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const triggerHighlight = () => {
+    setIsHighlighted(true)
+    if (highlightTimeout.current) clearTimeout(highlightTimeout.current)
+    highlightTimeout.current = setTimeout(() => setIsHighlighted(false), 10000)
+  }
 
   useEffect(() => {
-    setLocal(safe(col.value))
+    const next = safe(col.value)
+    if (next !== local) {
+      triggerHighlight()
+      setLocal(next)
+    }
   }, [col.value])
 
   const baseInputClass =
-    "w-full min-w-0 flex-1 rounded-md border p-2.5 text-sm outline-none transition-colors focus:border-blue-400 focus:bg-white focus:ring-1 focus:ring-blue-50"
-  const inputClass = `${baseInputClass} border-gray-200 bg-gray-50`
+    "w-full min-w-0 flex-1 rounded-md border p-2.5 text-sm outline-none transition-all focus:border-blue-400 focus:bg-white focus:ring-1 focus:ring-blue-50"
+  const inputClass = `${baseInputClass} border-gray-200 bg-gray-50 transition-all duration-300 ${isHighlighted ? 'border-sky-400 ring-1 ring-sky-200 shadow-[0_0_4px_rgba(56,189,248,0.2)]' : ''}`
 
   const handleCopyClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -245,7 +257,10 @@ function ColCell({
             value={local}
             rows={4}
             placeholder={col.placeholder ?? ""}
-            onChange={(e) => setLocal(e.target.value)}
+            onChange={(e) => {
+              setLocal(e.target.value)
+              triggerHighlight()
+            }}
             onBlur={() => handleCommit(local)}
             className={`${inputClass} pr-9 min-h-[100px] resize-none`}
           />
@@ -255,6 +270,7 @@ function ColCell({
               value={local}
               onChange={(e) => {
                 setLocal(e.target.value)
+                triggerHighlight()
               }}
               onBlur={() => handleCommit(local)}
               className={`${inputClass} cursor-pointer appearance-none pr-9`}
@@ -274,7 +290,10 @@ function ColCell({
             type="text"
             value={local}
             placeholder={col.placeholder ?? ""}
-            onChange={(e) => setLocal(e.target.value)}
+            onChange={(e) => {
+              setLocal(e.target.value)
+              triggerHighlight()
+            }}
             onBlur={() => handleCommit(local)}
             className={`${inputClass} pr-9`}
           />

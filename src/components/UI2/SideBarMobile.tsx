@@ -117,6 +117,19 @@ export default function SideBarMobile() {
         y: window.innerHeight * 0.90 - rect.height 
       });
     }
+    
+    // Reset position when window resizes
+    const handleResize = () => {
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect();
+        setPosition({ 
+          x: window.innerWidth * 0.90 - rect.width, 
+          y: window.innerHeight * 0.90 - rect.height 
+        });
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   useEffect(() => {

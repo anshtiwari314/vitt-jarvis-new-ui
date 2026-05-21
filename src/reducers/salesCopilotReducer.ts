@@ -441,12 +441,22 @@ const initialCopilotState = {
 }
 
 function normalizeInitPayload(rawPayload: any) {
-  // Support both formats:
+  // Support formats:
   // 1) direct object payload
   // 2) wrapped payload ["questions_loader_res", {...}]
+  // 3) websocket envelope payload { data: { salesData, ... }, route_type }
   let payload = rawPayload;
   if (Array.isArray(rawPayload) && rawPayload.length >= 2 && typeof rawPayload[1] === "object") {
     payload = rawPayload[1];
+  }
+
+  if (
+    payload?.data &&
+    typeof payload.data === "object" &&
+    !Array.isArray(payload.data) &&
+    payload?.salesData === undefined
+  ) {
+    payload = payload.data;
   }
 
   const incomingSalesData = payload?.salesData ?? {};
@@ -481,6 +491,7 @@ const salesCopilotSlice = createSlice({
   name: "salesCopilotReducer", // Changed from "usersReducer" for consistency
   initialState: initialCopilotState,
   reducers: {
+    resetSalesState: () => initialCopilotState,
     initSalesState:(state,action)=>{
       console.log('action payload',action.payload)
       const payload = normalizeInitPayload(action.payload ?? {});
@@ -681,6 +692,7 @@ const salesCopilotSlice = createSlice({
 });
 
 export const { initSalesState,
+  resetSalesState,
   updateSalesCopilotState,
   updateBasicInfo,updateAssets,updateFinancialReview,
   updateLiabilities,updateFinancialGoals,

@@ -287,6 +287,8 @@ useEffect(()=>{
         function disconnect() {
         console.log("Socket disconnected");
         setIsSocketConnected(false)
+        // Force speaker + topic sync to re-emit after reconnect.
+        lastSentSpeakerStateRef.current = null
         }
 
         tempSocket.on("connect", connected);
@@ -316,7 +318,7 @@ useEffect(()=>{
   // },[socket])
 
   useEffect(() => {
-    if (!socket) {
+    if (!socket || !isSocketConnected) {
       return
     }
 
@@ -334,7 +336,7 @@ useEffect(()=>{
     }
 
     socket.emit("selected_topic_req_v2", data)
-  }, [navigation,socket])
+  }, [navigation, socket, isSocketConnected, roomId, name])
 
   useEffect(() => {
     if (!socket || !isSocketConnected) return

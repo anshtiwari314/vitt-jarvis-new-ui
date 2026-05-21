@@ -18,6 +18,7 @@ import Header, { MobileHeaderControls } from '../components/UI2/Header'
 import RightPanel from '../components/UI2/RightPanel'
 import { useDispatch } from 'react-redux';
 import { setQP } from '../reducers/queryparamReducer';
+import { resetSalesState } from '../reducers/salesCopilotReducer';
 import { useData } from '../context/DataWrapper';
 
 function HotPageLoader() {
@@ -266,16 +267,25 @@ console.log("Filtered Recommendations:", filteredRecommendations);
               //meetingIsLegit: true,
             };
       
+              dispatch(resetSalesState());
               dispatch(setQP(qParams))
           } 
               getMeetingInfo()
-          },[])
+          },[window.location.href])
 
    
 
     useEffect(()=>{
         console.log('qpState',qpState)
     },[qpState])
+
+    const sectionKey =
+      typeof currentNavigation === 'string' &&
+      currentNavigation.startsWith('Recommendations::')
+        ? 'Recommendations'
+        : currentNavigation;
+    const isLanguageLoading = sectionKey !== 'Recommendations' && !!languageChangeLoading?.[sectionKey as string];
+
   return (
     
     <div className="bg-slate-50 text-slate-800 antialiased" style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
@@ -317,30 +327,23 @@ console.log("Filtered Recommendations:", filteredRecommendations);
                         paint above the sticky wrapper (z-40) holding the header,
                         icons strip and AI Cues panel. */}
                     <main
-                    className="
+                    className={`
                         relative z-0 flex min-w-0 w-full flex-1 flex-col overflow-x-hidden bg-slate-100 px-3 py-1 pb-5 sm:p-6
-                        lg:order-1 lg:basis-[62%] lg:overflow-y-auto thin-scrollbar
-                      "
+                        lg:order-1 lg:basis-[62%] thin-scrollbar
+                        ${isLanguageLoading ? 'lg:overflow-hidden' : 'lg:overflow-y-auto'}
+                      `}
                     >
-                        {(() => {
-                          const sectionKey =
-                            typeof currentNavigation === 'string' &&
-                            currentNavigation.startsWith('Recommendations::')
-                              ? 'Recommendations'
-                              : currentNavigation
-                          if (!languageChangeLoading?.[sectionKey]) return null
-                          return (
+                        {isLanguageLoading && (
                             <div
                               className="
-                                fixed inset-0 z-10 bg-white/60 backdrop-blur-sm
+                                fixed inset-0 lg:absolute lg:inset-0 z-30 bg-white/60 backdrop-blur-sm
                                 flex flex-col items-center justify-center px-4 text-center
                               "
                             >
                               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500 mb-4"></div>
                               <p className="text-sm text-slate-500">changing language, please wait</p>
                             </div>
-                          )
-                        })()}
+                        )}
                         {renderContent()}
                     </main>
 

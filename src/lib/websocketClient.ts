@@ -2,6 +2,9 @@ type EventHandler = (payload: any) => void
 
 type HandlerMap = Map<string, Set<EventHandler>>
 
+const RECONNECT_BASE_DELAY_MS = 1000
+const RECONNECT_MAX_DELAY_MS = 30000
+
 function normalizeWebSocketUrl(rawUrl: string, endpointPath: string) {
   const trimmedUrl = (rawUrl || "").trim()
   const safeEndpoint = endpointPath.startsWith("/") ? endpointPath : `/${endpointPath}`
@@ -39,12 +42,51 @@ function emitToHandlers(handlers: HandlerMap, eventName: string, payload: any) {
   handlers.get(eventName)?.forEach((handler) => handler(payload))
 }
 
+function createSocketId() {
+  return crypto?.randomUUID?.() ?? `ws-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function extractRoutePayload(data: Record<string, unknown>) {
+  if (
+    Object.prototype.hasOwnProperty.call(data, "payload") &&
+    data.payload !== null &&
+    typeof data.payload === "object" &&
+    !Array.isArray(data.payload)
+  ) {
+    return data.payload
+  }
+
+  // WebSocket envelope: { route_type, data: { salesData, clientName, ... } }
+  if (
+    Object.prototype.hasOwnProperty.call(data, "data") &&
+    data.data !== null &&
+    typeof data.data === "object" &&
+    !Array.isArray(data.data)
+  ) {
+    return data.data
+  }
+
+  const {
+    route_type: _routeType,
+    event: _event,
+    channel: _channel,
+    action: _action,
+    message_type: _messageType,
+    socket_event: _socketEvent,
+    topic: _topic,
+    ...rest
+  } = data
+
+  return Object.keys(rest).length > 0 ? rest : data
+}
+
 function resolveIncomingEvent(data: any) {
   if (!data || typeof data !== "object") {
     return { event: "message", payload: data }
   }
 
-  const event =
+  const routeType =
+    data.route_type ||
     data.event ||
     data.channel ||
     data.action ||
@@ -52,10 +94,10 @@ function resolveIncomingEvent(data: any) {
     data.socket_event ||
     data.topic
 
-  if (event && typeof event === "string") {
+  if (routeType && typeof routeType === "string") {
     return {
-      event,
-      payload: Object.prototype.hasOwnProperty.call(data, "payload") ? data.payload : data,
+      event: routeType,
+      payload: extractRoutePayload(data),
     }
   }
 
@@ -94,7 +136,7 @@ function resolveIncomingEvent(data: any) {
   return { event: "message", payload: data }
 }
 
-export type AppWebSocket ={
+export type AppWebSocket = {
   emit: (eventName: string, payload?: Record<string, unknown>) => boolean
   on: (eventName: string, handler: EventHandler) => () => void
   off: (eventName: string, handler?: EventHandler) => void
@@ -106,12 +148,30 @@ export type AppWebSocket ={
 export function createAppWebSocket(rawUrl: string, endpointPath = "/ai_suggestion_req_ins_v2"): AppWebSocket {
   const wsUrl = normalizeWebSocketUrl(rawUrl, endpointPath)
   const handlers: HandlerMap = new Map()
-  const socket = new WebSocket(wsUrl)
-  const socketId = crypto?.randomUUID?.() ?? `ws-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
   const pendingMessages: string[] = []
 
+  let socket: WebSocket | null = null
+  let socketId: string | null = null
+  let manualDisconnect = false
+  let reconnectAttempt = 0
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null
+
+  function clearReconnectTimer() {
+    if (reconnectTimer !== null) {
+      clearTimeout(reconnectTimer)
+      reconnectTimer = null
+    }
+  }
+
+  function getReconnectDelayMs() {
+    const exponentialDelay = RECONNECT_BASE_DELAY_MS * Math.pow(2, reconnectAttempt)
+    const cappedDelay = Math.min(exponentialDelay, RECONNECT_MAX_DELAY_MS)
+    const jitter = Math.floor(Math.random() * 500)
+    return cappedDelay + jitter
+  }
+
   function flushPendingMessages() {
-    while (socket.readyState === WebSocket.OPEN && pendingMessages.length > 0) {
+    while (socket?.readyState === WebSocket.OPEN && pendingMessages.length > 0) {
       const nextMessage = pendingMessages.shift()
       if (nextMessage) {
         socket.send(nextMessage)
@@ -119,23 +179,47 @@ export function createAppWebSocket(rawUrl: string, endpointPath = "/ai_suggestio
     }
   }
 
-  socket.addEventListener("open", () => {
+  function scheduleReconnect() {
+    if (manualDisconnect || reconnectTimer !== null) {
+      return
+    }
+
+    const delayMs = getReconnectDelayMs()
+    console.info(`WebSocket reconnect scheduled in ${delayMs}ms (attempt ${reconnectAttempt + 1}).`)
+
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null
+      reconnectAttempt += 1
+      openConnection()
+    }, delayMs)
+  }
+
+  function handleOpen() {
+    reconnectAttempt = 0
+    clearReconnectTimer()
+    socketId = createSocketId()
     flushPendingMessages()
     emitToHandlers(handlers, "connect", { id: socketId })
-  })
+  }
 
-  socket.addEventListener("close", (event) => {
+  function handleClose(event: CloseEvent) {
     if (event.code !== 1000) {
       console.warn(`WebSocket closed with code ${event.code}.`)
     }
+
+    socket = null
     emitToHandlers(handlers, "disconnect", event)
-  })
 
-  socket.addEventListener("error", (event) => {
+    if (!manualDisconnect) {
+      scheduleReconnect()
+    }
+  }
+
+  function handleError(event: Event) {
     emitToHandlers(handlers, "error", event)
-  })
+  }
 
-  socket.addEventListener("message", (event) => {
+  function handleMessage(event: MessageEvent) {
     let parsedData: any = event.data
 
     if (typeof event.data === "string") {
@@ -149,23 +233,41 @@ export function createAppWebSocket(rawUrl: string, endpointPath = "/ai_suggestio
     const { event: eventName, payload } = resolveIncomingEvent(parsedData)
     emitToHandlers(handlers, eventName, payload)
     emitToHandlers(handlers, "message", parsedData)
-  })
+  }
+
+  function openConnection() {
+    if (manualDisconnect || !wsUrl) {
+      return
+    }
+
+    if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+      return
+    }
+
+    socket = new WebSocket(wsUrl)
+    socket.addEventListener("open", handleOpen)
+    socket.addEventListener("close", handleClose)
+    socket.addEventListener("error", handleError)
+    socket.addEventListener("message", handleMessage)
+  }
+
+  openConnection()
 
   return {
     emit(eventName, payload = {}) {
       const message = JSON.stringify({
-        event: eventName,
+        route_type: eventName,
         ...payload,
       })
 
-      if (socket.readyState === WebSocket.OPEN) {
+      if (socket?.readyState === WebSocket.OPEN) {
         socket.send(message)
         return true
       }
 
-      if (socket.readyState === WebSocket.CONNECTING) {
+      if (!manualDisconnect && (socket?.readyState === WebSocket.CONNECTING || socket === null)) {
         pendingMessages.push(message)
-        console.info(`WebSocket still connecting. Queued emit for ${eventName}.`)
+        console.info(`WebSocket not ready. Queued emit for ${eventName}.`)
         return false
       }
 
@@ -196,13 +298,17 @@ export function createAppWebSocket(rawUrl: string, endpointPath = "/ai_suggestio
       }
     },
     disconnect() {
-      socket.close()
+      manualDisconnect = true
+      clearReconnectTimer()
+      pendingMessages.length = 0
+      socket?.close(1000, "Client disconnect")
+      socket = null
     },
     get id() {
       return socketId
     },
     get readyState() {
-      return socket.readyState
+      return socket?.readyState ?? WebSocket.CLOSED
     },
   }
 }

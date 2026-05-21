@@ -223,7 +223,7 @@ export default function PlanSummaryCard({
       </h4>
 
       {cols && Object.keys(cols).length > 0 && (
-        <div className="grid grid-cols-3 gap-6 mb-3">
+        <div className="grid grid-cols-2 gap-6 mb-3">
           {Object.entries(cols).map(([key, value]) => (
             <div key={key}>
               <p className="text-slate-500 text-sm mb-1">{key}</p>

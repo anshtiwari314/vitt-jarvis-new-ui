@@ -9,6 +9,7 @@ import {
   SignalMedium,
   SignalLow,
   SignalZero,
+  X,
 } from "lucide-react";
 import { config as AppConfig } from "../../configuration";
 
@@ -21,7 +22,8 @@ export type NetworkConnStatus =
   | "checking"
   | "good"
   | "poor-internet"
-  | "server-unreachable"
+  | "feeling latency"
+  | "high latency"
   | "offline";
 
 export interface NetworkStatus {
@@ -100,10 +102,14 @@ export function useConnectionQuality(serverHealthUrl: string, intervalMs = 15000
       ]);
 
       let currentStatus: NetworkConnStatus = "good";
-      if (internetTime > THRESHOLDS.POOR || internetTime === Infinity) {
+      if (serverTime === Infinity) {
+        currentStatus = "offline";
+      } else if (internetTime >= 1500 || internetTime === Infinity) {
         currentStatus = "poor-internet";
-      } else if (serverTime > THRESHOLDS.POOR || serverTime === Infinity) {
-        currentStatus = "server-unreachable";
+      } else if (internetTime > 1200 && internetTime < 1500 && serverTime >= 1800) {
+        currentStatus = "high latency";
+      } else if (internetTime <= 1000 && serverTime >= 1200) {
+        currentStatus = "feeling latency";
       }
 
       if (!cancelled) {
@@ -131,14 +137,16 @@ const STATUS_META: Record<NetworkConnStatus, { label: string; dot: string; tint:
   checking: { label: "Checking connection…", dot: "bg-slate-400", tint: "text-slate-500" },
   good: { label: "Connection looks good", dot: "bg-green-500", tint: "text-green-600" },
   "poor-internet": { label: "Internet is unstable or slow", dot: "bg-red-500", tint: "text-red-600" },
-  "server-unreachable": { label: "Trouble reaching our servers", dot: "bg-amber-500", tint: "text-amber-600" },
+  "high latency": { label: "High latency to server", dot: "bg-orange-500", tint: "text-orange-600" },
+  "feeling latency": { label: "Feeling latency to server", dot: "bg-amber-500", tint: "text-amber-600" },
   offline: { label: "You are offline", dot: "bg-red-600", tint: "text-red-700" },
 };
 
 function StatusIconGlyph({ status, className }: { status: NetworkConnStatus; className?: string }) {
   if (status === "offline") return <SignalZero className={className} />;
   if (status === "poor-internet") return <SignalLow className={className} />;
-  if (status === "server-unreachable") return <SignalMedium className={className} />;
+  if (status === "high latency") return <SignalLow className={className} />;
+  if (status === "feeling latency") return <SignalMedium className={className} />;
   if (status === "checking") return <Loader2 className={`${className} animate-spin`} />;
   return <Signal className={className} />;
 }
@@ -237,11 +245,22 @@ export function NetworkStatusIcon({ status, internetLatency, serverLatency, vari
 }
 
 export function NetworkStatusBanner({ status, internetLatency, serverLatency }: NetworkStatus) {
-  if (status === "good" || status === "checking") return null;
+  const [dismissedStatus, setDismissedStatus] = useState<NetworkConnStatus | null>(null);
+
+  // Reset the dismissed status whenever a new latency reading comes in,
+  // which happens every interval (e.g., 15s), so the banner will reappear
+  // on the next check even if the status hasn't changed.
+  useEffect(() => {
+    setDismissedStatus(null);
+  }, [internetLatency, serverLatency]);
+
+  if (status === "good" || status === "checking" || status === dismissedStatus) return null;
 
   const tint =
     status === "offline" || status === "poor-internet"
       ? "bg-red-100/80 border-red-200/60 text-red-900"
+      : status === "high latency"
+      ? "bg-orange-100/80 border-orange-200/60 text-orange-900"
       : "bg-amber-100/80 border-amber-200/60 text-amber-900";
 
   const Icon =
@@ -252,19 +271,29 @@ export function NetworkStatusBanner({ status, internetLatency, serverLatency }: 
       ? "You are offline."
       : status === "poor-internet"
       ? "Your internet connection is unstable or slow."
-      : "Having trouble reaching our servers.";
+      : status === "high latency"
+      ? "High latency to our servers."
+      : "Feeling latency to our servers.";
 
   return (
     <div
       className={`fixed bottom-5 left-5 z-[9999] flex items-center gap-3 rounded-lg border px-4 py-3 shadow-md backdrop-blur-sm ${tint}`}
     >
       <Icon className="h-5 w-5 flex-shrink-0" />
-      <div className="flex flex-col">
+      <div className="flex flex-col pr-6">
         <strong className="text-sm font-medium">{message}</strong>
         <span className="text-[11px] opacity-80">
           Internet: {String(internetLatency)}ms | Server: {String(serverLatency)}ms
         </span>
       </div>
+      {status !== "offline" && (
+        <button
+          onClick={() => setDismissedStatus(status)}
+          className="absolute top-2 right-2 p-1 rounded-md opacity-60 hover:opacity-100 hover:bg-black/5"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 }
