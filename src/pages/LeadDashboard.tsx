@@ -13,6 +13,9 @@ import { config } from "../configuration"
 const DataContext = createContext(null)
 const useData = () => useContext(DataContext)
 
+const normalizeFieldKey = (fieldName = "") => fieldName.replace(/\s+/g, "_").toLowerCase()
+const isCustomerNameField = (fieldName = "") => ["name", "customer_name"].includes(normalizeFieldKey(fieldName))
+
 const Form = ({ state, setState, submitForm, loading, error }) => {
   const [lmsData, setLmsData] = useState<any>([]);
 
@@ -54,7 +57,7 @@ const Form = ({ state, setState, submitForm, loading, error }) => {
       console.log("🔧 Building Initial State…");
 
       json.field_data.forEach((field) => {
-        const key = field.cell_name.replace(/\s+/g, "_").toLowerCase();
+        const key = normalizeFieldKey(field.cell_name);
         const isUserInput = field.type === "user-input";
 
         defaultState[key] = isUserInput ? field.cell_value || "" : "";
@@ -90,14 +93,18 @@ const Form = ({ state, setState, submitForm, loading, error }) => {
   // RENDER FIELDS
   // ------------------------
   const renderField = (field) => {
-    const key = field.cell_name.replace(/\s+/g, "_").toLowerCase();
+    const key = normalizeFieldKey(field.cell_name);
+    const showRequiredStar = isCustomerNameField(field.cell_name);
 
     console.log("🎨 Rendering field:", field.cell_name, "| key:", key);
 
     if (field.type === "user-input") {
       return (
         <div key={key}>
-          <label className="block text-slate-500 mb-1">{field.cell_name}</label>
+          <label className="block text-slate-500 mb-1">
+            {field.cell_name}
+            {showRequiredStar && <span className="text-red-500 ml-1">*</span>}
+          </label>
           <input
             type="text"
             name={key}
@@ -113,7 +120,10 @@ const Form = ({ state, setState, submitForm, loading, error }) => {
       console.log(`🔽 Dropdown options for ${key}:`, field.cell_value);
       return (
         <div key={key}>
-          <label className="block text-slate-500 mb-1">{field.cell_name}</label>
+          <label className="block text-slate-500 mb-1">
+            {field.cell_name}
+            {showRequiredStar && <span className="text-red-500 ml-1">*</span>}
+          </label>
           <select
             name={key}
             value={state[key] || ""}
@@ -573,25 +583,7 @@ export function Table({ setFormState, initialFormState }) {
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
                   >
-                    Lead Type
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-                  >
-                    Priority
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-                  >
                     Language
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-                  >
-                    Source
                   </th>
                   <th
                     scope="col"
@@ -633,11 +625,7 @@ export function Table({ setFormState, initialFormState }) {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.timestamp ? (() => { const [y, m, d] = String(lead.timestamp).split(' ')[0].split('-'); return `${d}-${m}-${y}`; })() : '-'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.timestamp ? String(lead.timestamp).split(' ').slice(1).join(' ') : '-'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.email}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{lead.lead_type}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead.priority}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead?.pref_language}</td>
-                   
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{lead.source}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 flex items-center space-x-2">
                         <a href={linkToCopy} className="text-blue-600 hover:underline" rel="noopener noreferrer">
                           Link
@@ -961,23 +949,19 @@ function LeadDashboard() {
     setError("")
     e.preventDefault()
 
-    if (
-      !formState.first_name ||
-    !formState.last_name ||
-    !formState.email ||
-    !formState.mobile_number ||
-    !formState.priority ||
-    !formState.lead_source
-    ) {
-      setError("Please fill all fields of form")
+    const name = String(formState.name || formState.customer_name || "").trim()
+    const language = String(formState.language || "").trim()
+
+    if (!name || !language) {
+      setError("Please fill required fields: Name, Language")
       setLoading(false)
       return
     }
 
     const data = {
        lead_id: formState.lead_id,
-    customer_name: formState.first_name + " " + formState.last_name,
-    mobile_num: formState.mobile_number,
+    customer_name: name,
+    mobile_num: formState.mobile_number || formState.mobile || "9999999999",
     email: formState.email,
     priority: formState.priority,
     source: formState.lead_source,
