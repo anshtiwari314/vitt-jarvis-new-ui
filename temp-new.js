@@ -105,7 +105,8 @@ const aiSuggestionResponseExamples = {
         }
       },
       audio_url: "https://example.com/audio/basic-info.mp3",
-      audiobase64: null
+      audiobase64: null,
+      video_url:""
     },
     {
       

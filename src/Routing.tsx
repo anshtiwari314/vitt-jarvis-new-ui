@@ -13,7 +13,7 @@ import Login from './pages/Login'
 import Login2 from './pages/Login2'
 import MainInsurancePage from './pages/MainInsurancePage';
 import {HashRouter as Router ,Routes,Route} from 'react-router-dom'
-import LeadDashboard from './pages/LeadDashboard';
+import { LeadDashboard } from './pages/LeadDashboard';
 import { useAuth } from './context/AuthContext';
 import {v4 as uuidv4} from 'uuid'
 

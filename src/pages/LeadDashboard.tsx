@@ -194,6 +194,20 @@ const UploadComp = () => {
   )
 }
 
+const planOptions = [
+  { planId: "100001", planName: "Comprehensive ULIP", planType: "ULIP", status: "Active", annualPremium: 1200 },
+  { planId: "100002", planName: "Health Plus", planType: "ULIP", status: "Active", annualPremium: 1200 },
+  { planId: "100003", planName: "Term Life Protect", planType: "TERM", status: "Pending", annualPremium: 1200 },
+  { planId: "100004", planName: "PPO Premium", planType: "ULIP", status: "Active", annualPremium: 1200 },
+  { planId: "100005", planName: "Family Shield", planType: "TERM", status: "Active", annualPremium: 1200 },
+  { planId: "100006", planName: "Life Secure", planType: "TERM", status: "Pending", annualPremium: 1200 },
+  { planId: "100007", planName: "Wealth Builder", planType: "ULIP", status: "Active", annualPremium: 1200 },
+  { planId: "100008", planName: "Retire Safe", planType: "TERM", status: "Active", annualPremium: 1200 },
+]
+
+const PLAN_LIST_TRIGGER = "req_li_plans"
+const APPLY_PLAN_SELECTION_TRIGGER = "submit_li_plan_selection"
+
 // Table component original structure with fix notes
 export function Table({ setFormState, initialFormState }) {
   const { formData, base_url, getFormData } = useData() // Using mock data from context
@@ -839,7 +853,200 @@ export function Sidebar({ links }) {
   )
 }
 
-const Header = ({ title, dashboardLink }) => {
+const SelectPlansModal = ({
+  isOpen,
+  onClose,
+  plans,
+  initialSelectedPlanIds,
+  onApplySelected,
+  isApplying,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  plans: Array<{ planId: string; planName: string; planType: string; status: string }>
+  initialSelectedPlanIds: string[]
+  onApplySelected: (selectedPlanIds: string[]) => Promise<void>
+  isApplying: boolean
+}) => {
+  const [planSearchTerm, setPlanSearchTerm] = useState("")
+  const [selectedPlanIds, setSelectedPlanIds] = useState<string[]>([])
+
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedPlanIds(initialSelectedPlanIds)
+      return
+    }
+    if (!isOpen) {
+      setPlanSearchTerm("")
+      setSelectedPlanIds([])
+    }
+  }, [isOpen, initialSelectedPlanIds])
+
+  if (!isOpen) return null
+
+  const filteredPlans = plans.filter((plan) => {
+    return plan.planName.toLowerCase().includes(planSearchTerm.trim().toLowerCase())
+  })
+
+  const allVisibleSelected =
+    filteredPlans.length > 0 && filteredPlans.every((plan) => selectedPlanIds.includes(plan.planId))
+
+  const togglePlanSelection = (planId: string) => {
+    setSelectedPlanIds((prev) =>
+      prev.includes(planId) ? prev.filter((id) => id !== planId) : [...prev, planId],
+    )
+  }
+
+  const toggleAllVisible = () => {
+    if (allVisibleSelected) {
+      const visibleIds = new Set(filteredPlans.map((plan) => plan.planId))
+      setSelectedPlanIds((prev) => prev.filter((id) => !visibleIds.has(id)))
+      return
+    }
+
+    const merged = new Set([...selectedPlanIds, ...filteredPlans.map((plan) => plan.planId)])
+    setSelectedPlanIds(Array.from(merged))
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-0 sm:p-4">
+      <div className="flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-none bg-white shadow-2xl sm:h-[70vh] sm:rounded-xl">
+        <div className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:px-6 sm:py-4">
+          <h2 className="text-lg font-bold text-slate-800 sm:text-2xl">Advanced Filterable Plan Selector</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md px-2 py-1 text-xl text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+            aria-label="Close plan selector"
+          >
+            x
+          </button>
+        </div>
+
+        <div className="border-b border-slate-200 px-4 py-3 sm:px-6 sm:py-4">
+          <div>
+            <label className="mb-2 block text-xs font-bold uppercase text-slate-500" htmlFor="plan-name-search">
+              Search Plans
+            </label>
+            <input
+              id="plan-name-search"
+              type="text"
+              value={planSearchTerm}
+              onChange={(e) => setPlanSearchTerm(e.target.value)}
+              placeholder="Search by plan name..."
+              className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700"
+            />
+          </div>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-6 sm:py-4">
+          <table className="hidden min-w-full divide-y divide-slate-200 md:table">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500">Select</th>
+                <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500">Plan ID</th>
+                <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500">Plan Name</th>
+                <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500">Plan Type</th>
+                <th className="px-3 py-2 text-left text-xs font-semibold uppercase text-slate-500">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 bg-white">
+              {filteredPlans.map((plan) => (
+                <tr key={plan.planId}>
+                  <td className="px-3 py-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedPlanIds.includes(plan.planId)}
+                      onChange={() => togglePlanSelection(plan.planId)}
+                      className="h-4 w-4 accent-blue-600"
+                    />
+                  </td>
+                  <td className="px-3 py-2 text-sm font-medium text-slate-700">{plan.planId}</td>
+                  <td className="px-3 py-2 text-sm text-slate-700">{plan.planName}</td>
+                  <td className="px-3 py-2 text-sm text-slate-700">{plan.planType}</td>
+                  <td className="px-3 py-2 text-sm text-slate-700">{plan.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div className="space-y-3 md:hidden">
+            {filteredPlans.map((plan) => (
+              <div key={plan.planId} className="rounded-lg border border-slate-200 p-3 shadow-sm">
+                <div className="mb-2 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-slate-800">{plan.planName}</p>
+                  <input
+                    type="checkbox"
+                    checked={selectedPlanIds.includes(plan.planId)}
+                    onChange={() => togglePlanSelection(plan.planId)}
+                    className="h-4 w-4 accent-blue-600"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-y-1 text-xs text-slate-600">
+                  <span className="font-medium">Plan ID</span>
+                  <span>{plan.planId}</span>
+                  <span className="font-medium">Plan Type</span>
+                  <span>{plan.planType}</span>
+                  <span className="font-medium">Status</span>
+                  <span>{plan.status}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {filteredPlans.length === 0 && (
+            <div className="rounded-lg border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
+              No plans available.
+            </div>
+          )}
+        </div>
+
+        <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 sm:px-6">
+          <span className="font-semibold">{selectedPlanIds.length}</span> selected
+        </div>
+
+        <div className="shrink-0 flex flex-col gap-3 border-t border-slate-200 bg-white px-4 py-4 sm:px-6 md:flex-row md:items-center md:justify-between">
+          <label className="flex items-center gap-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={allVisibleSelected}
+              onChange={toggleAllVisible}
+              className="h-4 w-4 accent-blue-600"
+            />
+            Select All Visible
+          </label>
+
+          <div className="flex w-full items-center gap-2 md:w-auto md:justify-end">
+            <button
+              type="button"
+              onClick={() => onApplySelected(selectedPlanIds)}
+              disabled={isApplying}
+              className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400 md:flex-none"
+            >
+              {isApplying ? "Applying..." : "Apply Selected"}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 md:flex-none"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const Header = ({
+  title,
+  dashboardLink,
+  onSelectPlansClick,
+}: {
+  title: string
+  dashboardLink?: string
+  onSelectPlansClick: () => void
+}) => {
   const { setCurrentUser } = useAuth()
 
   function handleLogout() {
@@ -850,21 +1057,35 @@ const Header = ({ title, dashboardLink }) => {
   return (
     <header className="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center">
       <h1 className="text-2xl font-bold text-slate-800">{title}</h1>
-      <a onClick={handleLogout} style={{ cursor: "pointer" }} className="text-blue-600 hover:underline">
-        Logout
-      </a>
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={onSelectPlansClick}
+          className="rounded-md border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
+        >
+          Select Plans
+        </button>
+        <a onClick={handleLogout} style={{ cursor: "pointer" }} className="text-blue-600 hover:underline">
+          Logout
+        </a>
+      </div>
     </header>
   )
 }
 
-function LeadDashboard() {
+export function LeadDashboard() {
   const [formData, setFormData] = useState([]) // Mock for useData's formData
   const base_url = config.serverBaseUrl
   const { currentUser }:any = useAuth()
+  const currentAgentName = JSON.parse(localStorage.getItem("agent_name") || "{}")?.agent_name || ""
   const pollingRef = useRef(null)
   const pollingRefs = useRef({})
 
   const [isPopupVisible,setIsPopupVisible] = useState(false)
+  const [isPlanSelectorOpen, setIsPlanSelectorOpen] = useState(false)
+  const [allPlans, setAllPlans] = useState<any[]>([])
+  const [preselectedPlanIds, setPreselectedPlanIds] = useState<string[]>([])
+  const [isApplyingPlans, setIsApplyingPlans] = useState(false)
 
   const getFormData = async (url) => {
     let resp = await fetch(`${base_url}`, {
@@ -904,6 +1125,89 @@ function LeadDashboard() {
     setFormData(resp?.recent_lead_data)
   }
 
+  const normalizePlan = (rawPlan: any, index: number) => {
+    const planId = String(rawPlan?.plan_id || rawPlan?.planId || rawPlan?.id || `plan-${index}`)
+    return {
+      ...rawPlan,
+      planId,
+      planName: String(rawPlan?.plan_name || rawPlan?.planName || rawPlan?.name || "Unnamed Plan"),
+      planType: String(rawPlan?.plan_type || rawPlan?.planType || rawPlan?.type || "N/A"),
+      status: String(rawPlan?.status || "Active"),
+    }
+  }
+
+  const fetchAllPlans = async () => {
+    try {
+      const response = await fetch(`${base_url}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          route_name: "main_router",
+          json_data: {
+            trigger_func: PLAN_LIST_TRIGGER,
+            params: {
+              agent_id: currentUser?.userid,
+              agent_name: currentAgentName,
+            },
+          },
+        }),
+      })
+
+      const json = await response.json()
+      const rawPlans = json?.plans || json?.plan_data || json?.data?.plans || json?.data || []
+      if (Array.isArray(rawPlans) && rawPlans.length > 0) {
+        const normalizedPlans = rawPlans.map(normalizePlan)
+        setAllPlans(normalizedPlans)
+        setPreselectedPlanIds(
+          normalizedPlans
+            .filter((plan) => plan?.selected === true)
+            .map((plan) => String(plan.planId)),
+        )
+      }
+    } catch (error) {
+      console.error("Failed to fetch plans. Falling back to local plan list.", error)
+    }
+  }
+
+  const applySelectedPlans = async (selectedPlanIds: string[]) => {
+    try {
+      setIsApplyingPlans(true)
+      const plansWithSelection = allPlans.map((plan, index) => {
+        const normalized = normalizePlan(plan, index)
+        return {
+          ...normalized,
+          selected: selectedPlanIds.includes(normalized.planId),
+        }
+      })
+
+      await fetch(`${base_url}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          route_name: "main_router",
+          json_data: {
+            trigger_func: APPLY_PLAN_SELECTION_TRIGGER,
+            params: {
+              agent_id: currentUser?.userid,
+              agent_name: currentAgentName,
+              plans: plansWithSelection,
+            },
+          },
+        }),
+      })
+
+      setIsPlanSelectorOpen(false)
+    } catch (error) {
+      console.error("Failed to apply selected plans.", error)
+    } finally {
+      setIsApplyingPlans(false)
+    }
+  }
+
   const initialState = {
     lead_id: null,
     fname: "",
@@ -931,6 +1235,7 @@ function LeadDashboard() {
 
   useEffect(() => {
     getFormData(`${base_url}/recent_uploads`)
+    fetchAllPlans()
 
     // Polling setup
     const interval = setInterval(() => {
@@ -942,7 +1247,7 @@ function LeadDashboard() {
       clearInterval(interval)
       pollingRef.current = null
     }
-  }, [])
+  }, [currentUser?.userid])
 
   async function submitForm(e) {
     setLoading(true)
@@ -1005,7 +1310,11 @@ function LeadDashboard() {
         {/* <Sidebar links={mylink} /> */}
         <div style={{  }} className="mx-0 lg:mx-[8rem]">
           <div className="py-6">
-            <Header title="Lead Management" dashboardLink="/#/" />
+            <Header
+              title="Lead Management"
+              dashboardLink="/#/"
+              onSelectPlansClick={() => setIsPlanSelectorOpen(true)}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
@@ -1013,6 +1322,14 @@ function LeadDashboard() {
             <UploadComp />
             <NewLeadPopup isOpen={isPopupVisible} setIsOpen={setIsPopupVisible}/>
           </div>
+          <SelectPlansModal
+            isOpen={isPlanSelectorOpen}
+            onClose={() => setIsPlanSelectorOpen(false)}
+            plans={allPlans}
+            initialSelectedPlanIds={preselectedPlanIds}
+            onApplySelected={applySelectedPlans}
+            isApplying={isApplyingPlans}
+          />
 
           <div className="mt-6 pb-8">
             <Table formState={formState} setFormState={setFormState} />

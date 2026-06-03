@@ -1,0 +1,68 @@
+{
+  "fetchAllPlansOnPageLoad": {
+    "request": {
+      "route_name": "main_router",
+      "json_data": {
+        "trigger_func": "req_li_plans",
+        "params": {
+          "agent_id": "AGENT_1024",
+          "agent_name": "Ravi Kumar"
+        }
+      }
+    },
+    "response": {
+      "status": "success",
+      "message": "Plans fetched successfully",
+      "plans": [
+        {
+          "plan_id": "100001",
+          "plan_name": "Comprehensive ULIP",
+          "plan_type": "ULIP",
+          "status": "Active",
+          "selected": true
+        },
+        {
+          "plan_id": "100002",
+          "plan_name": "Health Plus",
+          "plan_type": "TERM",
+          "status": "Pending",
+          "selected": false
+        }
+      ]
+    }
+  },
+  "applySelectedPlans": {
+    "request": {
+      "route_name": "main_router",
+      "json_data": {
+        "trigger_func": "submit_li_plan_selection",
+        "params": {
+          "agent_id": "AGENT_1024",
+          "agent_name": "Ravi Kumar",
+          "plans": [
+            {
+              "plan_id": "100001",
+              "plan_name": "Comprehensive ULIP",
+              "plan_type": "ULIP",
+              "status": "Active",
+              "selected": true
+            },
+            {
+              "plan_id": "100002",
+              "plan_name": "Health Plus",
+              "plan_type": "TERM",
+              "status": "Pending",
+              "selected": false
+            }
+          ]
+        }
+      }
+    },
+    "response": {
+      "status": "success",
+      "message": "Plan selections saved successfully",
+      "saved_count": 2,
+      "selected_count": 1
+    }
+  }
+}
