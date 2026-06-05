@@ -8,7 +8,7 @@ import { useData } from "../../context/DataWrapper"
 import playSound from "../../assets/sound-play.gif"
 import { updatePref_language } from "../../reducers/salesCopilotReducer"
 import { TailSpin } from "react-loading-icons"
-import { Flag, X, Mic, MicOff, AudioLines, LogOut, ChevronDown } from "lucide-react"
+import { Flag, X, Mic, MicOff, AudioLines, LogOut, ChevronDown, Play, Pause } from "lucide-react"
 import {
   useConnectionQuality,
   defaultHealthUrl,
@@ -166,15 +166,21 @@ export default function Header() {
               )}
             </div>
 
-            {/* Speaker Control */}
+            {/* Media play/pause control (gray styling like mic) */}
             <div className="h-10 md:h-12 ml-1 md:ml-2 flex items-center flex-shrink-0">
               <button
                 className={`h-full px-3 md:px-4 flex items-center justify-center rounded-lg transition-all duration-200 shadow-sm ${
                   speakerEnabled
-                    ? "text-green-600 bg-white shadow-[0_0_10px_rgba(22,163,74,0.3)] relative z-10"
-                    : "text-red-400 bg-slate-100 hover:bg-slate-200"
+                    ? "text-slate-600 bg-white shadow-[0_0_10px_rgba(148,163,184,0.35)] ring-1 ring-slate-200 relative z-10"
+                    : "text-slate-600 bg-slate-100 hover:bg-slate-200"
                 }`}
-                title={speakerEnabled ? (isAudioPlayingState ? "Audio playing — click to disable speaker" : "Speaker on — click to disable") : "Speaker off — click to enable"}
+                title={
+                  speakerEnabled
+                    ? isAudioPlayingState
+                      ? "Media playing — click to turn off playback"
+                      : "Playback on — click to turn off"
+                    : "Playback off — click to turn on"
+                }
                 onClick={() => {
                   if (speakerEnabled) {
                     if (audioRef?.current) {
@@ -186,21 +192,9 @@ export default function Header() {
                 }}
               >
                 {speakerEnabled ? (
-                  isAudioPlayingState ? (
-                    <svg className="w-5 h-5 md:w-7 md:h-7" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M11.553 3.064A.75.75 0 0112 3.75v16.5a.75.75 0 01-1.255.555L5.46 16H2.75A1.75 1.75 0 011 14.25v-4.5C1 8.784 1.784 8 2.75 8H5.46l5.285-4.805a.75.75 0 01.808-.131z" />
-                      <path d="M17.03 7.47a.75.75 0 011.06 0 8.25 8.25 0 010 11.66.75.75 0 11-1.06-1.06 6.75 6.75 0 000-9.54.75.75 0 010-1.06zM14.47 9.97a.75.75 0 011.06 0 5.25 5.25 0 010 7.06.75.75 0 11-1.06-1.06 3.75 3.75 0 000-4.94.75.75 0 010-1.06z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5 md:w-7 md:h-7" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M11.553 3.064A.75.75 0 0112 3.75v16.5a.75.75 0 01-1.255.555L5.46 16H2.75A1.75 1.75 0 011 14.25v-4.5C1 8.784 1.784 8 2.75 8H5.46l5.285-4.805a.75.75 0 01.808-.131z" />
-                    </svg>
-                  )
+                  <Pause className="w-5 h-5 md:w-7 md:h-7" fill="currentColor" />
                 ) : (
-                  <svg className="w-5 h-5 md:w-7 md:h-7" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M11.553 3.064A.75.75 0 0112 3.75v16.5a.75.75 0 01-1.255.555L5.46 16H2.75A1.75 1.75 0 011 14.25v-4.5C1 8.784 1.784 8 2.75 8H5.46l5.285-4.805a.75.75 0 01.808-.131z" />
-                    <path fillRule="evenodd" d="M16.28 9.22a.75.75 0 011.06 0l1.72 1.72 1.72-1.72a.75.75 0 111.06 1.06L20.12 12l1.72 1.72a.75.75 0 11-1.06 1.06L19.06 13.06l-1.72 1.72a.75.75 0 11-1.06-1.06L17.94 12l-1.66-1.72a.75.75 0 010-1.06z" clipRule="evenodd" />
-                  </svg>
+                  <Play className="w-5 h-5 md:w-7 md:h-7" fill="currentColor" />
                 )}
               </button>
             </div>
@@ -342,20 +336,20 @@ export function MobileHeaderControls() {
             )}
           </div>
 
-          {/* Speaker Control */}
+          {/* Media play/pause control (gray styling like mic) */}
           <div className="flex items-center flex-shrink-0 bg-slate-100 rounded-lg shadow-sm">
             <button
               className={`px-3 py-2 flex items-center justify-center rounded-lg transition-all duration-200 ${
                 speakerEnabled
-                  ? "text-green-600 bg-white shadow-[0_0_10px_rgba(22,163,74,0.3)] ring-1 ring-slate-200 relative z-10"
-                  : "text-red-400 hover:bg-slate-200"
+                  ? "text-slate-600 bg-white shadow-[0_0_10px_rgba(148,163,184,0.35)] ring-1 ring-slate-200 relative z-10"
+                  : "text-slate-600 hover:bg-slate-200"
               }`}
               title={
                 speakerEnabled
                   ? isAudioPlayingState
-                    ? "Audio playing — click to disable speaker"
-                    : "Speaker on — click to disable"
-                  : "Speaker off — click to enable"
+                    ? "Media playing — click to turn off playback"
+                    : "Playback on — click to turn off"
+                  : "Playback off — click to turn on"
               }
               onClick={() => {
                 if (speakerEnabled) {
@@ -368,25 +362,9 @@ export function MobileHeaderControls() {
               }}
             >
               {speakerEnabled ? (
-                isAudioPlayingState ? (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M11.553 3.064A.75.75 0 0112 3.75v16.5a.75.75 0 01-1.255.555L5.46 16H2.75A1.75 1.75 0 011 14.25v-4.5C1 8.784 1.784 8 2.75 8H5.46l5.285-4.805a.75.75 0 01.808-.131z" />
-                    <path d="M17.03 7.47a.75.75 0 011.06 0 8.25 8.25 0 010 11.66.75.75 0 11-1.06-1.06 6.75 6.75 0 000-9.54.75.75 0 010-1.06zM14.47 9.97a.75.75 0 011.06 0 5.25 5.25 0 010 7.06.75.75 0 11-1.06-1.06 3.75 3.75 0 000-4.94.75.75 0 010-1.06z" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M11.553 3.064A.75.75 0 0112 3.75v16.5a.75.75 0 01-1.255.555L5.46 16H2.75A1.75 1.75 0 011 14.25v-4.5C1 8.784 1.784 8 2.75 8H5.46l5.285-4.805a.75.75 0 01.808-.131z" />
-                  </svg>
-                )
+                <Pause className="w-5 h-5" fill="currentColor" />
               ) : (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M11.553 3.064A.75.75 0 0112 3.75v16.5a.75.75 0 01-1.255.555L5.46 16H2.75A1.75 1.75 0 011 14.25v-4.5C1 8.784 1.784 8 2.75 8H5.46l5.285-4.805a.75.75 0 01.808-.131z" />
-                  <path
-                    fillRule="evenodd"
-                    d="M16.28 9.22a.75.75 0 011.06 0l1.72 1.72 1.72-1.72a.75.75 0 111.06 1.06L20.12 12l1.72 1.72a.75.75 0 11-1.06 1.06L19.06 13.06l-1.72 1.72a.75.75 0 11-1.06-1.06L17.94 12l-1.66-1.72a.75.75 0 010-1.06z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+                <Play className="w-5 h-5" fill="currentColor" />
               )}
             </button>
           </div>

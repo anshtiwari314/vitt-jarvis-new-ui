@@ -1,4 +1,17 @@
 const aiSuggestionResponseExamples = {
+  // Media playback uses dedicated WebSocket routes (not ai_suggestion_res):
+  // route_type: "video_playback_res" → { video_url: "https://..." }
+  // route_type: "audio_playback_res" → { audio_url: "https://..." } or { audiobase64: "..." }
+  video_playback_res_example: {
+    route_type: "video_playback_res",
+    video_url:
+      "https://navtalk.s3.us-east-2.amazonaws.com/video/eda4fad9-958e-4052-9894-cb82699c34a8.mp4",
+  },
+  audio_playback_res_example: {
+    route_type: "audio_playback_res",
+    audio_url: "https://example.com/audio/basic-info.mp3",
+    audiobase64: null,
+  },
   // One payload per supported "type" in updateSalesState()
   // You can emit any one of these from backend on "ai_suggestion_res".
   ai_suggestion_res_examples: [
@@ -104,9 +117,6 @@ const aiSuggestionResponseExamples = {
           ]
         }
       },
-      audio_url: "https://example.com/audio/basic-info.mp3",
-      audiobase64: null,
-      video_url:""
     },
     {
       

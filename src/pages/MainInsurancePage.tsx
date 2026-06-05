@@ -15,6 +15,7 @@ import NewFinancialGoals from '../components/UI2/NewFinancialGoals'
 import SideNavigation from '../components/UI2/SideNavigation'
 import SideBarMobile from '../components/UI2/SideBarMobile'
 import Header, { MobileHeaderControls } from '../components/UI2/Header'
+import SectionVideoOverlay from '../components/UI2/SectionVideoOverlay'
 import RightPanel from '../components/UI2/RightPanel'
 import { useDispatch } from 'react-redux';
 import { setQP } from '../reducers/queryparamReducer';
@@ -75,7 +76,7 @@ function RecommendationsGeneratedToast() {
 }
 
 export default function App() {
-   const { isSocketConnected, hotPageLoading, languageChangeLoading } = useData();
+   const { isSocketConnected, hotPageLoading, languageChangeLoading, isBasicInfoVideoPlaying } = useData();
    const { navigation: currentNavigation, salesData ,RecomendationSelected} = useAppSelector((state) => state.salesCopilotReducer)
    console.log("Current Navigation:", currentNavigation);
    console.log("Sales Datain main page:", salesData.recommendations);
@@ -285,6 +286,7 @@ console.log("Filtered Recommendations:", filteredRecommendations);
         ? 'Recommendations'
         : currentNavigation;
     const isLanguageLoading = sectionKey !== 'Recommendations' && !!languageChangeLoading?.[sectionKey as string];
+    const lockMainScroll = isBasicInfoVideoPlaying;
 
   return (
     
@@ -303,7 +305,11 @@ console.log("Filtered Recommendations:", filteredRecommendations);
         <div className="flex lg:h-full lg:overflow-hidden" style={{ width: '100%', height: '100%' }}>
             <SideNavigation/>
             <SideBarMobile />
-            <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto thin-scrollbar lg:overflow-hidden">
+            <div
+              className={`flex-1 flex flex-col min-w-0 h-full thin-scrollbar lg:overflow-hidden ${
+                lockMainScroll ? 'overflow-hidden' : 'overflow-y-auto'
+              }`}
+            >
 
                 {/* Mobile/tablet sticky wrapper that bundles the title bar (Header),
                     the mobile icons strip and the AI Cues panel so they stick together
@@ -320,7 +326,11 @@ console.log("Filtered Recommendations:", filteredRecommendations);
                     </div>
                 </div>
 
-                <div className="flex flex-1 flex-col lg:flex-row lg:overflow-hidden">
+                <div
+                  className={`flex flex-1 flex-col lg:flex-row lg:overflow-hidden ${
+                    lockMainScroll ? 'min-h-0' : ''
+                  }`}
+                >
                     {/* <!-- Main Content -->
                         `z-0` makes main its own stacking context at z-0, so the
                         loading overlay and any fields/content inside main can never
@@ -330,7 +340,8 @@ console.log("Filtered Recommendations:", filteredRecommendations);
                     className={`
                         relative z-0 flex min-w-0 w-full flex-1 flex-col overflow-x-hidden bg-slate-100 px-3 py-1 pb-5 sm:p-6
                         lg:order-1 lg:basis-[62%] thin-scrollbar
-                        ${isLanguageLoading ? 'lg:overflow-hidden' : 'lg:overflow-y-auto'}
+                        ${isLanguageLoading || lockMainScroll ? 'min-h-0 overflow-hidden' : 'lg:overflow-y-auto'}
+                        ${lockMainScroll ? 'flex flex-col' : ''}
                       `}
                     >
                         {isLanguageLoading && (
@@ -344,7 +355,9 @@ console.log("Filtered Recommendations:", filteredRecommendations);
                               <p className="text-sm text-slate-500">changing language, please wait</p>
                             </div>
                         )}
-                        {renderContent()}
+                        <SectionVideoOverlay>
+                          {renderContent()}
+                        </SectionVideoOverlay>
                     </main>
 
                     {/* <!-- AI Cues Sidebar (Desktop only — on mobile this renders inside the sticky header above) --> */}

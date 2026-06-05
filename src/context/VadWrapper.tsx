@@ -85,7 +85,7 @@ export default function VadWrapper({children}){
 
     const oneWayUrl = ''
     const ngrokServerUrl = ''
-    const {socket,isSocketConnected,setMsgLoading,audioRef,isAudioStillPlaying,audioQueueRef} = useData()
+    const {socket,isSocketConnected,setMsgLoading,audioRef,isAudioStillPlaying,mediaQueueRef} = useData()
     const { currentUser } = useAuth() as any
     const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
     
@@ -293,9 +293,11 @@ export default function VadWrapper({children}){
         },
         onSpeechEnd:(audio)=>{
             console.log('getting data from vad2')
-          // Real speech detected - clear audio queue, keep audio stopped
+          // Real speech detected - drop pending audio (keep queued video)
           //@ts-ignore
-          audioQueueRef.current = []
+          mediaQueueRef.current = mediaQueueRef.current.filter(
+            (item: { type: string }) => item.type !== "audio"
+          )
           wasPlayingBeforeSpeechRef.current = false
 
           let speechStopDate = new Date();

@@ -75,14 +75,20 @@ const [pref_language,setPref_language]=useState("English")
   })
   const navigation =
     useAppSelector((state) => state.salesCopilotReducer.navigation) || "Basic Info"
+  const navigationRef = useRef(navigation)
   const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
   const salesCopilotState = useAppSelector(state=>state.salesCopilotReducer)
 
   const [recommendationsGenerated,setRecommendationsGenerated] = useState(false)
 
-  // --- Audio playback state ---
+  // --- Audio / video playback (shared queue, play btn must be on) ---
+  type MediaQueueItem =
+    | { type: "audio"; url: string }
+    | { type: "video"; url: string }
+
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const audioQueueRef = useRef<string[]>([])
+  const mediaQueueRef = useRef<MediaQueueItem[]>([])
+  const isMediaBusyRef = useRef(false)
   const isAudioStillPlaying = useRef<boolean>(false)
   const [audioUrl, setAudioUrl] = useState('')
   const [resetAudioPlayerState, setResetAudioPlayerState] = useState('')
@@ -92,6 +98,10 @@ const [pref_language,setPref_language]=useState("English")
   const [speakerEnabled, setSpeakerEnabled] = useState(false)
   const speakerEnabledRef = useRef(false)
   const lastSentSpeakerStateRef = useRef<"on" | "off" | null>(null)
+
+  const [basicInfoVideoUrl, setBasicInfoVideoUrl] = useState("")
+  const [isBasicInfoVideoPlaying, setIsBasicInfoVideoPlaying] = useState(false)
+  const isBasicInfoVideoPlayingRef = useRef(false)
   // ----------------------------
 
   const [toggleNotificationModal,setToggleNotificationModal] = useState({
@@ -196,6 +206,24 @@ const [pref_language,setPref_language]=useState("English")
     extractAndPlayAudio(data)
   }
 
+  function handleVideoPlaybackResponse(data: any) {
+    console.log("video_playback_res received", data)
+    const videoUrl =
+      typeof data?.video_url === "string" ? data.video_url.trim() : ""
+    if (!videoUrl) return
+    enqueueMedia({ type: "video", url: videoUrl })
+  }
+
+  function startBasicInfoVideo() {
+    if (!speakerEnabledRef.current) {
+      cancelBasicInfoVideoSession()
+      return
+    }
+    if (isBasicInfoVideoPlayingRef.current) return
+    setIsBasicInfoVideoPlaying(true)
+    isBasicInfoVideoPlayingRef.current = true
+  }
+
   function initialisationSalesState(data: any) {
     console.log('init sales data',data)
     //return null;
@@ -211,36 +239,90 @@ const [pref_language,setPref_language]=useState("English")
     speakerEnabledRef.current = speakerEnabled
   }, [speakerEnabled])
 
-  // When speaker is turned off, hard-reset local audio state so
-  // subsequent audio_playback_res events can start fresh after re-enable.
   useEffect(() => {
-    if (speakerEnabled) return
+    isBasicInfoVideoPlayingRef.current = isBasicInfoVideoPlaying
+  }, [isBasicInfoVideoPlaying])
 
+  useEffect(() => {
+    navigationRef.current = navigation
+  }, [navigation])
+
+
+  function stopCurrentAudio() {
     const audioElem = audioRef.current
     if (audioElem) {
       audioElem.pause()
-      audioElem.src = ''
+      audioElem.src = ""
       audioElem.load()
     }
-
-    audioQueueRef.current = []
     isAudioStillPlaying.current = false
     pendingAutoplayRef.current = false
     setIsAudioPlayingState(false)
-    setAudioUrl('')
-  }, [speakerEnabled])
+    setAudioUrl("")
+  }
 
-  function enqueueAudio(audiourl: string) {
-    if (!speakerEnabledRef.current) return   // speaker is off — ignore
-    if (isAudioStillPlaying.current) {
-      audioQueueRef.current = [...audioQueueRef.current, audiourl]
-    } else {
-      isAudioStillPlaying.current = true
-      setIsAudioPlayingState(true)
-      setAudioUrl(audiourl)
-      setResetAudioPlayerState(uuidv4())
+  function cancelBasicInfoVideoSession() {
+    setIsBasicInfoVideoPlaying(false)
+    isBasicInfoVideoPlayingRef.current = false
+    setBasicInfoVideoUrl("")
+    if (isMediaBusyRef.current && !isAudioStillPlaying.current) {
+      isMediaBusyRef.current = false
+      processMediaQueue()
     }
   }
+
+  function endBasicInfoVideo() {
+    setIsBasicInfoVideoPlaying(false)
+    isBasicInfoVideoPlayingRef.current = false
+    setBasicInfoVideoUrl("")
+    isMediaBusyRef.current = false
+    processMediaQueue()
+  }
+
+  function clearAllMedia() {
+    mediaQueueRef.current = []
+    isMediaBusyRef.current = false
+    stopCurrentAudio()
+    setIsBasicInfoVideoPlaying(false)
+    isBasicInfoVideoPlayingRef.current = false
+    setBasicInfoVideoUrl("")
+  }
+
+  function processMediaQueue() {
+    if (!speakerEnabledRef.current) return
+    if (isMediaBusyRef.current) return
+
+    const next = mediaQueueRef.current[0]
+    if (!next) return
+
+    mediaQueueRef.current.shift()
+
+    if (next.type === "audio") {
+      isMediaBusyRef.current = true
+      isAudioStillPlaying.current = true
+      setIsAudioPlayingState(true)
+      setAudioUrl(next.url)
+      setResetAudioPlayerState(uuidv4())
+      return
+    }
+
+    isMediaBusyRef.current = true
+    setIsBasicInfoVideoPlaying(false)
+    isBasicInfoVideoPlayingRef.current = false
+    setBasicInfoVideoUrl(next.url)
+  }
+
+  function enqueueMedia(item: MediaQueueItem) {
+    if (!speakerEnabledRef.current) return
+    mediaQueueRef.current.push(item)
+    processMediaQueue()
+  }
+
+  // When play is turned off, stop everything and discard the queue.
+  useEffect(() => {
+    if (speakerEnabled) return
+    clearAllMedia()
+  }, [speakerEnabled])
 
   function extractAndPlayAudio(data: any) {
     let audiourl: string | null = null
@@ -251,7 +333,7 @@ const [pref_language,setPref_language]=useState("English")
       audiourl = `data:audio/mpeg;base64,${data.audiobase64}`
     }
     if (audiourl) {
-      enqueueAudio(audiourl)
+      enqueueMedia({ type: "audio", url: audiourl })
     }
   }
 
@@ -298,6 +380,7 @@ useEffect(()=>{
         tempSocket.on('ai_suggestion_res', updateSalesState)
         tempSocket.on('notifications', updateNotifications)
         tempSocket.on('audio_playback_res', handleAudioPlaybackResponse)
+        tempSocket.on('video_playback_res', handleVideoPlaybackResponse)
 
     setSocket(tempSocket)
 
@@ -308,6 +391,7 @@ useEffect(()=>{
       tempSocket.off("ai_suggestion_res", updateSalesState)
       tempSocket.off("notifications", updateNotifications)
       tempSocket.off("audio_playback_res", handleAudioPlaybackResponse)
+      tempSocket.off("video_playback_res", handleVideoPlaybackResponse)
       tempSocket.disconnect()
     }
   }, [])
@@ -621,15 +705,11 @@ useEffect(()=>{
       setIsAudioPlayingState(true)
     }
     function handleEnded() {
-      const nextAudio = audioQueueRef.current.shift()
-      if (nextAudio) {
-        setAudioUrl(nextAudio)
-        setResetAudioPlayerState(uuidv4())
-      } else {
-        isAudioStillPlaying.current = false
-        setIsAudioPlayingState(false)
-        setAudioUrl('')
-      }
+      isAudioStillPlaying.current = false
+      setIsAudioPlayingState(false)
+      setAudioUrl("")
+      isMediaBusyRef.current = false
+      processMediaQueue()
     }
 
     audioElem.addEventListener('play', handlePlay)
@@ -703,8 +783,9 @@ useEffect(()=>{
     toggleNotificationModal,setToggleNotificationModal,updateField,emitModifiedData,updateTableCell,
     recommendationsGenerated,setRecommendationsGenerated,
     pref_language,setPref_language,
-    audioRef, audioUrl, setAudioUrl, audioQueueRef, isAudioStillPlaying, isAudioPlayingState,
+    audioRef, audioUrl, setAudioUrl, mediaQueueRef, isAudioStillPlaying, isAudioPlayingState,
     speakerEnabled, setSpeakerEnabled,
+    basicInfoVideoUrl, isBasicInfoVideoPlaying, startBasicInfoVideo, endBasicInfoVideo,
     hotPageLoading,
     languageChangeLoading, startLanguageChangeLoading
   }

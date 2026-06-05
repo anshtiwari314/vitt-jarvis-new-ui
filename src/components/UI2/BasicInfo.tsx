@@ -77,7 +77,6 @@ export default function BasicInfo({ data }: BasicInfoProps) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(value ?? '').catch(console.error);
     } else {
-      // Fallback for non-secure contexts (HTTP)
       const textArea = document.createElement("textarea");
       textArea.value = value ?? '';
       textArea.style.position = "fixed";
@@ -101,46 +100,46 @@ export default function BasicInfo({ data }: BasicInfoProps) {
 
   const BOX_ORDER = ['boxA', 'table', 'boxB', 'boxC', 'boxD'] as const;
 
+  const renderBoxOrTable = (key: typeof BOX_ORDER[number]) => {
+    if (key === 'table') {
+      const table = data.table;
+      if (!table) return null;
+      return (
+        <Section
+          key="table"
+          icon={<Users size={18} className="text-blue-500" />}
+          title={table.header || 'Family Structure'}
+        >
+          <FamilyTable table={table} />
+        </Section>
+      );
+    }
+
+    const box = data[key] as BoxData | undefined;
+    if (!box || !box.header) return null;
+
+    return (
+      <Section
+        key={key}
+        icon={getIcon(box.header)}
+        title={box.header}
+      >
+        <DataFields
+          fields={box.data ?? []}
+          onCopy={handleCopy}
+          onBlur={handleBlur}
+        />
+      </Section>
+    );
+  };
+
+  const allSections = BOX_ORDER.map((key) => renderBoxOrTable(key)).filter(Boolean);
+
   return (
     <div className="min-w-0 w-full font-sans text-gray-800">
       <div className="flex w-full flex-col gap-4 sm:gap-6 min-w-0">
-        <div className="col-span-12 space-y-6 min-w-0">
-
-            {BOX_ORDER.map((key) => {
-              if (key === 'table') {
-                const table = data.table;
-                if (!table) return null;
-                return (
-                  <Section
-                    key="table"
-                    icon={<Users size={18} className="text-blue-500" />}
-                    title={table.header || 'Family Structure'}
-                  >
-                    <FamilyTable table={table} />
-                  </Section>
-                );
-              }
-
-              const box = data[key] as BoxData | undefined;
-              if (!box || !box.header) return null;
-
-              return (
-                <Section
-                  key={key}
-                  icon={getIcon(box.header)}
-                  title={box.header}
-                >
-                  <DataFields
-                    fields={box.data ?? []}
-                    onCopy={handleCopy}
-                    onBlur={handleBlur}
-                  />
-                </Section>
-              );
-            })}
-
-          </div>
-        </div>
+        <div className="col-span-12 min-w-0 space-y-6">{allSections}</div>
+      </div>
     </div>
   );
 }
@@ -185,7 +184,6 @@ function DataFields({
   }
 
   return (
-    // CSS grid: items in the same row automatically share the tallest height
     <div className="grid min-w-0 grid-cols-1 gap-4 items-stretch sm:grid-cols-2 md:grid-cols-3">
       {fields.map((field, i) => (
         <div
@@ -225,9 +223,6 @@ function FieldCell({
     highlightTimeout.current = setTimeout(() => setIsHighlighted(false), 10000);
   };
 
-  // Sync if the Redux value changes from the backend; highlight when the
-  // incoming value differs from the value already shown locally (i.e. the
-  // change came from ai_suggestion_res, not from the user's own typing).
   useEffect(() => {
     const next = field.value ?? '';
     if (next !== localValue) {
@@ -256,7 +251,6 @@ function FieldCell({
   const inputClass = `${baseInputClass} border-gray-200 bg-gray-50 transition-all duration-300 ${isHighlighted ? 'border-sky-400 ring-1 ring-sky-200 shadow-[0_0_4px_rgba(56,189,248,0.2)]' : ''} ${!isEditable ? 'cursor-default opacity-70' : ''}`;
 
   return (
-    // h-full + flex col ensures cell stretches to row height
     <div className="flex h-full min-w-0 flex-col gap-1">
       <div className="flex items-center justify-between gap-1">
         <div className="flex min-w-0 items-center gap-1.5">
@@ -266,7 +260,6 @@ function FieldCell({
         </div>
       </div>
 
-      {/* Input — flex-1 so it fills all remaining height */}
       <div className="relative flex min-w-0 flex-1 group">
         {field.type === 'text-area' ? (
           <textarea
@@ -320,7 +313,6 @@ function FieldCell({
           />
         )}
 
-        {/* Copy button */}
         {field.type !== 'option' && isCopyable && (
           <button
             type="button"
@@ -376,13 +368,6 @@ function FamilyTable({ table }: { table: TableData }) {
           </div>
       </div>
       <div className="overflow-x-auto rounded-lg border border-blue-100 bg-white shadow-sm">
-        {/*
-          `table-fixed` + an explicit `width: 100/N %` per <th> divides
-          the table into N equal-width columns. This is the contract that
-          TableCell relies on for column-wise width sync (see the docblock
-          at the top of TableCell.tsx) — every editable field in the same
-          column ends up identical width, so copy icons align vertically.
-        */}
         <table className="w-full min-w-[420px] table-fixed text-left text-sm">
           <thead className="border-b border-blue-100 bg-[#f1f5f9]">
             <tr>
@@ -404,13 +389,6 @@ function FamilyTable({ table }: { table: TableData }) {
                 className="transition-colors hover:bg-blue-50/30"
               >
                 {row.map((cell, j) => (
-                  // `align-top` anchors short-content cells to the top
-                  // of the row so they line up with the first line of a
-                  // wrapped neighbour. Without this, <td>'s default
-                  // `vertical-align: middle` would center short cells
-                  // against the tallest wrapped cell — copy icons would
-                  // still align horizontally, but the rows would look
-                  // ragged. (See height-sync §3 in TableCell.tsx.)
                   <td key={j} className="px-4 py-2.5 align-top text-gray-700">
                     <TableCell
                       cell={cell}

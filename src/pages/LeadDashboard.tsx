@@ -611,18 +611,6 @@ export function Table({ setFormState, initialFormState }) {
                   >
                     Edit
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-                  >
-                    Insights
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-                  >
-                    Plan Summary
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
@@ -663,67 +651,6 @@ export function Table({ setFormState, initialFormState }) {
                         >
                           <FontAwesomeIcon icon={faEdit} className="w-4 h-4" />
                         </button>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                        <div className="flex flex-col items-start space-y-1">
-                          <button
-                            onClick={() => generateInsight(lead)}
-                            disabled={insightLoading[uniqueLeadId] || lead.postfacto_status === "N/A"}
-                            className={getInsightButtonStyle(lead, insightLoading[uniqueLeadId])}
-                            title={
-                              lead.postfacto_status === "done"
-                                ? "Open Insight Link"
-                                : lead.postfacto_status === "N/A"
-                                  ? "No insights available"
-                                  : "Generate Insight"
-                            }
-                            aria-busy={!!insightLoading[uniqueLeadId]}
-                          >
-                            <span className="inline-flex items-center gap-2">
-                              {insightLoading[uniqueLeadId] && (
-                                <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" aria-hidden="true">
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                    fill="none"
-                                  />
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                  />
-                                </svg>
-                              )}
-                              {getInsightButtonText(lead, insightLoading[uniqueLeadId])}
-                            </span>
-                          </button>
-                          {insightMsg[uniqueLeadId] && (
-                            <span className="text-xs text-slate-600" aria-live="polite">
-                              {insightMsg[uniqueLeadId]}
-                            </span>
-                          )}
-                          {insightError[uniqueLeadId] && (
-                            <span className="text-xs text-red-600 font-medium">{insightError[uniqueLeadId]}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                        {lead.plan_summary !== "N/A" ? (
-                          <a
-                            href={lead.plan_summary}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
-                          >
-                            View Summary
-                          </a>
-                        ) : (
-                          "N/A"
-                        )}
                       </td>
                     </tr>
                   )
