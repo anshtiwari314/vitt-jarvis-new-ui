@@ -1,22 +1,25 @@
-import React, { useEffect } from 'react'
+import React,{ StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
-import App from './App'
-// import '@fontsource/roboto/300.css';
-// import '@fontsource/roboto/400.css';
-// import '@fontsource/roboto/500.css';
-// import '@fontsource/roboto/700.css';
 import ReduxProvider from "./store/Providers";
 import Routing from './Routing';
 import AuthContext from './context/AuthContext';
- 
+import { registerSW } from 'virtual:pwa-register'
+
+registerSW({
+  onNeedRefresh() {
+    console.log('New version available')
+  },
+  onOfflineReady() {
+    console.log('App ready for offline use')
+  },
+})
+
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
+  <StrictMode>
     <ReduxProvider>
       <AuthContext>
         <Routing/>
       </AuthContext>
     </ReduxProvider>
-  </React.StrictMode>,
+  </StrictMode>,
 )
-
-

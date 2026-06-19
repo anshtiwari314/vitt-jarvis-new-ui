@@ -9,14 +9,33 @@ export default function SideNavigation(){
     const currentNavigation = useAppSelector(state => state.salesCopilotReducer.navigation);
     const salesData = useAppSelector(state => state.salesCopilotReducer.salesData);
 
-    const {recommendationsGenerated} = useData()
+    const { recommendationsGenerated, emitSelectedTopic } = useData()
     const [financialReviewOpen, setFinancialReviewOpen] = useState(false);
     const [recommendationsOpen, setRecommendationsOpen] = useState(false);
 
     const handleNavigationClick = (page: string) => {
         console.log("clicked on---->", page);
         dispatch(setNavigation(page));
+        emitSelectedTopic(page);
     };
+
+    const handleRecommendationsClick = () => {
+        setRecommendationsOpen(true);
+        emitSelectedTopic('Recommendations');
+        if (recCategories.length > 0) {
+            dispatch(setNavigation(recNavKey(recCategories[0].category)));
+        } else {
+            dispatch(setNavigation('Recommendations'));
+        }
+    };
+
+    const handleCategoryNavigation = (categoryKey: string) => {
+        dispatch(setNavigation(categoryKey));
+    };
+
+    const isRecommendationsActive =
+        currentNavigation === 'Recommendations' ||
+        (typeof currentNavigation === 'string' && currentNavigation.startsWith('Recommendations::'));
 
     const mockData = salesData.recommendations;
     // recommendations can be an array (old format) or { categories: [...] } (new format)
@@ -47,7 +66,10 @@ export default function SideNavigation(){
         if (currentNavigation === 'Assets' || currentNavigation === 'Liabilities') {
             setFinancialReviewOpen(true);
         }
-        if (typeof currentNavigation === 'string' && currentNavigation.startsWith('Recommendations::')) {
+        if (
+            currentNavigation === 'Recommendations' ||
+            (typeof currentNavigation === 'string' && currentNavigation.startsWith('Recommendations::'))
+        ) {
             setRecommendationsOpen(true);
         }
     }, [currentNavigation]);
@@ -61,7 +83,7 @@ export default function SideNavigation(){
     return (
         <aside className="w-72 bg-white border-r border-slate-200 flex flex-col hidden lg:block">
             <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-                <a href="#/lead-management" id="home-button" className="text-slate-500 hover:text-sky-600" onClick={() => handleNavigationClick('Basic Info')}>
+                <a href="#/lead-management" id="home-button" className="text-slate-500 hover:text-sky-600" onClick={() => handleNavigationClick('Data Retrieval')}>
                     <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
@@ -74,25 +96,16 @@ export default function SideNavigation(){
             <nav className="overflow-y-auto px-3 py-4" style={{ height: '50vh' }}>
                 <div className="space-y-1">
 
-                    {/* Basic Info */}
+                    {/* Client Info */}
                     <button
-                        className={navItemClass(currentNavigation === 'Basic Info')}
-                        onClick={() => handleNavigationClick('Basic Info')}
+                        className={navItemClass(currentNavigation === 'Data Retrieval')}
+                        onClick={() => handleNavigationClick('Data Retrieval')}
                     >
                         <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                        Basic Info
+                        Client Info
                     </button>
 
-                    {/* Financial Goals */}
-                    <button
-                        className={navItemClass(currentNavigation === 'Financial Goals')}
-                        onClick={() => handleNavigationClick('Financial Goals')}
-                    >
-                        <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                        Financial Goals
-                    </button>
-
-                    {/* Financial Review — dropdown toggle only */}
+                    {/* Financial Review — dropdown toggle only (hidden for now)
                     <div>
                         <button
                             className={navItemClass(currentNavigation === 'Assets' || currentNavigation === 'Liabilities')}
@@ -126,6 +139,7 @@ export default function SideNavigation(){
                             </div>
                         )}
                     </div>
+                    */}
 
                     {/* Plan Summary */}
                     <button
@@ -136,11 +150,11 @@ export default function SideNavigation(){
                         Plan Summary
                     </button>
 
-                    {/* Recommendations — dropdown (no page on click) */}
+                    {/* Recommendations — dropdown */}
                     <div>
                         <button
-                            className={navItemClass(typeof currentNavigation === 'string' && currentNavigation.startsWith('Recommendations::'))}
-                            onClick={() => setRecommendationsOpen(prev => !prev)}
+                            className={navItemClass(isRecommendationsActive)}
+                            onClick={handleRecommendationsClick}
                         >
                             <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
                             <span className="flex-1 text-left">Recommendations</span>
@@ -157,7 +171,7 @@ export default function SideNavigation(){
                                     <button
                                         key={cat.category}
                                         className={navItemClass(currentNavigation === recNavKey(cat.category))}
-                                        onClick={() => handleNavigationClick(recNavKey(cat.category))}
+                                        onClick={() => handleCategoryNavigation(recNavKey(cat.category))}
                                     >
                                         <svg className="w-4 h-4 shrink-0" fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                                         <span className="flex-1 text-left">{cat.title}</span>

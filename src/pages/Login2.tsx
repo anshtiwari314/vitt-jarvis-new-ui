@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React,{ useState } from "react"
 // import { useAuth } from '../context/AuthContext'; // Assuming you have this context
 import { v4 as uuidv4 } from "uuid"
 import { useAuth } from "../context/AuthContext"
@@ -219,7 +219,12 @@ export default function Login() {
               Sign Up
             </a>
           </p>
+
+          
         </div>
+        <div className="text-sm text-center text-slate-500">
+        <div>v 1.0</div>
+          </div>
       </div>
     </div>
   )

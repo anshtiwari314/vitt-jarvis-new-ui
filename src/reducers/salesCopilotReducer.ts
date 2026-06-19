@@ -90,7 +90,7 @@ interface SalesCopilotState {
 }
 
 const initialCopilotLoadState= {
-  navigation: 'Basic Info',
+  navigation: 'Data Retrieval',
   chat:[
     "hi how are you",
     "hello"
@@ -367,7 +367,7 @@ const initialCopilotLoadState= {
 };
 
 const initialCopilotState = {
-  "navigation": "Basic Info",
+  "navigation": "Data Retrieval",
   "pref_language":"English",
   "language_ids":["English","Hindi","Marathi"],
   "RecomendationSelected":"",
@@ -495,10 +495,11 @@ const salesCopilotSlice = createSlice({
     initSalesState:(state,action)=>{
       console.log('action payload',action.payload)
       const payload = normalizeInitPayload(action.payload ?? {});
+      const { navigation: _incomingNavigation, ...payloadWithoutNavigation } = payload;
       return {
         ...state,
-        ...payload,
-        navigation: payload.navigation ?? state.navigation ?? "Basic Info",
+        ...payloadWithoutNavigation,
+        navigation: state.navigation ?? "Data Retrieval",
         salesData: {
           ...state.salesData,
           ...(payload.salesData ?? {}),
@@ -669,10 +670,10 @@ const salesCopilotSlice = createSlice({
         console.log("it got hitted");
 
         const navMap = {
-          basicInfo: "Basic Info",
+          basicInfo: "Data Retrieval",
           asset: "Assets",
           liability: "Liabilities",
-          financialGoals: "Financial Goals",
+          financialGoals: "Data Retrieval",
           planSummary: "Plan Summary",
           productRec: "Recommendations",
         };

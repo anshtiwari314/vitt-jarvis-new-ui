@@ -31,7 +31,6 @@ function SectionVideoPlayer({
           src={url}
           className="block max-h-full max-w-full h-auto w-auto rounded-xl shadow-sm"
           playsInline
-          controls
           preload="auto"
           onEnded={onEnd}
           onError={onEnd}
@@ -49,13 +48,19 @@ export default function SectionVideoOverlay({
   const {
     basicInfoVideoUrl,
     isBasicInfoVideoPlaying,
+    isVideoPreloaded,
     startBasicInfoVideo,
     endBasicInfoVideo,
   } = useData();
   const preloadStartedRef = useRef(false);
 
   const showVideo = isBasicInfoVideoPlaying && !!basicInfoVideoUrl;
-  const isPreloadingVideo = !!basicInfoVideoUrl && !isBasicInfoVideoPlaying;
+  const videoAlreadyCached =
+    !!basicInfoVideoUrl &&
+    typeof isVideoPreloaded === "function" &&
+    isVideoPreloaded(basicInfoVideoUrl);
+  const isPreloadingVideo =
+    !!basicInfoVideoUrl && !isBasicInfoVideoPlaying && !videoAlreadyCached;
 
   useEffect(() => {
     if (!isBasicInfoVideoPlaying) return;
@@ -72,6 +77,12 @@ export default function SectionVideoOverlay({
   useEffect(() => {
     preloadStartedRef.current = false;
   }, [basicInfoVideoUrl]);
+
+  useEffect(() => {
+    if (!basicInfoVideoUrl || isBasicInfoVideoPlaying) return;
+    if (typeof isVideoPreloaded !== "function" || !isVideoPreloaded(basicInfoVideoUrl)) return;
+    startBasicInfoVideo();
+  }, [basicInfoVideoUrl, isBasicInfoVideoPlaying, isVideoPreloaded, startBasicInfoVideo]);
 
   const handlePreloadReady = () => {
     if (preloadStartedRef.current) return;

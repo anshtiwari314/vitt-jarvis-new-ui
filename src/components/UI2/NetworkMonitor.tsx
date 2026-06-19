@@ -11,7 +11,7 @@ import {
   SignalZero,
   X,
 } from "lucide-react";
-import { config as AppConfig } from "../../configuration";
+import { config as AppConfig, networkManagerPingRoute } from "../../configuration";
 
 const THRESHOLDS = {
   POOR: 800,
@@ -38,7 +38,7 @@ function wsToHttp(url: string) {
 }
 
 export function defaultHealthUrl() {
-  return `${wsToHttp(AppConfig.wsUrl)}/ping`;
+  return `${wsToHttp(AppConfig.wsUrl)}${networkManagerPingRoute}`;
 }
 
 export function useConnectionQuality(serverHealthUrl: string, intervalMs = 15000): NetworkStatus {

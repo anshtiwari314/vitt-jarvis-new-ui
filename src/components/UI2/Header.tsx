@@ -18,10 +18,9 @@ import {
 
 // Page title mapping (shared between Header and MobileHeaderControls)
 const pageDetails: Record<string, string> = {
-  "Basic Info": "Basic Info",
+  "Data Retrieval": "Client Info",
   Assets: "Assets",
   Liabilities: "Liabilities",
-  "Financial Goals": "Financial Goals",
   "Plan Summary": "Plan Summary",
   Recommendations: "Recommendations",
 }

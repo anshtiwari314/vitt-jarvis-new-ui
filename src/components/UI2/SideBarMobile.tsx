@@ -12,7 +12,7 @@ export default function SideBarMobile() {
 
   // --- Real State (from SideNavigation) ---
   const currentNavigation = useAppSelector(state => state.salesCopilotReducer.navigation);
-  const { recommendationsGenerated } = useData();
+  const { recommendationsGenerated, emitSelectedTopic } = useData();
   // @ts-ignore — VadContext is loosely typed
   const { VAD2, manualVadStatus } = useVad();
   // --- End of Real State ---
@@ -38,7 +38,10 @@ export default function SideBarMobile() {
   const recNavKey = (cat: string) => `Recommendations::${cat}`;
 
   useEffect(() => {
-    if (typeof currentNavigation === 'string' && currentNavigation.startsWith('Recommendations::')) {
+    if (
+      currentNavigation === 'Recommendations' ||
+      (typeof currentNavigation === 'string' && currentNavigation.startsWith('Recommendations::'))
+    ) {
       setRecommendationsOpen(true);
     }
     if (currentNavigation === 'Assets' || currentNavigation === 'Liabilities') {
@@ -46,9 +49,30 @@ export default function SideBarMobile() {
     }
   }, [currentNavigation]);
 
+  const isRecommendationsActive =
+    currentNavigation === 'Recommendations' ||
+    (typeof currentNavigation === 'string' && currentNavigation.startsWith('Recommendations::'));
+
   // --- Merged Handler ---
   const handleNavigationClick = (page: string) => {
     dispatch(setNavigation(page));
+    emitSelectedTopic(page);
+    setIsOpen(false);
+  };
+
+  const handleCategoryNavigation = (categoryKey: string) => {
+    dispatch(setNavigation(categoryKey));
+    setIsOpen(false);
+  };
+
+  const handleRecommendationsClick = () => {
+    setRecommendationsOpen(true);
+    emitSelectedTopic('Recommendations');
+    if (recCategories.length > 0) {
+      dispatch(setNavigation(recNavKey(recCategories[0].category)));
+    } else {
+      dispatch(setNavigation('Recommendations'));
+    }
     setIsOpen(false);
   };
 
@@ -230,25 +254,16 @@ export default function SideBarMobile() {
                 Extra bottom padding gives breathing room so users can tell the
                 list has ended and there's no hidden content below. */}
             <nav className="flex-1 min-h-0 overflow-y-auto thin-scrollbar px-3 pt-3 pb-8 space-y-1">
-            {/* Basic Info */}
+            {/* Client Info */}
             <button
-                className={`flex items-center gap-3 w-full px-3 py-2.5 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 text-sm ${currentNavigation === 'Basic Info' ? 'active-nav-item' : ''}`}
-                onClick={() => handleNavigationClick('Basic Info')}
+                className={`flex items-center gap-3 w-full px-3 py-2.5 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 text-sm ${currentNavigation === 'Data Retrieval' ? 'active-nav-item' : ''}`}
+                onClick={() => handleNavigationClick('Data Retrieval')}
             >
                 <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                Basic Info
+                Client Info
             </button>
 
-            {/* Financial Goals */}
-            <button
-                className={`flex items-center gap-3 w-full px-3 py-2.5 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 text-sm ${currentNavigation === 'Financial Goals' ? 'active-nav-item' : ''}`}
-                onClick={() => handleNavigationClick('Financial Goals')}
-            >
-                <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                Financial Goals
-            </button>
-
-            {/* Financial Review — dropdown */}
+            {/* Financial Review — dropdown (hidden for now)
             <div>
                 <button
                     className={`flex items-center gap-3 w-full px-3 py-2.5 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 text-sm ${currentNavigation === 'Assets' || currentNavigation === 'Liabilities' ? 'active-nav-item' : ''}`}
@@ -279,6 +294,7 @@ export default function SideBarMobile() {
                     </div>
                 )}
             </div>
+            */}
 
             {/* Plan Summary */}
             <button
@@ -292,8 +308,8 @@ export default function SideBarMobile() {
             {/* Recommendations — dropdown */}
             <div>
                 <button
-                    className={`flex items-center gap-3 w-full px-3 py-2.5 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 text-sm ${typeof currentNavigation === 'string' && currentNavigation.startsWith('Recommendations::') ? 'active-nav-item' : ''}`}
-                    onClick={() => setRecommendationsOpen(prev => !prev)}
+                    className={`flex items-center gap-3 w-full px-3 py-2.5 text-slate-600 font-medium rounded-lg hover:bg-slate-100 transition-colors duration-200 text-sm ${isRecommendationsActive ? 'active-nav-item' : ''}`}
+                    onClick={handleRecommendationsClick}
                 >
                     <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
                     <span className="flex-1 text-left">Recommendations</span>
@@ -308,7 +324,7 @@ export default function SideBarMobile() {
                             <button
                                 key={cat.category}
                                 className={`flex items-center gap-3 w-full px-3 py-2 text-slate-600 font-medium rounded-lg hover:bg-slate-100 text-sm ${currentNavigation === recNavKey(cat.category) ? 'active-nav-item' : ''}`}
-                                onClick={() => handleNavigationClick(recNavKey(cat.category))}
+                                onClick={() => handleCategoryNavigation(recNavKey(cat.category))}
                             >
                                 <span className="flex-1 text-left">{cat.title}</span>
                             </button>

@@ -12,13 +12,14 @@
  */
 
 const questionsLoaderResExample = {
-  navigation: "Basic Info",
+  // navigation is managed internally by the app (defaults to "Data Retrieval")
+  // navigation: "Basic Info",
   pref_language: "English",
   language_ids: ["English", "Hindi", "Marathi"],
   RecomendationSelected: "",
   chat: ["hi how are you", "hello"],
   clientName: "Anjali Sharma",
-
+  "videos_url":["url1","url2","url3"],
   salesData: {
     basicInfo: {
       boxA: {

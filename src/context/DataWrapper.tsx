@@ -19,7 +19,7 @@ import {
 } from "../reducers/salesCopilotReducer"
 import { useDispatch } from "react-redux"
 import { useAppSelector } from "../store/store"
-import {config as AppConfig} from '../configuration.js'
+import {config as AppConfig, wsEndpoint} from '../configuration.js'
 import { createAppWebSocket, type AppWebSocket } from "../lib/websocketClient"
 // interface DataContextType {
 //   socket: Socket | null
@@ -69,12 +69,12 @@ export default function DataWrapper({ children }: { children: React.ReactNode })
   }
 const [pref_language,setPref_language]=useState("English")
   const [hotPageLoading, setHotPageLoading] = useState<Record<string, boolean>>({
-    "Financial Goals": false,
+    "Data Retrieval": false,
     "Plan Summary": false,
     Recommendations: false,
   })
   const navigation =
-    useAppSelector((state) => state.salesCopilotReducer.navigation) || "Basic Info"
+    useAppSelector((state) => state.salesCopilotReducer.navigation) || "Data Retrieval"
   const navigationRef = useRef(navigation)
   const {roomId,candid,name} = useAppSelector((state) => state.qpReducer);
   const salesCopilotState = useAppSelector(state=>state.salesCopilotReducer)
@@ -102,6 +102,12 @@ const [pref_language,setPref_language]=useState("English")
   const [basicInfoVideoUrl, setBasicInfoVideoUrl] = useState("")
   const [isBasicInfoVideoPlaying, setIsBasicInfoVideoPlaying] = useState(false)
   const isBasicInfoVideoPlayingRef = useRef(false)
+
+  type VideoPreloadEntry = {
+    status: "loading" | "ready" | "error"
+    element: HTMLVideoElement
+  }
+  const videoPreloadCacheRef = useRef<Map<string, VideoPreloadEntry>>(new Map())
   // ----------------------------
 
   const [toggleNotificationModal,setToggleNotificationModal] = useState({
@@ -146,7 +152,7 @@ const [pref_language,setPref_language]=useState("English")
         break
       case "financial-goals":
         dispatch(updateFinancialGoals(data.financialGoals))
-        setHotPageLoading((prev) => ({ ...prev, "Financial Goals": false }))
+        setHotPageLoading((prev) => ({ ...prev, "Data Retrieval": false }))
         setLanguageChangeLoading((prev) => ({ ...prev, "Financial Goals": false }))
         break
       case "plan-summary":
@@ -232,6 +238,15 @@ const [pref_language,setPref_language]=useState("English")
     // Fallback: if a full reload comes back via questions_loader_res,
     // clear language-change loading for every section.
     setLanguageChangeLoading(buildLanguageLoadingMap(false))
+
+    try {
+      const videosUrl = extractVideosUrlFromLoaderPayload(data)
+      if (videosUrl.length > 0) {
+        preloadVideoUrls(videosUrl)
+      }
+    } catch (err) {
+      console.warn('Video preload skipped:', err)
+    }
   }
 
   // Keep speakerEnabledRef in sync so socket callbacks always read the latest value
@@ -288,6 +303,109 @@ const [pref_language,setPref_language]=useState("English")
     setBasicInfoVideoUrl("")
   }
 
+  function normalizeVideoUrls(raw: unknown): string[] {
+    if (!Array.isArray(raw)) return []
+    return [...new Set(
+      raw
+        .filter((url): url is string => typeof url === "string")
+        .map((url) => url.trim())
+        .filter(Boolean)
+    )]
+  }
+
+  function extractVideosUrlFromLoaderPayload(rawPayload: any): string[] {
+    if (rawPayload == null) return []
+
+    let payload = rawPayload
+    if (Array.isArray(rawPayload) && rawPayload.length >= 2 && typeof rawPayload[1] === "object") {
+      payload = rawPayload[1]
+    }
+    if (payload == null || typeof payload !== "object") return []
+
+    if (
+      payload?.data &&
+      typeof payload.data === "object" &&
+      !Array.isArray(payload.data) &&
+      payload?.videos_url == null
+    ) {
+      payload = payload.data
+    }
+
+    const rawUrls = payload?.videos_url ?? payload?.videosUrl
+    return normalizeVideoUrls(rawUrls)
+  }
+
+  function isVideoPreloaded(url: string): boolean {
+    if (typeof url !== "string" || !url.trim()) return false
+    return videoPreloadCacheRef.current.get(url)?.status === "ready"
+  }
+
+  function clearVideoPreloadCache() {
+    videoPreloadCacheRef.current.forEach(({ element }) => {
+      element.pause()
+      element.removeAttribute("src")
+      element.load()
+      element.remove()
+    })
+    videoPreloadCacheRef.current.clear()
+  }
+
+  function preloadVideoUrls(urls: unknown) {
+    const nextUrls = normalizeVideoUrls(urls)
+    if (nextUrls.length === 0) return
+    if (typeof document === "undefined") return
+
+    for (const [url, entry] of videoPreloadCacheRef.current) {
+      if (!nextUrls.includes(url)) {
+        entry.element.pause()
+        entry.element.removeAttribute("src")
+        entry.element.load()
+        entry.element.remove()
+        videoPreloadCacheRef.current.delete(url)
+      }
+    }
+
+    nextUrls.forEach((url) => {
+      if (videoPreloadCacheRef.current.has(url)) return
+
+      const video = document.createElement("video")
+      video.preload = "auto"
+      video.playsInline = true
+      video.muted = true
+      video.style.display = "none"
+      document.body.appendChild(video)
+
+      const entry: VideoPreloadEntry = { status: "loading", element: video }
+      videoPreloadCacheRef.current.set(url, entry)
+
+      const markReady = () => {
+        entry.status = "ready"
+      }
+      const markError = () => {
+        entry.status = "error"
+      }
+
+      video.addEventListener("canplaythrough", markReady, { once: true })
+      video.addEventListener("error", markError, { once: true })
+      video.src = url
+      video.load()
+    })
+  }
+
+  function startQueuedVideo(url: string) {
+    if (typeof url !== "string" || !url.trim()) {
+      isMediaBusyRef.current = false
+      processMediaQueue()
+      return
+    }
+    setIsBasicInfoVideoPlaying(false)
+    isBasicInfoVideoPlayingRef.current = false
+    setBasicInfoVideoUrl(url)
+    if (isVideoPreloaded(url)) {
+      startBasicInfoVideo()
+    }
+  }
+
   function processMediaQueue() {
     if (!speakerEnabledRef.current) return
     if (isMediaBusyRef.current) return
@@ -307,9 +425,7 @@ const [pref_language,setPref_language]=useState("English")
     }
 
     isMediaBusyRef.current = true
-    setIsBasicInfoVideoPlaying(false)
-    isBasicInfoVideoPlayingRef.current = false
-    setBasicInfoVideoUrl(next.url)
+    startQueuedVideo(next.url)
   }
 
   function enqueueMedia(item: MediaQueueItem) {
@@ -349,7 +465,7 @@ useEffect(()=>{
         //const socketUrl = 'https://0be7987cc39f.ngrok-free.app'
         
         const socketUrl = AppConfig.wsUrl
-        const tempSocket = createAppWebSocket(socketUrl, AppConfig.wsEndpoint)
+        const tempSocket = createAppWebSocket(socketUrl, wsEndpoint)
 
         //console.log('Socket has been created',tempSocket)
 
@@ -392,6 +508,7 @@ useEffect(()=>{
       tempSocket.off("notifications", updateNotifications)
       tempSocket.off("audio_playback_res", handleAudioPlaybackResponse)
       tempSocket.off("video_playback_res", handleVideoPlaybackResponse)
+      clearVideoPreloadCache()
       tempSocket.disconnect()
     }
   }, [])
@@ -401,26 +518,50 @@ useEffect(()=>{
   //   dispatch(updatePref_language(lang))
   // },[socket])
 
-  useEffect(() => {
+  // Internal nav label → socket topic (backend contract).
+  const NAV_TO_SOCKET_TOPIC: Record<string, string> = {
+    "Data Retrieval": "Basic Info",
+  }
+
+  function resolveSocketTopic(navPage: string): string {
+    return NAV_TO_SOCKET_TOPIC[navPage] ?? navPage
+  }
+
+  function emitSelectedTopic(navPage: string) {
     if (!socket || !isSocketConnected) {
       return
     }
 
-    if (navigation === "Financial Goals" || navigation === "Plan Summary") {
-      setHotPageLoading((prev) => ({ ...prev, [navigation]: true }))
+    if (navPage === "Data Retrieval" || navPage === "Plan Summary") {
+      setHotPageLoading((prev) => ({ ...prev, [navPage]: true }))
     }
+
+    const socketTopic = resolveSocketTopic(navPage)
 
     const data = {
       roomid: roomId,
       jobid: "abcde",
       agentid: "1234",
       name: name,
-      selected_topic: navigation,
-      agent_name:JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name || ''
+      selected_topic: socketTopic,
+      agent_name: JSON.parse(localStorage.getItem('agent_name') || '{}')?.agent_name || '',
     }
 
+    console.log("emitting selected_topic_req_v2", data)
     socket.emit("selected_topic_req_v2", data)
-  }, [navigation, socket, isSocketConnected, roomId, name])
+  }
+
+  // Emit current topic on page load / socket connect (and reconnect).
+  useEffect(() => {
+    if (!socket || !isSocketConnected) return
+
+    const nav = navigationRef.current
+    if (typeof nav === 'string' && nav.startsWith('Recommendations::')) {
+      return
+    }
+
+    emitSelectedTopic(nav)
+  }, [socket, isSocketConnected])
 
   useEffect(() => {
     if (!socket || !isSocketConnected) return
@@ -512,6 +653,7 @@ useEffect(()=>{
     let anyChanged = false
 
     switch (navigation) {
+      case 'Data Retrieval':
       case 'Basic Info': {
         sectionKey = navigation
         const { node: updated, changed } = updateFieldInTree(
@@ -522,7 +664,7 @@ useEffect(()=>{
         anyChanged = changed
         if (!changed) break
         dispatch(updateBasicInfo(updated))
-        modified_data = { [navigation]: updated }
+        modified_data = { 'Basic Info': updated }
         break
       }
       case 'Assets': {
@@ -654,13 +796,14 @@ useEffect(()=>{
     let modified_data: Record<string, any> = {}
 
     switch (navigation) {
+      case 'Data Retrieval':
       case 'Basic Info': {
         const basicInfo = salesCopilotState.salesData.basicInfo
         const updatedTable = applyTableEdit(basicInfo?.table, rowIndex, colIndex, value)
         if (!updatedTable) return
         const updated = { ...basicInfo, table: updatedTable }
         dispatch(updateBasicInfo(updated))
-        modified_data = { [navigation]: updated }
+        modified_data = { 'Basic Info': updated }
         break
       }
       case 'Assets': {
@@ -786,8 +929,10 @@ useEffect(()=>{
     audioRef, audioUrl, setAudioUrl, mediaQueueRef, isAudioStillPlaying, isAudioPlayingState,
     speakerEnabled, setSpeakerEnabled,
     basicInfoVideoUrl, isBasicInfoVideoPlaying, startBasicInfoVideo, endBasicInfoVideo,
+    isVideoPreloaded,
     hotPageLoading,
-    languageChangeLoading, startLanguageChangeLoading
+    languageChangeLoading, startLanguageChangeLoading,
+    emitSelectedTopic,
   }
   return (
     <Context.Provider value={values}>

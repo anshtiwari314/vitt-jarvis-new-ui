@@ -19,8 +19,9 @@ import SectionVideoOverlay from '../components/UI2/SectionVideoOverlay'
 import RightPanel from '../components/UI2/RightPanel'
 import { useDispatch } from 'react-redux';
 import { setQP } from '../reducers/queryparamReducer';
-import { resetSalesState } from '../reducers/salesCopilotReducer';
+import { resetSalesState, setNavigation } from '../reducers/salesCopilotReducer';
 import { useData } from '../context/DataWrapper';
+import { useWakeLock } from '../functions/useWakeLock';
 
 function HotPageLoader() {
     return (
@@ -82,7 +83,16 @@ export default function App() {
    console.log("Sales Datain main page:", salesData.recommendations);
 //    [{},{},{}]---->aise me dikha dega lekin kuch select karna padega phir vo dikgeaga                                 
 //   console.log(currentNavigation,"basic sales data is ",salesData.liabilities);
-   const mockData = salesData.recommendations
+    
+    useWakeLock(true);
+    const mockData = salesData.recommendations
+
+   const recCategories: { category: string; title: string }[] = Array.isArray(mockData)
+     ? []
+     : (mockData as any)?.categories?.map((c: any) => ({
+         category: c.category,
+         title: c.title || c.category,
+       })) ?? [];
 
 const mock2=[
 
@@ -217,12 +227,22 @@ console.log("Filtered Recommendations:", filteredRecommendations);
         return `₹ ${formattedNum} <span class="text-slate-500 font-normal text-xs">${shorthand}</span>`;
     };
 
+    const renderDataRetrieval = () => {
+        const goals = salesData.financialGoals?.goals ?? [];
+        const goalsLoading = hotPageLoading?.['Data Retrieval'] && goals.length === 0;
+
+        return (
+            <>
+                <BasicInfo data={salesData.basicInfo} />
+                {goalsLoading ? <HotPageLoader /> : <NewFinancialGoals />}
+            </>
+        );
+    };
+
     const renderContent = () => {
     switch (currentNavigation) {
-        case 'Basic Info':
-            return <BasicInfo data={salesData.basicInfo} />;
-        case 'Financial Goals':
-            return hotPageLoading?.['Financial Goals'] ? <HotPageLoader /> : <NewFinancialGoals />
+        case 'Data Retrieval':
+            return renderDataRetrieval();
         case 'Assets':
             return <Assets data={(salesData as any).financialReview?.assets} formatCurrency={formatCurrency} />;
         case 'Liabilities':
@@ -234,14 +254,12 @@ console.log("Filtered Recommendations:", filteredRecommendations);
                 ? <HotPageLoader />
                 : <PlanSummary data={salesData.planSummary} formatCurrency={formatCurrency} />;
         case 'Recommendations':
-            return hotPageLoading?.['Recommendations']
-                ? <HotPageLoader />
-                : <Recommendations data={filteredRecommendations} formatCurrency={formatCurrency} />;
+            return <HotPageLoader />;
         default:
             if (typeof currentNavigation === 'string' && currentNavigation.startsWith('Recommendations::')) {
                 return <RecommendationCategoryPage category={recommendationCategoryData} />;
             }
-            return <BasicInfo data={salesData.basicInfo} />; // Default to Basic Info
+            return renderDataRetrieval();
     }
 };
 
@@ -280,12 +298,21 @@ console.log("Filtered Recommendations:", filteredRecommendations);
         console.log('qpState',qpState)
     },[qpState])
 
+    useEffect(() => {
+        if (currentNavigation === 'Recommendations' && recCategories.length > 0) {
+            dispatch(setNavigation(`Recommendations::${recCategories[0].category}`));
+        }
+    }, [currentNavigation, recCategories, dispatch]);
+
     const sectionKey =
       typeof currentNavigation === 'string' &&
       currentNavigation.startsWith('Recommendations::')
         ? 'Recommendations'
         : currentNavigation;
-    const isLanguageLoading = sectionKey !== 'Recommendations' && !!languageChangeLoading?.[sectionKey as string];
+    const isLanguageLoading =
+      sectionKey !== 'Recommendations' &&
+      sectionKey !== 'Data Retrieval' &&
+      !!languageChangeLoading?.[sectionKey as string];
     const lockMainScroll = isBasicInfoVideoPlaying;
 
   return (

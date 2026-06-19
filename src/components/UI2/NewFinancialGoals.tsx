@@ -49,6 +49,11 @@ const normaliseMatch = (raw?: string): MatchKey => {
   return 'not identified yet';
 };
 
+const isVisibleGoalMatch = (raw?: string): boolean => {
+  const key = normaliseMatch(raw);
+  return key === 'strongly identified' || key === 'possible fit';
+};
+
 // ─── Style maps ──────────────────────────────────────────────────────────────
 // 'selected by agent' → same look as 'strongly identified'
 // 'ignored by agent'  → same look as 'not identified yet'
@@ -89,6 +94,14 @@ export default function FinancialGoalsPage() {
     (state) => state.salesCopilotReducer.salesData.financialGoals as any
   );
   const goals: GoalSection[] = financialGoals?.goals ?? [];
+
+  const visibleGoals = goals
+    .map((section, originalIndex) => ({
+      ...section,
+      originalIndex,
+      cards: section.cards.filter((card) => isVisibleGoalMatch(card.match)),
+    }))
+    .filter((section) => section.cards.length > 0);
 
   // ── Single card highlight (visual only, no Redux) ──────────────────────
   // Tracks the one card the user has clicked on to highlight it.
@@ -216,13 +229,18 @@ export default function FinancialGoalsPage() {
     );
   }
 
+  if (visibleGoals.length === 0) {
+    return null;
+  }
+
   return (
     <div
       className="w-full text-slate-800"
       onClick={() => setHighlightedKey(null)}
     >
       <div className="space-y-8">
-          {goals.map((section, sectionIndex) => {
+          {visibleGoals.map((section) => {
+            const sectionIndex = section.originalIndex;
             return (
               <div key={sectionIndex}>
                 <div className="mb-3 text-lg font-semibold">{section.section}</div>
