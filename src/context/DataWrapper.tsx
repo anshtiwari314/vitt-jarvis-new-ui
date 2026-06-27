@@ -1,5 +1,5 @@
 import React from "react"
-import { useState, createContext, useContext, useEffect, useRef } from "react"
+import { useState, createContext, useContext, useEffect, useRef, useCallback } from "react"
 import { v4 as uuidv4 } from 'uuid'
 import {
   initSalesState,
@@ -42,7 +42,9 @@ export function useData() {
 
 export default function DataWrapper({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch()
-  console.log("DataWrapper mounted")
+  useEffect(() => {
+    console.log("DataWrapper mounted")
+  }, [])
 
   const [socket, setSocket] = useState<AppWebSocket | null>(null)
   const [isSocketConnected,setIsSocketConnected] = useState(false)
@@ -83,11 +85,12 @@ const [pref_language,setPref_language]=useState("English")
 
   // --- Audio / video playback (shared queue, play btn must be on) ---
   type MediaQueueItem =
-    | { type: "audio"; url: string }
-    | { type: "video"; url: string }
+    | { type: "audio"; url: string; keepButtonActive: boolean }
+    | { type: "video"; url: string; keepButtonActive: boolean }
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const mediaQueueRef = useRef<MediaQueueItem[]>([])
+  const currentMediaItemRef = useRef<MediaQueueItem | null>(null)
   const isMediaBusyRef = useRef(false)
   const isAudioStillPlaying = useRef<boolean>(false)
   const [audioUrl, setAudioUrl] = useState('')
@@ -207,6 +210,10 @@ const [pref_language,setPref_language]=useState("English")
         setRecommendationsGenerated(false)
   }
 
+  function parseKeepButtonActive(data: any): boolean {
+    return data?.keep_button_active === true
+  }
+
   function handleAudioPlaybackResponse(data: any) {
     console.log("audio_playback_res received", data)
     extractAndPlayAudio(data)
@@ -217,10 +224,14 @@ const [pref_language,setPref_language]=useState("English")
     const videoUrl =
       typeof data?.video_url === "string" ? data.video_url.trim() : ""
     if (!videoUrl) return
-    enqueueMedia({ type: "video", url: videoUrl })
+    enqueueMedia({
+      type: "video",
+      url: videoUrl,
+      keepButtonActive: parseKeepButtonActive(data),
+    })
   }
 
-  function startBasicInfoVideo() {
+  const startBasicInfoVideo = useCallback(() => {
     if (!speakerEnabledRef.current) {
       cancelBasicInfoVideoSession()
       return
@@ -228,7 +239,7 @@ const [pref_language,setPref_language]=useState("English")
     if (isBasicInfoVideoPlayingRef.current) return
     setIsBasicInfoVideoPlaying(true)
     isBasicInfoVideoPlayingRef.current = true
-  }
+  }, [])
 
   function initialisationSalesState(data: any) {
     console.log('init sales data',data)
@@ -282,20 +293,51 @@ const [pref_language,setPref_language]=useState("English")
     setBasicInfoVideoUrl("")
     if (isMediaBusyRef.current && !isAudioStillPlaying.current) {
       isMediaBusyRef.current = false
-      processMediaQueue()
+      advanceMediaQueue()
     }
   }
 
-  function endBasicInfoVideo() {
+  const endBasicInfoVideo = useCallback(() => {
     setIsBasicInfoVideoPlaying(false)
     isBasicInfoVideoPlayingRef.current = false
     setBasicInfoVideoUrl("")
     isMediaBusyRef.current = false
+    advanceMediaQueue()
+  }, [])
+
+  function resetSpeakerWhenMediaIdle(completedKeepButtonActive = false) {
+    if (!speakerEnabledRef.current) return
+    if (mediaQueueRef.current.length > 0) return
+    if (isMediaBusyRef.current) return
+    if (isAudioStillPlaying.current) return
+    if (isBasicInfoVideoPlayingRef.current) return
+    if (completedKeepButtonActive) return
+    setSpeakerEnabled(false)
+  }
+
+  function advanceMediaQueue() {
+    const completedKeepButtonActive =
+      currentMediaItemRef.current?.keepButtonActive ?? false
+    currentMediaItemRef.current = null
     processMediaQueue()
+    resetSpeakerWhenMediaIdle(completedKeepButtonActive)
+  }
+
+  function toggleSpeakerPlayback() {
+    setSpeakerEnabled((prev) => {
+      if (prev) {
+        speakerEnabledRef.current = false
+        clearAllMedia()
+        return false
+      }
+      speakerEnabledRef.current = true
+      return true
+    })
   }
 
   function clearAllMedia() {
     mediaQueueRef.current = []
+    currentMediaItemRef.current = null
     isMediaBusyRef.current = false
     stopCurrentAudio()
     setIsBasicInfoVideoPlaying(false)
@@ -335,10 +377,10 @@ const [pref_language,setPref_language]=useState("English")
     return normalizeVideoUrls(rawUrls)
   }
 
-  function isVideoPreloaded(url: string): boolean {
+  const isVideoPreloaded = useCallback((url: string): boolean => {
     if (typeof url !== "string" || !url.trim()) return false
     return videoPreloadCacheRef.current.get(url)?.status === "ready"
-  }
+  }, [])
 
   function clearVideoPreloadCache() {
     videoPreloadCacheRef.current.forEach(({ element }) => {
@@ -395,11 +437,9 @@ const [pref_language,setPref_language]=useState("English")
   function startQueuedVideo(url: string) {
     if (typeof url !== "string" || !url.trim()) {
       isMediaBusyRef.current = false
-      processMediaQueue()
+      advanceMediaQueue()
       return
     }
-    setIsBasicInfoVideoPlaying(false)
-    isBasicInfoVideoPlayingRef.current = false
     setBasicInfoVideoUrl(url)
     if (isVideoPreloaded(url)) {
       startBasicInfoVideo()
@@ -414,6 +454,7 @@ const [pref_language,setPref_language]=useState("English")
     if (!next) return
 
     mediaQueueRef.current.shift()
+    currentMediaItemRef.current = next
 
     if (next.type === "audio") {
       isMediaBusyRef.current = true
@@ -449,7 +490,11 @@ const [pref_language,setPref_language]=useState("English")
       audiourl = `data:audio/mpeg;base64,${data.audiobase64}`
     }
     if (audiourl) {
-      enqueueMedia({ type: "audio", url: audiourl })
+      enqueueMedia({
+        type: "audio",
+        url: audiourl,
+        keepButtonActive: parseKeepButtonActive(data),
+      })
     }
   }
 
@@ -852,7 +897,7 @@ useEffect(()=>{
       setIsAudioPlayingState(false)
       setAudioUrl("")
       isMediaBusyRef.current = false
-      processMediaQueue()
+      advanceMediaQueue()
     }
 
     audioElem.addEventListener('play', handlePlay)
@@ -927,7 +972,7 @@ useEffect(()=>{
     recommendationsGenerated,setRecommendationsGenerated,
     pref_language,setPref_language,
     audioRef, audioUrl, setAudioUrl, mediaQueueRef, isAudioStillPlaying, isAudioPlayingState,
-    speakerEnabled, setSpeakerEnabled,
+    speakerEnabled, setSpeakerEnabled, toggleSpeakerPlayback,
     basicInfoVideoUrl, isBasicInfoVideoPlaying, startBasicInfoVideo, endBasicInfoVideo,
     isVideoPreloaded,
     hotPageLoading,

@@ -33,7 +33,7 @@ const resolvePageTitle = (nav: string) => {
 }
 
 export default function Header() {
-  const { socket, isAudioPlayingState, audioRef, speakerEnabled, setSpeakerEnabled, startLanguageChangeLoading } = useData()
+  const { socket, isAudioPlayingState, speakerEnabled, toggleSpeakerPlayback, startLanguageChangeLoading } = useData()
   const dispatch = useAppDispatch()
   //@ts-ignore
   const { setCurrentUser } = useAuth()
@@ -180,15 +180,7 @@ export default function Header() {
                       : "Playback on — click to turn off"
                     : "Playback off — click to turn on"
                 }
-                onClick={() => {
-                  if (speakerEnabled) {
-                    if (audioRef?.current) {
-                      audioRef.current.pause()
-                      audioRef.current.src = ''
-                    }
-                  }
-                  setSpeakerEnabled((prev: boolean) => !prev)
-                }}
+                onClick={() => toggleSpeakerPlayback()}
               >
                 {speakerEnabled ? (
                   <Pause className="w-5 h-5 md:w-7 md:h-7" fill="currentColor" />
@@ -254,7 +246,7 @@ export default function Header() {
  * scrolls away.
  */
 export function MobileHeaderControls() {
-  const { socket, isAudioPlayingState, audioRef, speakerEnabled, setSpeakerEnabled, startLanguageChangeLoading } = useData()
+  const { socket, isAudioPlayingState, speakerEnabled, toggleSpeakerPlayback, startLanguageChangeLoading } = useData()
   const dispatch = useAppDispatch()
   //@ts-ignore
   const { setCurrentUser } = useAuth()
@@ -350,15 +342,7 @@ export function MobileHeaderControls() {
                     : "Playback on — click to turn off"
                   : "Playback off — click to turn on"
               }
-              onClick={() => {
-                if (speakerEnabled) {
-                  if (audioRef?.current) {
-                    audioRef.current.pause()
-                    audioRef.current.src = ""
-                  }
-                }
-                setSpeakerEnabled((prev: boolean) => !prev)
-              }}
+              onClick={() => toggleSpeakerPlayback()}
             >
               {speakerEnabled ? (
                 <Pause className="w-5 h-5" fill="currentColor" />

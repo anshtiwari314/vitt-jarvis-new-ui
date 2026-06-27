@@ -51,7 +51,11 @@ const normaliseMatch = (raw?: string): MatchKey => {
 
 const isVisibleGoalMatch = (raw?: string): boolean => {
   const key = normaliseMatch(raw);
-  return key === 'strongly identified' || key === 'possible fit';
+  return (
+    key === 'strongly identified' ||
+    key === 'possible fit' ||
+    key === 'selected by agent'
+  );
 };
 
 // ─── Style maps ──────────────────────────────────────────────────────────────
