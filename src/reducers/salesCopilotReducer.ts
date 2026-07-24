@@ -1,7 +1,6 @@
 import { createSlice,current } from "@reduxjs/toolkit";
 import { act } from "react";
-import { recommendationsData } from "../data/recommendation.js";
-
+import { questionsLoaderResExample } from "../../temp2-new.js";
 // Define types for our data structure for type safety
 export interface PfrData {
   basicInfo: {
@@ -419,7 +418,7 @@ const initialCopilotState = {
     },
     "financialGoals": { "goals": [] },
     "planSummary": [],
-    "recommendations": recommendationsData,
+    "recommendations": questionsLoaderResExample.salesData.recommendations,
     // "followUpQn": {
     //   "header": "",
     //   "data": []

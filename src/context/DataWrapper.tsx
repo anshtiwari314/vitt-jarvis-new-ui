@@ -101,6 +101,7 @@ const [pref_language,setPref_language]=useState("English")
   const [speakerEnabled, setSpeakerEnabled] = useState(false)
   const speakerEnabledRef = useRef(false)
   const lastSentSpeakerStateRef = useRef<"on" | "off" | null>(null)
+  const suppressSpeakerEmitRef = useRef(false)
 
   const [basicInfoVideoUrl, setBasicInfoVideoUrl] = useState("")
   const [isBasicInfoVideoPlaying, setIsBasicInfoVideoPlaying] = useState(false)
@@ -214,6 +215,22 @@ const [pref_language,setPref_language]=useState("English")
     return data?.keep_button_active === true
   }
 
+  function parseActivateSpeaker(data: any): boolean {
+    return data?.activate_speaker === true
+  }
+
+  /** Turn speaker on when server requests it (ref updated synchronously for queue processing). */
+  function activateSpeakerIfRequested(data: any) {
+    if (speakerEnabledRef.current || !parseActivateSpeaker(data)) return
+    suppressSpeakerEmitRef.current = true
+    speakerEnabledRef.current = true
+    setSpeakerEnabled(true)
+  }
+
+  function canPlayIncomingMedia(data: any): boolean {
+    return speakerEnabledRef.current || parseActivateSpeaker(data)
+  }
+
   function handleAudioPlaybackResponse(data: any) {
     console.log("audio_playback_res received", data)
     extractAndPlayAudio(data)
@@ -224,6 +241,8 @@ const [pref_language,setPref_language]=useState("English")
     const videoUrl =
       typeof data?.video_url === "string" ? data.video_url.trim() : ""
     if (!videoUrl) return
+    if (!canPlayIncomingMedia(data)) return
+    activateSpeakerIfRequested(data)
     enqueueMedia({
       type: "video",
       url: videoUrl,
@@ -489,13 +508,14 @@ const [pref_language,setPref_language]=useState("English")
     if (data?.audiobase64 && data.audiobase64 !== null) {
       audiourl = `data:audio/mpeg;base64,${data.audiobase64}`
     }
-    if (audiourl) {
-      enqueueMedia({
-        type: "audio",
-        url: audiourl,
-        keepButtonActive: parseKeepButtonActive(data),
-      })
-    }
+    if (!audiourl) return
+    if (!canPlayIncomingMedia(data)) return
+    activateSpeakerIfRequested(data)
+    enqueueMedia({
+      type: "audio",
+      url: audiourl,
+      keepButtonActive: parseKeepButtonActive(data),
+    })
   }
 
 
@@ -614,6 +634,13 @@ useEffect(()=>{
     const currentSpeakerState: "on" | "off" = speakerEnabled ? "on" : "off"
     // Emit once right after connect, then only when speaker state actually changes.
     if (lastSentSpeakerStateRef.current === currentSpeakerState) {
+      return
+    }
+
+    // Server-initiated activation via activate_speaker — do not echo speaker: "on" back.
+    if (currentSpeakerState === "on" && suppressSpeakerEmitRef.current) {
+      suppressSpeakerEmitRef.current = false
+      lastSentSpeakerStateRef.current = currentSpeakerState
       return
     }
 

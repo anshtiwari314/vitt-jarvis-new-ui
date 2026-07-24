@@ -1,16 +1,23 @@
 const aiSuggestionResponseExamples = {
   // Media playback uses dedicated WebSocket routes (not ai_suggestion_res):
-  // route_type: "video_playback_res" → { video_url: "https://..." }
-  // route_type: "audio_playback_res" → { audio_url: "https://..." } or { audiobase64: "..." }
+  // route_type: "video_playback_res" → { video_url, activate_speaker?, keep_button_active? }
+  // route_type: "audio_playback_res" → { audio_url | audiobase64, activate_speaker?, keep_button_active? }
+  // activate_speaker: true → turns speaker on and plays even when playback btn is off
+  // keep_button_active: true → keeps speaker on after this clip finishes (default: auto-off)
   video_playback_res_example: {
     route_type: "video_playback_res",
     video_url:
       "https://navtalk.s3.us-east-2.amazonaws.com/video/eda4fad9-958e-4052-9894-cb82699c34a8.mp4",
+    activate_speaker: true,
+    keep_button_active: false,
   },
   audio_playback_res_example: {
     route_type: "audio_playback_res",
-    audio_url: "https://example.com/audio/basic-info.mp3",
-    audiobase64: null,
+    id: "qna_answer",
+    audio_url: null,
+    audiobase64: "BASE64_MP3_DATA",
+    activate_speaker: true,
+    keep_button_active: false,
   },
   // One payload per supported "type" in updateSalesState()
   // You can emit any one of these from backend on "ai_suggestion_res".
@@ -452,7 +459,7 @@ const aiSuggestionResponseExamples = {
           {
             id: "life_cover",
             category: "Immediate Life Cover Analysis",
-            title: "Immediate Life Cover Analysis",
+            title: "Mera Life Cover Analysis",
             subtitle:
               "Pure protection need identified for family income replacement and liability protection.",
             summary: {
@@ -460,18 +467,36 @@ const aiSuggestionResponseExamples = {
               term: "20 years",
               budget: "1.06 L / year"
             },
+            product_table_left_header: "Compare top product options",
+            product_table_right_header: "Select one primary option for this need",
+            product_table: {
+              table_header: ["Product", "Fit", "Annual Premium", "Cover/Benefit", "Term", "Action"],
+              table_values: [
+                [
+                  { value: "Kotak Signature Term Plan" },
+                  { value: "Best fit" },
+                  { value: "1.06L" },
+                  { value: "71L" },
+                  { value: "20 years" }
+                ],
+                [
+                  { value: "Kotak e-Term Plan" },
+                  { value: "Strong alternate" },
+                  { value: "0.94" },
+                  { value: "71L" },
+                  { value: "20 years" }
+                ]
+              ]
+            },
+            advantages_header: "Key Advantages",
+            reasons_fit_header: "why this product seems fit",
+            selected_box_header: "Selected option details",
+            selected_box_sub_header:
+              "Review the selected product, edit values if needed, and use the reasons below to support advisor discussion.",
             products: [
               {
                 id: "signature_term",
                 name: "Kotak Signature Term Plan",
-                fit: "Best fit",
-                annualPremium: "1.06 L",
-                cover: "71 L",
-                term: "20 years",
-                premiumPayingTerm: "20 years",
-                premiumFrequency: "Annual",
-                payout: "Lump sum",
-                survivalBenefit: "None",
                 why: "Strong protection fit with premium aligned to current need.",
                 reasons: [
                   "Pure protection plan aligned to life cover need",
@@ -500,14 +525,6 @@ const aiSuggestionResponseExamples = {
               {
                 id: "e_term",
                 name: "Kotak e-Term Plan",
-                fit: "Strong alternate",
-                annualPremium: "0.94 L",
-                cover: "71 L",
-                term: "20 years",
-                premiumPayingTerm: "20 years",
-                premiumFrequency: "Annual",
-                payout: "Lump sum / income options",
-                survivalBenefit: "None",
                 why: "Economical pure protection option with flexible payout choices.",
                 reasons: [
                   "Lower premium can help if affordability is a concern",
@@ -545,18 +562,29 @@ const aiSuggestionResponseExamples = {
               horizon: "18 years",
               targetYear: "2043"
             },
+            product_table_left_header: "Compare top product options",
+            product_table_right_header: "Select one primary option for this need",
+            product_table: {
+              table_header: ["Product", "Fit", "Annual Premium", "Cover/Benefit", "Term", "Action"],
+              table_values: [
+                [
+                  { value: "Kotak e-Invest Plus" },
+                  { value: "Best fit" },
+                  { value: "2.35L" },
+                  { value: "Goal-linked" },
+                  { value: "18 years" }
+                ]
+              ]
+            },
+            advantages_header: "Key Advantages",
+            reasons_fit_header: "why this product seems fit",
+            selected_box_header: "Selected option details",
+            selected_box_sub_header:
+              "Review the selected product, edit values if needed, and use the reasons below to support advisor discussion.",
             products: [
               {
                 id: "e_invest_plus",
                 name: "Kotak e-Invest Plus",
-                fit: "Best fit",
-                annualPremium: "2.35 L",
-                cover: "Goal-linked",
-                term: "18 years",
-                premiumPayingTerm: "18 years",
-                premiumFrequency: "Annual",
-                payout: "Fund value",
-                survivalBenefit: "Fund-linked maturity value",
                 why: "Strong fit for child-focused long-horizon market-linked corpus creation.",
                 reasons: [
                   "Well suited for long-duration child future planning",

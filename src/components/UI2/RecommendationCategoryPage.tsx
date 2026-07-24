@@ -11,6 +11,13 @@ type Benefit = {
   modified_by_agent?: boolean
 }
 
+type TableCell = string | { value?: string | number; [key: string]: unknown }
+
+type ProductTable = {
+  table_header: string[]
+  table_values: TableCell[][]
+}
+
 type Product = {
   id: string
   name: string
@@ -32,6 +39,13 @@ type Category = {
   title?: string
   subtitle?: string
   summary?: Record<string, string>
+  product_table_left_header?: string
+  product_table_right_header?: string
+  product_table?: ProductTable
+  advantages_header?: string
+  reasons_fit_header?: string
+  selected_box_header?: string
+  selected_box_sub_header?: string
   products: Product[]
 }
 
@@ -40,6 +54,105 @@ const fitTone: Record<string, string> = {
   "Strong alternate": "bg-amber-50 text-amber-700 border-amber-200",
   "Budget option": "bg-slate-50 text-slate-700 border-slate-200",
   "Safer alternate": "bg-emerald-50 text-emerald-700 border-emerald-200",
+}
+
+function cellValue(cell: TableCell | undefined): string {
+  if (cell == null) return ""
+  if (typeof cell === "object" && "value" in cell) return String(cell.value ?? "")
+  return String(cell)
+}
+
+function normalizeHeader(header: string) {
+  return header.toLowerCase().replace(/\s+/g, " ").trim()
+}
+
+function isFitColumn(header: string) {
+  return normalizeHeader(header) === "fit"
+}
+
+function isActionColumn(header: string) {
+  return normalizeHeader(header) === "action"
+}
+
+function findProductForRow(products: Product[], row: TableCell[], rowIndex: number) {
+  const name = cellValue(row[0])
+  return products.find((p) => p.name === name) || products[rowIndex]
+}
+
+function getRowFit(row: TableCell[], headers: string[]) {
+  const fitIdx = headers.findIndex(isFitColumn)
+  return fitIdx >= 0 ? cellValue(row[fitIdx]) : undefined
+}
+
+function getProductFit(product: Product, row: TableCell[] | undefined, headers: string[]) {
+  return product.fit || (row ? getRowFit(row, headers) : undefined)
+}
+
+function buildLegacyProductTable(products: Product[]): ProductTable {
+  return {
+    table_header: ["Product", "Fit", "Annual Premium", "Cover / Benefit", "Term", "Action"],
+    table_values: products.map((product) => [
+      { value: product.name },
+      { value: product.fit ?? "" },
+      { value: product.annualPremium ?? "" },
+      { value: product.cover ?? "" },
+      { value: product.term ?? "" },
+    ]),
+  }
+}
+
+function resolveProductTable(category: Category): ProductTable {
+  if (category.product_table?.table_header?.length) {
+    return category.product_table
+  }
+  return buildLegacyProductTable(category.products)
+}
+
+function isProductColumn(header: string) {
+  return normalizeHeader(header) === "product"
+}
+
+function renderTableCellContent(
+  header: string,
+  cell: TableCell | undefined,
+  fit: string | undefined,
+  isSelected: boolean,
+  onSelect: () => void
+) {
+  if (isFitColumn(header)) {
+    if (!fit) return null
+    return (
+      <span
+        className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
+          fitTone[fit] || fitTone["Strong alternate"]
+        }`}
+      >
+        {fit}
+      </span>
+    )
+  }
+
+  if (isActionColumn(header)) {
+    return (
+      <button
+        onClick={onSelect}
+        title={isSelected ? "Selected" : "Select"}
+        className={`inline-flex items-center justify-center rounded-xl border p-2 transition ${
+          isSelected
+            ? "border-[#54B8FF] bg-[#EEF8FF] text-[#1689DA]"
+            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+        }`}
+      >
+        <CheckIcon className="h-4 w-4" />
+      </button>
+    )
+  }
+
+  if (isProductColumn(header)) {
+    return <div className="font-semibold text-slate-800">{cellValue(cell)}</div>
+  }
+
+  return <span className="text-slate-700">{cellValue(cell)}</span>
 }
 
 function toLabel(value: string) {
@@ -76,6 +189,31 @@ export default function RecommendationCategoryPage({ category }: Props) {
     () => category.products.find((p) => p.id === selectedId) || category.products[0],
     [category.products, selectedId]
   )
+
+  const productTable = useMemo(() => resolveProductTable(category), [category])
+  const tableHeaders = productTable.table_header ?? []
+  const tableRows = productTable.table_values ?? []
+
+  const selectedRow = useMemo(() => {
+    const matchIndex = tableRows.findIndex((row, rowIndex) => {
+      const product = findProductForRow(category.products, row, rowIndex)
+      return product?.id === selected.id
+    })
+    return matchIndex >= 0 ? tableRows[matchIndex] : undefined
+  }, [category.products, selected.id, tableRows])
+
+  const selectedFit = getProductFit(selected, selectedRow, tableHeaders)
+
+  const tableLeftHeader =
+    category.product_table_left_header ?? "Compare top product options"
+  const tableRightHeader =
+    category.product_table_right_header ?? "Select one primary option for this need"
+  const selectedBoxHeader = category.selected_box_header ?? "Selected option details"
+  const selectedBoxSubHeader =
+    category.selected_box_sub_header ??
+    "Review the selected product, edit values if needed, and use the reasons below to support advisor discussion."
+  const advantagesHeader = category.advantages_header ?? "Key Advantages"
+  const reasonsFitHeader = category.reasons_fit_header ?? "Why this product seems fit"
   const copyCalculation = () => {
     const content = (selected.calculation ?? []).join("\n")
     if (!content) return
@@ -133,8 +271,8 @@ export default function RecommendationCategoryPage({ category }: Props) {
         {/* Product comparison table */}
         <div className="px-4 py-5 sm:px-6">
           <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm font-semibold text-slate-700">Compare top product options</div>
-            <div className="text-xs text-slate-500">Select one primary option for this need</div>
+            <div className="text-sm font-semibold text-slate-700">{tableLeftHeader}</div>
+            <div className="text-xs text-slate-500">{tableRightHeader}</div>
           </div>
 
           {/* Desktop table */}
@@ -142,52 +280,35 @@ export default function RecommendationCategoryPage({ category }: Props) {
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-slate-500">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Product</th>
-                  <th className="px-4 py-3 font-medium">Fit</th>
-                  <th className="px-4 py-3 font-medium">Annual Premium</th>
-                  <th className="px-4 py-3 font-medium">Cover / Benefit</th>
-                  <th className="px-4 py-3 font-medium">Term</th>
-                  <th className="px-4 py-3 font-medium">Action</th>
+                  {tableHeaders.map((header) => (
+                    <th key={header} className="px-4 py-3 font-medium">
+                      {header}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {category.products.map((product) => {
+                {tableRows.map((row, rowIndex) => {
+                  const product = findProductForRow(category.products, row, rowIndex)
+                  if (!product) return null
                   const isSelected = selected.id === product.id
+                  const rowFit = getProductFit(product, row, tableHeaders)
                   return (
                     <tr
                       key={product.id}
                       className={isSelected ? "bg-[#F7FBFF]" : "bg-white"}
                     >
-                      <td className="px-4 py-4 align-top">
-                        <div className="font-semibold text-slate-800">{product.name}</div>
-                      </td>
-                      <td className="px-4 py-4 align-top">
-                        <span
-                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
-                            fitTone[product.fit || ""] || fitTone["Strong alternate"]
-                          }`}
-                        >
-                          {product.fit}
-                        </span>
-                      </td>
-                      <td className="px-4 py-4 align-top font-medium text-slate-800">
-                        {product.annualPremium}
-                      </td>
-                      <td className="px-4 py-4 align-top text-slate-700">{product.cover}</td>
-                      <td className="px-4 py-4 align-top text-slate-700">{product.term}</td>
-                      <td className="px-4 py-4 align-top">
-                        <button
-                          onClick={() => setSelectedId(product.id)}
-                          title={isSelected ? "Selected" : "Select"}
-                          className={`inline-flex items-center justify-center rounded-xl border p-2 transition ${
-                            isSelected
-                              ? "border-[#54B8FF] bg-[#EEF8FF] text-[#1689DA]"
-                              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                          }`}
-                        >
-                          <CheckIcon className="h-4 w-4" />
-                        </button>
-                      </td>
+                      {tableHeaders.map((header, colIndex) => (
+                        <td key={`${product.id}-${header}`} className="px-4 py-4 align-top">
+                          {renderTableCellContent(
+                            header,
+                            row[colIndex],
+                            rowFit,
+                            isSelected,
+                            () => setSelectedId(product.id)
+                          )}
+                        </td>
+                      ))}
                     </tr>
                   )
                 })}
@@ -197,8 +318,14 @@ export default function RecommendationCategoryPage({ category }: Props) {
 
           {/* Mobile cards */}
           <div className="space-y-3 lg:hidden">
-            {category.products.map((product) => {
+            {tableRows.map((row, rowIndex) => {
+              const product = findProductForRow(category.products, row, rowIndex)
+              if (!product) return null
               const isSelected = selected.id === product.id
+              const rowFit = getProductFit(product, row, tableHeaders)
+              const metricHeaders = tableHeaders.filter(
+                (header) => !isFitColumn(header) && !isActionColumn(header) && normalizeHeader(header) !== "product"
+              )
               return (
                 <div
                   key={product.id}
@@ -208,16 +335,18 @@ export default function RecommendationCategoryPage({ category }: Props) {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="font-semibold text-slate-800">{product.name}</div>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <span
-                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
-                            fitTone[product.fit || ""] || fitTone["Strong alternate"]
-                          }`}
-                        >
-                          {product.fit}
-                        </span>
-                      </div>
+                      <div className="font-semibold text-slate-800">{cellValue(row[0]) || product.name}</div>
+                      {rowFit && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <span
+                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-medium ${
+                              fitTone[rowFit] || fitTone["Strong alternate"]
+                            }`}
+                          >
+                            {rowFit}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={() => setSelectedId(product.id)}
@@ -231,12 +360,22 @@ export default function RecommendationCategoryPage({ category }: Props) {
                       <CheckIcon className="h-4 w-4" />
                     </button>
                   </div>
-                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                    <MiniMetric label="Annual Premium" value={product.annualPremium} />
-                    <MiniMetric label="Cover / Benefit" value={product.cover} />
-                    <MiniMetric label="Term" value={product.term} />
-                    <MiniMetric label="Payout" value={product.payout} />
-                  </div>
+                  {metricHeaders.length > 0 && (
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                      {metricHeaders.map((header) => {
+                        const colIndex = tableHeaders.findIndex(
+                          (tableHeader) => normalizeHeader(tableHeader) === normalizeHeader(header)
+                        )
+                        return (
+                          <MiniMetric
+                            key={`${product.id}-${header}`}
+                            label={header}
+                            value={colIndex >= 0 ? cellValue(row[colIndex]) : undefined}
+                          />
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               )
             })}
@@ -247,11 +386,8 @@ export default function RecommendationCategoryPage({ category }: Props) {
         <div className="border-t border-slate-200 px-4 py-5 sm:px-6">
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="text-sm font-semibold text-slate-700">Selected option details</div>
-              <div className="mt-1 text-xs text-slate-500">
-                Review the selected product, edit values if needed, and use the reasons below to
-                support advisor discussion.
-              </div>
+              <div className="text-sm font-semibold text-slate-700">{selectedBoxHeader}</div>
+              <div className="mt-1 text-xs text-slate-500">{selectedBoxSubHeader}</div>
             </div>
             <div className="rounded-full border border-[#B8E3FF] bg-[#EEF8FF] px-3 py-1 text-xs font-medium text-[#1689DA]">
               Primary option for this need
@@ -266,13 +402,15 @@ export default function RecommendationCategoryPage({ category }: Props) {
                   <p className="mt-2 text-sm leading-6 text-slate-500">{selected.why}</p>
                 )}
               </div>
-              <span
-                className={`inline-flex w-fit rounded-full border px-3 py-1 text-xs font-medium ${
-                  fitTone[selected.fit || ""] || fitTone["Strong alternate"]
-                }`}
-              >
-                {selected.fit}
-              </span>
+              {selectedFit && (
+                <span
+                  className={`inline-flex w-fit rounded-full border px-3 py-1 text-xs font-medium ${
+                    fitTone[selectedFit] || fitTone["Strong alternate"]
+                  }`}
+                >
+                  {selectedFit}
+                </span>
+              )}
             </div>
 
             {/* Benefits */}
@@ -288,7 +426,7 @@ export default function RecommendationCategoryPage({ category }: Props) {
             <div className="mt-5 flex flex-col gap-5">
               {selected.keyFeatures && selected.keyFeatures.length > 0 && (
                 <div className="w-full rounded-[16px] border border-slate-200 bg-white p-4">
-                  <div className="mb-3 text-sm font-semibold text-slate-700">Key Advantages</div>
+                  <div className="mb-3 text-sm font-semibold text-slate-700">{advantagesHeader}</div>
                   <div className="space-y-2">
                     {selected.keyFeatures.map((feature) => (
                       <div key={feature} className="flex gap-2 text-sm text-slate-600">
@@ -301,9 +439,7 @@ export default function RecommendationCategoryPage({ category }: Props) {
               )}
               {selected.reasons && selected.reasons.length > 0 && (
                 <div className="w-full rounded-[16px] border border-slate-200 bg-white p-4">
-                  <div className="mb-3 text-sm font-semibold text-slate-700">
-                    Why this product seems fit
-                  </div>
+                  <div className="mb-3 text-sm font-semibold text-slate-700">{reasonsFitHeader}</div>
                   <div className="space-y-2">
                     {selected.reasons.map((reason) => (
                       <div key={reason} className="flex gap-2 text-sm text-slate-600">

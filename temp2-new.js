@@ -11,7 +11,7 @@
  * - navigation, clientName, pref_language, language_ids, RecomendationSelected, chat, salesData
  */
 
-const questionsLoaderResExample = {
+export const questionsLoaderResExample = {
   // navigation is managed internally by the app (defaults to "Data Retrieval")
   // navigation: "Basic Info",
   pref_language: "English",
@@ -455,7 +455,7 @@ const questionsLoaderResExample = {
         {
           id: "life_cover",
           category: "Immediate Life Cover Analysis",
-          title: "Immediate Life Cover Analysis",
+          title: "Mera Life Cover Analysis",
           subtitle:
             "Pure protection need identified for family income replacement and liability protection.",
           summary: {
@@ -463,18 +463,46 @@ const questionsLoaderResExample = {
             term: "20 years",
             budget: "1.06 L / year"
           },
+          product_table_left_header: "Compare top product options",
+          product_table_right_header:"Select one primary option for this need",
+          product_table:{
+            // if only Fit & Action are present in table_header 
+            // then their specific columns have round shape boxes & tick otherwise let it be simple text as usual
+            table_header: ["Product", "Fit", "Annual Premium", "Cover/Benefit","Term","Action"],
+            table_values:[
+                [
+                { value: "Kotak Signature Term Plan"},
+                { value: "Best fit" },
+                { value: "1.06L" },
+                { value: "71L"},
+                { value: "20 years"}
+                ],
+                [
+                  { value: "Kotak e-Term Plan"},
+                  { value: "Strong alternate" },
+                  { value: "0.94" },
+                  { value: "71L"},
+                  { value: "20 years"}
+                  ]
+            ]
+            
+          },
+          advantages_header:'Key Advantages',
+          reasons_fit_header:'why this product seems fit',
+          selected_box_header:'Selected option details',
+          selected_box_sub_header:'Review the selected product, edit values if needed, and use the reasons below to support advisor discussion.',
           products: [
             {
               id: "signature_term",
               name: "Kotak Signature Term Plan",
-              fit: "Best fit",
-              annualPremium: "1.06 L",
-              cover: "71 L",
-              term: "20 years",
-              premiumPayingTerm: "20 years",
-              premiumFrequency: "Annual",
-              payout: "Lump sum",
-              survivalBenefit: "None",
+              //fit: "Best fit",
+              //annualPremium: "1.06 L",
+              //cover: "71 L",
+              //term: "20 years",
+              //premiumPayingTerm: "20 years",
+              //premiumFrequency: "Annual",
+              //payout: "Lump sum",
+              //survivalBenefit: "None",
               why: "Strong protection fit with premium aligned to current need.",
               reasons: [
                 "Pure protection plan aligned to life cover need",
@@ -503,14 +531,14 @@ const questionsLoaderResExample = {
             {
               id: "e_term",
               name: "Kotak e-Term Plan",
-              fit: "Strong alternate",
-              annualPremium: "0.94 L",
-              cover: "71 L",
-              term: "20 years",
-              premiumPayingTerm: "20 years",
-              premiumFrequency: "Annual",
-              payout: "Lump sum / income options",
-              survivalBenefit: "None",
+              //fit: "Best fit",
+              //annualPremium: "1.06 L",
+              //cover: "71 L",
+              //term: "20 years",
+              //premiumPayingTerm: "20 years",
+              //premiumFrequency: "Annual",
+              //payout: "Lump sum",
+              //survivalBenefit: "None",
               why: "Economical pure protection option with flexible payout choices.",
               reasons: [
                 "Lower premium can help if affordability is a concern",
@@ -548,18 +576,46 @@ const questionsLoaderResExample = {
             horizon: "18 years",
             targetYear: "2043"
           },
+          product_table_left_header: "Compare top product options",
+          product_table_right_header:"Select one primary option for this needy",
+          product_table:{
+            // if only Fit & Action are present in table_header 
+            // then their specific columns have round shape boxes & tick otherwise let it be simple text as usual
+            table_header: ["Product", "Fit", "Annual Premium", "Cover/Benefit","Term","Action"],
+            table_values:[
+                [
+                { value: "Kotak Signature Term Plan"},
+                { value: "Best fit" },
+                { value: "1.06L" },
+                { value: "71L"},
+                { value: "20 years"}
+                ],
+                [
+                  { value: "Kotak e-Term Plan"},
+                  { value: "Strong alternate" },
+                  { value: "0.94" },
+                  { value: "71L"},
+                  { value: "20 years"}
+                  ]
+            ]
+            
+          },
+          advantages_header:'Key Advantagess',
+          reasons_fit_header:'why this product seems fitting',
+          selected_box_header:'Selected option details',
+          selected_box_sub_header:'Review the selected product, edit values if needed, and use the reasons below to support advisor discussion.',
           products: [
             {
               id: "e_invest_plus",
               name: "Kotak e-Invest Plus",
-              fit: "Best fit",
-              annualPremium: "2.35 L",
-              cover: "Goal-linked",
-              term: "18 years",
-              premiumPayingTerm: "18 years",
-              premiumFrequency: "Annual",
-              payout: "Fund value",
-              survivalBenefit: "Fund-linked maturity value",
+              // fit: "Best fit",
+              // annualPremium: "2.35 L",
+              // cover: "Goal-linked",
+              // term: "18 years",
+              // premiumPayingTerm: "18 years",
+              // premiumFrequency: "Annual",
+              // payout: "Fund value",
+              // survivalBenefit: "Fund-linked maturity value",
               why: "Strong fit for child-focused long-horizon market-linked corpus creation.",
               reasons: [
                 "Well suited for long-duration child future planning",
@@ -590,10 +646,10 @@ const questionsLoaderResExample = {
       ]
     },
 
-    followUpQn: {
-      header: "Follow-up Questions",
-      data: []
-    },
+    // followUpQn: {
+    //   header: "Follow-up Questions",
+    //   data: []
+    // },
 
     cues: {
       header: "ai cues",
@@ -603,63 +659,35 @@ const questionsLoaderResExample = {
           card_type: "notification_card",
           options: ["true", "false"],
           text: "Sample cue card text for the agent."
+        },
+        {
+          header:'Ins benefit',
+          color: "green",
+          data:[
+              {
+                  "id": "unique_0_elaborated",
+                  "text": "Discounted premium rates for female lives are available in certain plans, such as the Kotak SmartLife Plan, which offers lower premiums for female policyholders. "
+              },
+              {
+                  "id": "unique_1_elaborated",
+                  "text": "The option for long-term savings up to 75 years of age is also available in plans like the Kotak SmartLife Plan, allowing females to secure their financial future with flexibility."
+              }
+          ]
         }
       ]
     },
 
-    alert: {
-      header: "Alerts",
-      data: []
-    }
+    // alert: {
+    //   header: "Alerts",
+    //   data: []
+    // }
   }
 }
 
-/**
- * Minimal empty shell (matches initialCopilotState shape). Use when backend has no prefilled PFR yet.
- */
-const questionsLoaderResMinimalExample = {
-  navigation: "",
-  pref_language: "English",
-  language_ids: ["English", "Hindi", "Marathi"],
-  RecomendationSelected: "",
-  chat: [],
-  clientName: "",
-  salesData: {
-    basicInfo: {
-      boxA: { header: "", data: {} },
-      table: { header: "", table_header: [], table_values: [] }
-    },
-    assets: {
-      boxA: {
-        header: "",
-        sub_header: "",
-        sub_header_data: 0,
-        text_area_header: "",
-        text_area_value: ""
-      },
-      boxB: {
-        header: "",
-        text_area_headerA: "",
-        text_area_valueA: "",
-        text_area_headerB: "",
-        text_area_valueB: ""
-      },
-      table: { header: "", table_header: [], table_values: [] }
-    },
-    liabilities: {
-      boxA: { header: "", data: {} },
-      boxB: { header: "", data: {} },
-      table: { header: "", table_header: [], table_values: [] }
-    },
-    financialGoals: [],
-    planSummary: [],
-    recommendations: [],
-    cues: { header: "", cards: [] }
-  }
-}
 
-module.exports = {
-  /** Emit this object on event: questions_loader_res */
-  questionsLoaderResExample,
-  questionsLoaderResMinimalExample
-}
+
+// module.exports = {
+//   /** Emit this object on event: questions_loader_res */
+//   questionsLoaderResExample,
+//   questionsLoaderResMinimalExample
+// }
