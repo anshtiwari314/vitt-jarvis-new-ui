@@ -1,3 +1,5 @@
+npm run fetch-models
+
 npm run oldbuild
 
 cp ./lame.min.js ./dist

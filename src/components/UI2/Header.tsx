@@ -3,6 +3,10 @@
 import React, { useEffect, useState } from "react"
 import { useAppSelector, useAppDispatch } from "../../store/store"
 import { useVad } from "../../context/VadWrapper"
+import {
+  isWakeWordModelLoading,
+  useMainPageWakeWord,
+} from "../../context/MainPageWakeWordContext"
 import { useAuth } from "../../context/AuthContext"
 import { useData } from "../../context/DataWrapper"
 import playSound from "../../assets/sound-play.gif"
@@ -39,6 +43,13 @@ export default function Header() {
   const { setCurrentUser } = useAuth()
   //@ts-ignore
   const { manualVadStatus, setManualVadStatus, VAD2 } = useVad()
+  const { status: wakeWordStatus } = useMainPageWakeWord()
+  const wakeWordLoading = isWakeWordModelLoading(manualVadStatus, wakeWordStatus)
+  const vadLoading = VAD2 === undefined || VAD2.loading === true
+  const micLoading = vadLoading || wakeWordLoading
+  const micLoadingTitle = wakeWordLoading
+    ? "Model is loading plz wait"
+    : "Loading microphone…"
 
   const currentNavigation = useAppSelector((state) => state.salesCopilotReducer.navigation)
   const clientName = useAppSelector((state) => state.salesCopilotReducer.clientName)
@@ -143,13 +154,27 @@ export default function Header() {
           <div className="hidden md:flex flex-wrap items-center gap-3">
             {/* Mic Control */}
             <div className="h-10 md:h-12 flex items-center flex-shrink-0">
-              {VAD2 !== undefined && VAD2.loading === false ? (
+              {micLoading ? (
+                <div
+                  className="h-full px-3 md:px-4 flex justify-center items-center rounded-lg bg-slate-100 shadow-sm cursor-wait"
+                  title={micLoadingTitle}
+                >
+                  <TailSpin stroke="red" speed={0.95} className="w-5 h-5 md:w-6 md:h-6" />
+                </div>
+              ) : (
                 <button
                   className={`h-full px-3 md:px-4 flex items-center justify-center rounded-lg transition-all duration-200 shadow-sm ${
                     manualVadStatus
                       ? "text-sky-600 bg-white shadow-[0_0_10px_rgba(2,132,199,0.3)] relative z-10"
                       : "text-slate-600 bg-slate-100 hover:bg-slate-200"
                   }`}
+                  title={
+                    manualVadStatus
+                      ? wakeWordStatus === "listening"
+                        ? "Mic on — listening for wake word"
+                        : "Mic on"
+                      : "Turn mic on"
+                  }
                   onClick={() => setManualVadStatus(!manualVadStatus)}
                 >
                   {manualVadStatus ? (
@@ -158,10 +183,6 @@ export default function Header() {
                     <MicOff className="w-5 h-4 md:w-7 md:h-7" />
                   )}
                 </button>
-              ) : (
-                <div className="h-full px-3 md:px-4 flex justify-center items-center rounded-lg bg-slate-100 shadow-sm">
-                  <TailSpin stroke="red" speed={0.95} className="w-5 h-5 md:w-6 md:h-6" />
-                </div>
               )}
             </div>
 
@@ -252,6 +273,13 @@ export function MobileHeaderControls() {
   const { setCurrentUser } = useAuth()
   //@ts-ignore
   const { manualVadStatus, setManualVadStatus, VAD2 } = useVad()
+  const { status: wakeWordStatus } = useMainPageWakeWord()
+  const wakeWordLoading = isWakeWordModelLoading(manualVadStatus, wakeWordStatus)
+  const vadLoading = VAD2 === undefined || VAD2.loading === true
+  const micLoading = vadLoading || wakeWordLoading
+  const micLoadingTitle = wakeWordLoading
+    ? "Model is loading plz wait"
+    : "Loading microphone…"
 
   const currentNavigation = useAppSelector((state) => state.salesCopilotReducer.navigation)
   const pref_language = useAppSelector((state) => state.salesCopilotReducer.pref_language)
@@ -309,21 +337,31 @@ export function MobileHeaderControls() {
         <div className="flex items-center justify-between gap-1 w-full">
           {/* Mic Control */}
           <div className="flex items-center flex-shrink-0 bg-slate-100 rounded-lg shadow-sm">
-            {VAD2 !== undefined && VAD2.loading === false ? (
+            {micLoading ? (
+              <div
+                className="px-3 py-2 flex justify-center items-center cursor-wait"
+                title={micLoadingTitle}
+              >
+                <TailSpin stroke="red" speed={0.95} className="w-5 h-5" />
+              </div>
+            ) : (
               <button
                 className={`px-3 py-2 flex items-center justify-center rounded-lg transition-all duration-200 ${
                   manualVadStatus
                     ? "text-sky-600 bg-white shadow-[0_0_10px_rgba(2,132,199,0.3)] ring-1 ring-slate-200 relative z-10"
                     : "text-slate-600 hover:bg-slate-200"
                 }`}
+                title={
+                  manualVadStatus
+                    ? wakeWordStatus === "listening"
+                      ? "Mic on — listening for wake word"
+                      : "Mic on"
+                    : "Turn mic on"
+                }
                 onClick={() => setManualVadStatus(!manualVadStatus)}
               >
                 {manualVadStatus ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
               </button>
-            ) : (
-              <div className="px-3 py-2 flex justify-center items-center">
-                <TailSpin stroke="red" speed={0.95} className="w-5 h-5" />
-              </div>
             )}
           </div>
 

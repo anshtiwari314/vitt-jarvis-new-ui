@@ -267,6 +267,11 @@ console.log("Filtered Recommendations:", filteredRecommendations);
     useEffect(()=>{
               function getMeetingInfo(){
               const query = window.location.href.split('?')[1];
+              if (!query) {
+                dispatch(resetSalesState());
+                dispatch(setQP({ roomId: '', name: '', pref_language: 'english' }));
+                return;
+              }
               const parts = query.split("&");
               const roomParam = parts[0] || "";
               //const candidParam = parts[1] || "";

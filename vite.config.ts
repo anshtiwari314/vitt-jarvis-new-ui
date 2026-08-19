@@ -1,15 +1,29 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const rootDir = path.dirname(fileURLToPath(import.meta.url))
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  resolve: {
+    alias: {
+      // openwakeword-wasm-browser does `import * as ort from 'onnxruntime-web'`;
+      // the default ORT ESM bundle breaks that under Vite — use the WASM shim instead.
+      'onnxruntime-web': path.resolve(rootDir, 'src/lib/onnxruntime-web-shim.js'),
+    },
+  },
+  optimizeDeps: {
+    exclude: ['openwakeword-web', 'openwakeword-wasm-browser', 'web-wake-word'],
+  },
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       devOptions: {
-        enabled: true,
+        enabled: false,
       },
       includeAssets: ['lame.min.js', '*.wasm', '*.onnx', 'vad.worklet.bundle.min.js'],
       manifest: {
@@ -18,8 +32,8 @@ export default defineConfig({
         description: 'Life Insurance tablet app',
         theme_color: '#0284c7',
         background_color: '#ffffff',
-        display: 'standalone', // good for tablets; use 'fullscreen' for kiosk
-        orientation: 'portrait', // if tablet is always landscape
+        display: 'standalone',
+        orientation: 'portrait',
         start_url: '/',
         icons: [
           {
@@ -42,12 +56,11 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm,onnx}'],
-        // Large ML assets — increase limit if needed
-        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        maximumFileSizeToCacheInBytes: 30 * 1024 * 1024,
       },
     }),
   ],
   server: {
-    allowedHosts: ['fdd2-103-173-124-184.ngrok-free.app','7cc57011abcd.ngrok-free.app','7cc57011412345a.ngrok-free.app','7cc57011447a.ngrok-free.app','afb715722b35.ngrok-free.app','44ae-2401-4900-8828-9ca4-684c-30f7-85f8-948a.ngrok-free.app'], // Add your host here
+    allowedHosts: ['97fc-103-173-124-212.ngrok-free.app','7cc57011abcd.ngrok-free.app','7cc57011412345a.ngrok-free.app','7cc57011447a.ngrok-free.app','afb715722b35.ngrok-free.app','44ae-2401-4900-8828-9ca4-684c-30f7-85f8-948a.ngrok-free.app'],
   },
 })

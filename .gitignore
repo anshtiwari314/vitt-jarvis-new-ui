@@ -1,3 +1,12 @@
 node_modules/
 dist/
 plans-and-features/
+
+# ML / wake-word models — fetched via scripts/fetch-models.sh (npm install / build / dev)
+public/openwakeword/models/*.onnx
+public/davoice/models/*.onnx
+public/porcupine/*.pv
+public/openwakeword/ort/*
+!public/openwakeword/ort/.gitkeep
+public/davoice/wasm/*
+!public/davoice/wasm/.gitkeep

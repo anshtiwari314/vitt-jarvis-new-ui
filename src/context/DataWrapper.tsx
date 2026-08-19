@@ -15,7 +15,8 @@ import {
   updateCues,
   updatePref_language,
   updateAlerts,
-  addCues
+  addCues,
+  setNavigation,
 } from "../reducers/salesCopilotReducer"
 import { useDispatch } from "react-redux"
 import { useAppSelector } from "../store/store"
@@ -102,6 +103,7 @@ const [pref_language,setPref_language]=useState("English")
   const speakerEnabledRef = useRef(false)
   const lastSentSpeakerStateRef = useRef<"on" | "off" | null>(null)
   const suppressSpeakerEmitRef = useRef(false)
+  const emitSelectedTopicRef = useRef<(navPage: string) => void>(() => {})
 
   const [basicInfoVideoUrl, setBasicInfoVideoUrl] = useState("")
   const [isBasicInfoVideoPlaying, setIsBasicInfoVideoPlaying] = useState(false)
@@ -209,6 +211,49 @@ const [pref_language,setPref_language]=useState("English")
         setRecommendationsGenerated(true)
       else
         setRecommendationsGenerated(false)
+  }
+
+  const SERVER_NAV_TO_INTERNAL: Record<string, string> = {
+    client_info: "Data Retrieval",
+    plan_summary: "Plan Summary",
+    recommendations: "Recommendations",
+    basicInfo: "Data Retrieval",
+    planSummary: "Plan Summary",
+    productRec: "Recommendations",
+  }
+
+  function resolveServerNavigationTarget(data: any): string | null {
+    const changeTo = data?.change_to ?? data?.changeTo
+    if (typeof changeTo !== "string" || !changeTo.trim()) {
+      return null
+    }
+
+    const normalized = changeTo.trim()
+    const internal =
+      SERVER_NAV_TO_INTERNAL[normalized] ??
+      SERVER_NAV_TO_INTERNAL[normalized.toLowerCase()]
+    if (!internal) {
+      return null
+    }
+
+    const category = data?.category ?? data?.recommendation_category
+    if (internal === "Recommendations" && typeof category === "string" && category.trim()) {
+      return `Recommendations::${category.trim()}`
+    }
+
+    return internal
+  }
+
+  function handleServerNavigation(data: any) {
+    const target = resolveServerNavigationTarget(data)
+    if (!target) {
+      console.warn("Unhandled server navigation payload", data)
+      return
+    }
+
+    console.log("server navigation →", target)
+    dispatch(setNavigation(target))
+    emitSelectedTopicRef.current(target)
   }
 
   function parseKeepButtonActive(data: any): boolean {
@@ -562,6 +607,7 @@ useEffect(()=>{
         tempSocket.on('notifications', updateNotifications)
         tempSocket.on('audio_playback_res', handleAudioPlaybackResponse)
         tempSocket.on('video_playback_res', handleVideoPlaybackResponse)
+        tempSocket.on('navigation', handleServerNavigation)
 
     setSocket(tempSocket)
 
@@ -573,6 +619,7 @@ useEffect(()=>{
       tempSocket.off("notifications", updateNotifications)
       tempSocket.off("audio_playback_res", handleAudioPlaybackResponse)
       tempSocket.off("video_playback_res", handleVideoPlaybackResponse)
+      tempSocket.off("navigation", handleServerNavigation)
       clearVideoPreloadCache()
       tempSocket.disconnect()
     }
@@ -615,6 +662,7 @@ useEffect(()=>{
     console.log("emitting selected_topic_req_v2", data)
     socket.emit("selected_topic_req_v2", data)
   }
+  emitSelectedTopicRef.current = emitSelectedTopic
 
   // Emit current topic on page load / socket connect (and reconnect).
   useEffect(() => {
