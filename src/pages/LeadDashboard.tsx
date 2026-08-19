@@ -276,30 +276,30 @@ export function Table({ setFormState, initialFormState }) {
   }
 
   const startPolling = (sessionId: string, uniqueLeadId: string) => {
-    if (pollingTimers.current[uniqueLeadId]) return 
-    
+    if (pollingTimers.current[uniqueLeadId]) return
+
     setInsightLoading((prev) => ({ ...prev, [uniqueLeadId]: true }))
     setInsightError((prev) => ({ ...prev, [uniqueLeadId]: "" }))
     setInsightMsg((prev) => ({ ...prev, [uniqueLeadId]: "Checking dashboard status..." }))
 
     const timerId = window.setInterval(async () => {
       try {
-          const pollResp = await fetch(MAIN_ROUTER_URL, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                route_name: "main_router",
-                json_data: {
-                  trigger_func: "ins_postfacto_status_check",
-                  params: { session_id: sessionId }
-                }
-              })
-            });
+        const pollResp = await fetch(MAIN_ROUTER_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            route_name: "main_router",
+            json_data: {
+              trigger_func: "ins_postfacto_status_check",
+              params: { session_id: sessionId }
+            }
+          })
+        });
 
-            const data = await pollResp.json();
-            const status = data?.status; // expects "done" | "pending"
+        const data = await pollResp.json();
+        const status = data?.status; // expects "done" | "pending"
 
         if (status === "done") {
           stopPolling(uniqueLeadId)
@@ -334,31 +334,31 @@ export function Table({ setFormState, initialFormState }) {
   // and made it run on unmount.
 
   function enableEdit(lead) {
-     const {
-          name,
-          mob,
-          email,
-          priority,
-          source,
-          lead_id,
-          link_params,
-          pref_language
-        } = lead
+    const {
+      name,
+      mob,
+      email,
+      priority,
+      source,
+      lead_id,
+      link_params,
+      pref_language
+    } = lead
 
-        const [fname = "", ...restName] = (name || "").split(" ")
+    const [fname = "", ...restName] = (name || "").split(" ")
 
-      setFormState({
-        ...initialFormState,
-        first_name: fname,
-        last_name: restName.join(" "),
-        mobile_number: mob,
-        email,
-        lead_source: source,
-        language: pref_language,
-        priority,
-        lead_id,
-        link_params
-      })
+    setFormState({
+      ...initialFormState,
+      first_name: fname,
+      last_name: restName.join(" "),
+      mobile_number: mob,
+      email,
+      lead_source: source,
+      language: pref_language,
+      priority,
+      lead_id,
+      link_params
+    })
   }
 
   const generateInsight = async (lead) => {
@@ -387,24 +387,24 @@ export function Table({ setFormState, initialFormState }) {
       const sessionId = cidMatch ? cidMatch[0] : "cid_8459"
 
       // Initial trigger
-    const response = await fetch(MAIN_ROUTER_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            route_name: "main_router",
-            json_data: {
-              trigger_func: "trigger_metrics_LI",
-              params: { session_id: sessionId }
-            }
-          })
-        });
+      const response = await fetch(MAIN_ROUTER_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          route_name: "main_router",
+          json_data: {
+            trigger_func: "trigger_metrics_LI",
+            params: { session_id: sessionId }
+          }
+        })
+      });
 
-        const json = await response.json();
+      const json = await response.json();
 
-        const rawMsg = json?.msg || "";
-        const msg = rawMsg.toLowerCase();
+      const rawMsg = json?.msg || "";
+      const msg = rawMsg.toLowerCase();
 
 
       if (rawMsg) {
@@ -611,12 +611,6 @@ export function Table({ setFormState, initialFormState }) {
                   >
                     Edit
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-                  >
-                    Insights
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-200">
@@ -657,53 +651,6 @@ export function Table({ setFormState, initialFormState }) {
                         >
                           <FontAwesomeIcon icon={faEdit} className="w-4 h-4" />
                         </button>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                        <div className="flex flex-col items-start space-y-1">
-                          <button
-                            onClick={() => generateInsight(lead)}
-                            disabled={insightLoading[uniqueLeadId] || lead.postfacto_status === "N/A"}
-                            className={getInsightButtonStyle(lead, insightLoading[uniqueLeadId])}
-                            title={
-                              lead.postfacto_status === "done"
-                                ? "Open Insight Link"
-                                : lead.postfacto_status === "N/A"
-                                  ? "No insights available"
-                                  : "Generate Insight"
-                            }
-                            aria-busy={!!insightLoading[uniqueLeadId]}
-                          >
-                            <span className="inline-flex items-center gap-2">
-                              {insightLoading[uniqueLeadId] && (
-                                <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" aria-hidden="true">
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                    fill="none"
-                                  />
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                                  />
-                                </svg>
-                              )}
-                              {getInsightButtonText(lead, insightLoading[uniqueLeadId])}
-                            </span>
-                          </button>
-                          {insightMsg[uniqueLeadId] && (
-                            <span className="text-xs text-slate-600" aria-live="polite">
-                              {insightMsg[uniqueLeadId]}
-                            </span>
-                          )}
-                          {insightError[uniqueLeadId] && (
-                            <span className="text-xs text-red-600 font-medium">{insightError[uniqueLeadId]}</span>
-                          )}
-                        </div>
                       </td>
                     </tr>
                   )
@@ -761,10 +708,9 @@ export function Table({ setFormState, initialFormState }) {
                       onClick={() => paginate(p)}
                       aria-current={currentPage === p ? "page" : undefined}
                       className={`px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500
-                        ${
-                          currentPage === p
-                            ? "border-blue-600 bg-blue-50 text-blue-700"
-                            : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800"
+                        ${currentPage === p
+                          ? "border-blue-600 bg-blue-50 text-blue-700"
+                          : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-800"
                         }`}
                     >
                       {p}
@@ -1056,12 +1002,12 @@ const Header = ({
 export function LeadDashboard() {
   const [formData, setFormData] = useState([]) // Mock for useData's formData
   const base_url = config.serverBaseUrl
-  const { currentUser }:any = useAuth()
+  const { currentUser }: any = useAuth()
   const currentAgentName = JSON.parse(localStorage.getItem("agent_name") || "{}")?.agent_name || ""
   const pollingRef = useRef(null)
   const pollingRefs = useRef({})
 
-  const [isPopupVisible,setIsPopupVisible] = useState(false)
+  const [isPopupVisible, setIsPopupVisible] = useState(false)
   const [isPlanSelectorOpen, setIsPlanSelectorOpen] = useState(false)
   const [allPlans, setAllPlans] = useState<any[]>([])
   const [preselectedPlanIds, setPreselectedPlanIds] = useState<string[]>([])
@@ -1244,14 +1190,14 @@ export function LeadDashboard() {
     }
 
     const data = {
-       lead_id: formState.lead_id,
-    customer_name: name,
-    mobile_num: formState.mobile_number || formState.mobile || "9999999999",
-    email: formState.email,
-    priority: formState.priority,
-    source: formState.lead_source,
-    agent_id: currentUser.userid,
-    pref_language: formState.language,
+      lead_id: formState.lead_id,
+      customer_name: name,
+      mobile_num: formState.mobile_number || formState.mobile || "9999999999",
+      email: formState.email,
+      priority: formState.priority,
+      source: formState.lead_source,
+      agent_id: currentUser.userid,
+      pref_language: formState.language,
       lead_type: "LI",
     }
 
@@ -1260,22 +1206,22 @@ export function LeadDashboard() {
 
     try {
       // upload request
-        await fetch(`${base_url}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            route_name: "single_lead_upload",
-            json_data: {
-              ...data
-            }
-          })
-        });
+      await fetch(`${base_url}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          route_name: "single_lead_upload",
+          json_data: {
+            ...data
+          }
+        })
+      });
 
-        // UI changes
-        setIsPopupVisible(true);
-        setFormState(initialState);
+      // UI changes
+      setIsPopupVisible(true);
+      setFormState(initialState);
       getFormData(`${base_url}/recent_uploads`)
     } catch (e) {
       console.error(e)
@@ -1288,7 +1234,7 @@ export function LeadDashboard() {
     <DataContext.Provider value={{ base_url, getFormData, formData }}>
       <div className="h-full overflow-y-auto bg-slate-100 font-sans">
         {/* <Sidebar links={mylink} /> */}
-        <div style={{  }} className="mx-0 lg:mx-[8rem]">
+        <div style={{}} className="mx-0 lg:mx-[8rem]">
           <div className="py-6">
             <Header
               title="Lead Management"
@@ -1300,7 +1246,7 @@ export function LeadDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
             <Form state={formState} setState={setFormState} submitForm={submitForm} loading={loading} error={error} />
             <UploadComp />
-            <NewLeadPopup isOpen={isPopupVisible} setIsOpen={setIsPopupVisible}/>
+            <NewLeadPopup isOpen={isPopupVisible} setIsOpen={setIsPopupVisible} />
           </div>
           <SelectPlansModal
             isOpen={isPlanSelectorOpen}

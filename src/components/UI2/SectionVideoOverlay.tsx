@@ -40,8 +40,18 @@ export default function SectionVideoOverlay({
     const video = videoRef.current;
     if (!basicInfoVideoUrl || !video) return;
 
-    const absoluteUrl = new URL(basicInfoVideoUrl, window.location.href).href;
-    if (video.src !== absoluteUrl) {
+    let targetSrc = basicInfoVideoUrl;
+    if (basicInfoVideoUrl.startsWith("blob:") || basicInfoVideoUrl.startsWith("data:")) {
+      targetSrc = basicInfoVideoUrl;
+    } else {
+      try {
+        targetSrc = new URL(basicInfoVideoUrl, window.location.href).href;
+      } catch (e) {
+        targetSrc = basicInfoVideoUrl;
+      }
+    }
+
+    if (video.src !== targetSrc) {
       video.src = basicInfoVideoUrl;
       video.load();
     }
@@ -66,13 +76,21 @@ export default function SectionVideoOverlay({
       startBasicInfoVideo();
     };
 
-    if (video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+    if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA || video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
       handleReady();
       return;
     }
 
+    video.addEventListener('canplay', handleReady, { once: true });
+    video.addEventListener('loadeddata', handleReady, { once: true });
     video.addEventListener('canplaythrough', handleReady, { once: true });
-    return () => video.removeEventListener('canplaythrough', handleReady);
+    const fallbackTimer = setTimeout(handleReady, 1000);
+    return () => {
+      clearTimeout(fallbackTimer);
+      video.removeEventListener('canplay', handleReady);
+      video.removeEventListener('loadeddata', handleReady);
+      video.removeEventListener('canplaythrough', handleReady);
+    };
   }, [basicInfoVideoUrl, isBasicInfoVideoPlaying, isVideoPreloaded, startBasicInfoVideo]);
 
   useEffect(() => {
@@ -102,13 +120,21 @@ export default function SectionVideoOverlay({
       }
     };
 
-    if (video.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+    if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
       startPlayback();
       return;
     }
 
+    video.addEventListener('canplay', startPlayback, { once: true });
+    video.addEventListener('loadeddata', startPlayback, { once: true });
     video.addEventListener('canplaythrough', startPlayback, { once: true });
-    return () => video.removeEventListener('canplaythrough', startPlayback);
+    const fallbackTimer = setTimeout(startPlayback, 1000);
+    return () => {
+      clearTimeout(fallbackTimer);
+      video.removeEventListener('canplay', startPlayback);
+      video.removeEventListener('loadeddata', startPlayback);
+      video.removeEventListener('canplaythrough', startPlayback);
+    };
   }, [isBasicInfoVideoPlaying, basicInfoVideoUrl]);
 
   const handleVideoEnd = () => {

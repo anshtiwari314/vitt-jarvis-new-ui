@@ -15,8 +15,7 @@ import {
   updateCues,
   updatePref_language,
   updateAlerts,
-  addCues,
-  setNavigation,
+  addCues
 } from "../reducers/salesCopilotReducer"
 import { useDispatch } from "react-redux"
 import { useAppSelector } from "../store/store"
@@ -103,7 +102,6 @@ const [pref_language,setPref_language]=useState("English")
   const speakerEnabledRef = useRef(false)
   const lastSentSpeakerStateRef = useRef<"on" | "off" | null>(null)
   const suppressSpeakerEmitRef = useRef(false)
-  const emitSelectedTopicRef = useRef<(navPage: string) => void>(() => {})
 
   const [basicInfoVideoUrl, setBasicInfoVideoUrl] = useState("")
   const [isBasicInfoVideoPlaying, setIsBasicInfoVideoPlaying] = useState(false)
@@ -213,49 +211,6 @@ const [pref_language,setPref_language]=useState("English")
         setRecommendationsGenerated(false)
   }
 
-  const SERVER_NAV_TO_INTERNAL: Record<string, string> = {
-    client_info: "Data Retrieval",
-    plan_summary: "Plan Summary",
-    recommendations: "Recommendations",
-    basicInfo: "Data Retrieval",
-    planSummary: "Plan Summary",
-    productRec: "Recommendations",
-  }
-
-  function resolveServerNavigationTarget(data: any): string | null {
-    const changeTo = data?.change_to ?? data?.changeTo
-    if (typeof changeTo !== "string" || !changeTo.trim()) {
-      return null
-    }
-
-    const normalized = changeTo.trim()
-    const internal =
-      SERVER_NAV_TO_INTERNAL[normalized] ??
-      SERVER_NAV_TO_INTERNAL[normalized.toLowerCase()]
-    if (!internal) {
-      return null
-    }
-
-    const category = data?.category ?? data?.recommendation_category
-    if (internal === "Recommendations" && typeof category === "string" && category.trim()) {
-      return `Recommendations::${category.trim()}`
-    }
-
-    return internal
-  }
-
-  function handleServerNavigation(data: any) {
-    const target = resolveServerNavigationTarget(data)
-    if (!target) {
-      console.warn("Unhandled server navigation payload", data)
-      return
-    }
-
-    console.log("server navigation →", target)
-    dispatch(setNavigation(target))
-    emitSelectedTopicRef.current(target)
-  }
-
   function parseKeepButtonActive(data: any): boolean {
     return data?.keep_button_active === true
   }
@@ -281,10 +236,67 @@ const [pref_language,setPref_language]=useState("English")
     extractAndPlayAudio(data)
   }
 
+  const videoChunksRef = useRef<Uint8Array[]>([])
+
+  function parseChunkToUint8Array(chunk: any): Uint8Array | null {
+    if (!chunk) return null
+    if (chunk instanceof Uint8Array) return chunk
+    if (chunk instanceof ArrayBuffer) return new Uint8Array(chunk)
+    if (Array.isArray(chunk)) return new Uint8Array(chunk)
+    if (typeof chunk === "string") {
+      const cleanB64 = chunk.includes(",") ? chunk.split(",")[1] : chunk
+      try {
+        const binaryStr = atob(cleanB64)
+        const bytes = new Uint8Array(binaryStr.length)
+        for (let i = 0; i < binaryStr.length; i++) {
+          bytes[i] = binaryStr.charCodeAt(i)
+        }
+        return bytes
+      } catch (err) {
+        console.warn("Failed to decode video chunk base64:", err)
+        return null
+      }
+    }
+    return null
+  }
+
   function handleVideoPlaybackResponse(data: any) {
     console.log("video_playback_res received", data)
-    const videoUrl =
-      typeof data?.video_url === "string" ? data.video_url.trim() : ""
+    let videoUrl = ""
+
+    if (typeof data?.video_url === "string" && data.video_url.trim()) {
+      videoUrl = data.video_url.trim()
+    } else if (typeof data?.videobase64 === "string" && data.videobase64.trim()) {
+      const rawB64 = data.videobase64.trim()
+      videoUrl = rawB64.startsWith("data:") ? rawB64 : `data:video/mp4;base64,${rawB64}`
+    } else {
+      const chunkData = data?.video_chunk ?? data?.videobytes ?? data?.chunk ?? data?.video_stream
+      if (chunkData !== undefined && chunkData !== null) {
+        const parsedBytes = parseChunkToUint8Array(chunkData)
+        if (parsedBytes) {
+          videoChunksRef.current.push(parsedBytes)
+        }
+
+        const isLastChunk =
+          data?.is_last_chunk === true ||
+          data?.is_final === true ||
+          data?.stream_end === true ||
+          data?.is_last === true ||
+          (data?.is_last_chunk === undefined && data?.is_final === undefined && data?.stream_end === undefined)
+
+        if (isLastChunk) {
+          if (videoChunksRef.current.length > 0) {
+            const mimeType = typeof data?.mime_type === "string" ? data.mime_type : "video/mp4"
+            const blob = new Blob(videoChunksRef.current, { type: mimeType })
+            videoUrl = URL.createObjectURL(blob)
+            videoChunksRef.current = []
+          }
+        } else {
+          return
+        }
+      }
+    }
+
     if (!videoUrl) return
     if (!canPlayIncomingMedia(data)) return
     activateSpeakerIfRequested(data)
@@ -607,7 +619,6 @@ useEffect(()=>{
         tempSocket.on('notifications', updateNotifications)
         tempSocket.on('audio_playback_res', handleAudioPlaybackResponse)
         tempSocket.on('video_playback_res', handleVideoPlaybackResponse)
-        tempSocket.on('navigation', handleServerNavigation)
 
     setSocket(tempSocket)
 
@@ -619,7 +630,6 @@ useEffect(()=>{
       tempSocket.off("notifications", updateNotifications)
       tempSocket.off("audio_playback_res", handleAudioPlaybackResponse)
       tempSocket.off("video_playback_res", handleVideoPlaybackResponse)
-      tempSocket.off("navigation", handleServerNavigation)
       clearVideoPreloadCache()
       tempSocket.disconnect()
     }
@@ -662,7 +672,6 @@ useEffect(()=>{
     console.log("emitting selected_topic_req_v2", data)
     socket.emit("selected_topic_req_v2", data)
   }
-  emitSelectedTopicRef.current = emitSelectedTopic
 
   // Emit current topic on page load / socket connect (and reconnect).
   useEffect(() => {

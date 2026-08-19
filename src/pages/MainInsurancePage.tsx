@@ -1,419 +1,568 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { useAppSelector } from '../store/store';
-// import '../css/All.css'
-// import '../css/msg.css'
-// Import all content components
+import React, { useEffect, useRef, useState, FormEvent } from 'react';
+import {
+  UserRound,
+  UsersRound,
+  ShieldCheck,
+  Target,
+  WalletCards,
+  Users,
+  MessageSquareText,
+  Maximize2,
+  Minimize2,
+} from 'lucide-react';
+import { useAppSelector, useAppDispatch } from '../store/store';
 import BasicInfo from '../components/UI2/BasicInfo';
-import Assets from '../components/UI2/Assets'
-import Liabilities from '../components/UI2/Liabilities'
-import FinancialGoals from '../components/UI2/FinancialGoals';
-import PlanSummary from '../components/UI2/PlanSummary'
-import Recommendations from '../components/UI2/Recommendations';
+import PlanSummary from '../components/UI2/PlanSummary';
 import RecommendationCategoryPage from '../components/UI2/RecommendationCategoryPage';
-import NewFinancialGoals from '../components/UI2/NewFinancialGoals'
-
-import SideNavigation from '../components/UI2/SideNavigation'
-import SideBarMobile from '../components/UI2/SideBarMobile'
-import Header, { MobileHeaderControls } from '../components/UI2/Header'
-import SectionVideoOverlay from '../components/UI2/SectionVideoOverlay'
-import RightPanel from '../components/UI2/RightPanel'
-import { useDispatch } from 'react-redux';
+import NewFinancialGoals from '../components/UI2/NewFinancialGoals';
+import SectionVideoOverlay from '../components/UI2/SectionVideoOverlay';
+import Header, { InteractionMode } from '../components/UI2/Header';
+import JourneyDrawer from '../components/UI2/JourneyDrawer';
+import AvatarStateOverlay, {
+  AvatarState,
+} from '../components/UI2/AvatarStateOverlay';
+import Composer from '../components/UI2/Composer';
+import ConversationPanel, {
+  TranscriptMessage,
+} from '../components/UI2/ConversationPanel';
+import CanvasAvatarChip from '../components/UI2/CanvasAvatarChip';
 import { setQP } from '../reducers/queryparamReducer';
 import { resetSalesState, setNavigation } from '../reducers/salesCopilotReducer';
 import { useData } from '../context/DataWrapper';
+import { useVad } from '../context/VadWrapper';
 import { useWakeLock } from '../functions/useWakeLock';
 
 function HotPageLoader() {
-    return (
-        <div className="flex flex-1 flex-col items-center justify-center w-full min-h-[50vh] py-16 px-4 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500 mb-4"></div>
-            <p className="text-sm text-slate-500">please wait while we are retrieving the updated info</p>
-        </div>
-    )
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center w-full min-h-[40vh] py-12 px-4 text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#3588e9] mb-4"></div>
+      <p className="text-sm font-semibold text-[#637590]">
+        Retrieving updated information…
+      </p>
+    </div>
+  );
 }
 
-/**
- * Transparent toast that appears for 10s whenever `recommendationsGenerated`
- * flips from false → true. Sits above all UI (z-[80]) on both mobile and
- * desktop, and complements the persistent indicator already rendered in the
- * side navigations.
- */
 function RecommendationsGeneratedToast() {
-    const { recommendationsGenerated } = useData();
-    const [visible, setVisible] = useState(false);
-    const prevRef = useRef(false);
+  const { recommendationsGenerated } = useData();
+  const [visible, setVisible] = useState(false);
+  const prevRef = useRef(false);
 
-    useEffect(() => {
-        if (recommendationsGenerated && !prevRef.current) {
-            setVisible(true);
-            const timer = setTimeout(() => setVisible(false), 10000);
-            prevRef.current = recommendationsGenerated;
-            return () => clearTimeout(timer);
-        }
-        prevRef.current = recommendationsGenerated;
-    }, [recommendationsGenerated]);
-
-    if (!visible) return null;
-
-    return (
-        <div
-            role="status"
-            aria-live="polite"
-            className="fixed bottom-5 left-5 z-[9999] flex items-center gap-3 rounded-lg border px-4 py-3 text-green-900 shadow-md backdrop-blur-sm pointer-events-none"
-            style={{
-                backgroundColor: 'rgba(34, 197, 94, 0.15)',
-                borderColor: 'rgba(34, 197, 94, 0.3)',
-            }}
-        >
-            <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
-            </span>
-            <div className="flex flex-col">
-                <strong className="text-sm font-medium">Recommendations Generated</strong>
-            </div>
-        </div>
-    );
-}
-
-export default function App() {
-   const { isSocketConnected, hotPageLoading, languageChangeLoading, isBasicInfoVideoPlaying } = useData();
-   const { navigation: currentNavigation, salesData ,RecomendationSelected} = useAppSelector((state) => state.salesCopilotReducer)
-   console.log("Current Navigation:", currentNavigation);
-   console.log("Sales Datain main page:", salesData.recommendations);
-//    [{},{},{}]---->aise me dikha dega lekin kuch select karna padega phir vo dikgeaga                                 
-//   console.log(currentNavigation,"basic sales data is ",salesData.liabilities);
-    
-    useWakeLock(true);
-    const mockData = salesData.recommendations
-
-   const recCategories: { category: string; title: string }[] = Array.isArray(mockData)
-     ? []
-     : (mockData as any)?.categories?.map((c: any) => ({
-         category: c.category,
-         title: c.title || c.category,
-       })) ?? [];
-
-const mock2=[
-
-    {
-
-        "header": "Immediate Life Cover Analysis",
-
-        "sub_header": "",
-
-        "cols": [
-
-            {
-
-                "heading": "Outstanding Liabilities",
-
-                "value": "10.00 lac"
-
-            },
-
-            {
-
-                "heading": "Annual Expenses",
-
-                "value": "18.00 lac"
-
-            },
-
-            {
-
-                "heading": "Required Corpus",
-
-                "value": "1.90 cr"
-
-            }
-
-        ],
-
-        "calculation": {},
-
-        "text_area_value": "",
-
-        "reason": "<h3 style=\"font-size:3rem\">Total Recommended Cover <p style=\"color:blue\">1.90 cr</p></h3>"
-
-    },
-
-    {
-
-        "header": "Retirement Savings",
-
-        "sub_header": "I want to save and require retirement purpose like 20 crores.",
-
-        "calculation": "",
-
-        "text_area_value": "Inflation rate percent: 6%",
-
-        "cols": [
-
-            {
-
-                "heading": "Time Frame",
-
-                "value": 13
-
-            },
-
-            {
-
-                "heading": "Target Year",
-
-                "value": 2038
-
-            },
-
-            {
-
-                "heading": "Required Corpus",
-
-                "value": "20.00 cr"
-
-            }
-
-        ]
-
+  useEffect(() => {
+    if (recommendationsGenerated && !prevRef.current) {
+      setVisible(true);
+      const timer = setTimeout(() => setVisible(false), 10000);
+      prevRef.current = recommendationsGenerated;
+      return () => clearTimeout(timer);
     }
+    prevRef.current = recommendationsGenerated;
+  }, [recommendationsGenerated]);
 
-]
- 
-console.log(salesData.planSummary,"the plan summarey in main page");
-
- 
-    //based on RecomendationSelected we will filter data
-    let filteredRecommendations:any = [];
-    let recommendationCategoryData: any = null;
-
-    if (typeof currentNavigation === 'string' && currentNavigation.startsWith('Recommendations::')) {
-      const parts = currentNavigation.split('::');
-      const categoryKey = parts[1] || null;
-      const cats = (mockData as any)?.categories || [];
-      recommendationCategoryData = cats.find((c: any) => c.category === categoryKey) || null;
-    } else if (RecomendationSelected && Array.isArray(mockData)) {
-      const matched = mockData.find(
-        (item: any) => item.planName === RecomendationSelected
-      );
-      if (matched) {
-        filteredRecommendations = matched.planDetails;
-      }
-    }
-
-console.log("Filtered Recommendations:", filteredRecommendations);
-    
-    console.log(filteredRecommendations,"---------",RecomendationSelected);
-    
-    //yaha pe filter karna padega mock data se ki konsa select hua hai r1,r2  yaa y3 
-
-    const qpState = useAppSelector((state) => state.qpReducer);
-    const dispatch = useDispatch();
-    // Helper function for currency formatting (moved from index2.html)
-    const formatCurrency = (num: number) => {
-        if (isNaN(num)) return '₹ 0';
-        const crores = num / 10000000;
-        const lakhs = num / 100000;
-        let shorthand = '';
-
-        if (crores >= 1) {
-            shorthand = `(${crores.toFixed(1)} Cr)`;
-        } else if (lakhs >= 1) {
-            shorthand = `(${lakhs.toFixed(1)} Lk)`;
-        }
-
-        const formattedNum = new Intl.NumberFormat('en-IN').format(num);
-
-        return `₹ ${formattedNum} <span class="text-slate-500 font-normal text-xs">${shorthand}</span>`;
-    };
-
-    const renderDataRetrieval = () => {
-        const goals = salesData.financialGoals?.goals ?? [];
-        const goalsLoading = hotPageLoading?.['Data Retrieval'] && goals.length === 0;
-
-        return (
-            <>
-                <BasicInfo data={salesData.basicInfo} />
-                {goalsLoading ? <HotPageLoader /> : <NewFinancialGoals />}
-            </>
-        );
-    };
-
-    const renderContent = () => {
-    switch (currentNavigation) {
-        case 'Data Retrieval':
-            return renderDataRetrieval();
-        case 'Assets':
-            return <Assets data={(salesData as any).financialReview?.assets} formatCurrency={formatCurrency} />;
-        case 'Liabilities':
-            return <Liabilities data={(salesData as any).financialReview?.liabilities} formatCurrency={formatCurrency} />;
-        // case 'Financial Goals':
-        //     return <FinancialGoals data={salesData.financialGoals} formatCurrency={formatCurrency} />;
-        case 'Plan Summary':
-            return hotPageLoading?.['Plan Summary']
-                ? <HotPageLoader />
-                : <PlanSummary data={salesData.planSummary} formatCurrency={formatCurrency} />;
-        case 'Recommendations':
-            return <HotPageLoader />;
-        default:
-            if (typeof currentNavigation === 'string' && currentNavigation.startsWith('Recommendations::')) {
-                return <RecommendationCategoryPage category={recommendationCategoryData} />;
-            }
-            return renderDataRetrieval();
-    }
-};
-
-
-    useEffect(()=>{
-              function getMeetingInfo(){
-              const query = window.location.href.split('?')[1];
-              if (!query) {
-                dispatch(resetSalesState());
-                dispatch(setQP({ roomId: '', name: '', pref_language: 'english' }));
-                return;
-              }
-              const parts = query.split("&");
-              const roomParam = parts[0] || "";
-              //const candidParam = parts[1] || "";
-              const name = parts[1] || "";
-             let  language = parts?.[2] || "english"
-      
-              //http://localhost:5173/?anuj-anuj-anuj&cid_7761
-              //new URLSearchParams(window.location.href)[1]
-              console.log('query params',roomParam,name,query)
-              const qParams = {
-              roomId: roomParam,
-             // candid: candidParam,
-             // agentId,
-              //isHost: login.isAuthenticated,
-              name,
-              pref_language:language
-              //meetingIsLegit: true,
-            };
-      
-              dispatch(resetSalesState());
-              dispatch(setQP(qParams))
-          } 
-              getMeetingInfo()
-          },[window.location.href])
-
-   
-
-    useEffect(()=>{
-        console.log('qpState',qpState)
-    },[qpState])
-
-    useEffect(() => {
-        if (currentNavigation === 'Recommendations' && recCategories.length > 0) {
-            dispatch(setNavigation(`Recommendations::${recCategories[0].category}`));
-        }
-    }, [currentNavigation, recCategories, dispatch]);
-
-    const sectionKey =
-      typeof currentNavigation === 'string' &&
-      currentNavigation.startsWith('Recommendations::')
-        ? 'Recommendations'
-        : currentNavigation;
-    const isLanguageLoading =
-      sectionKey !== 'Recommendations' &&
-      sectionKey !== 'Data Retrieval' &&
-      !!languageChangeLoading?.[sectionKey as string];
-    const lockMainScroll = isBasicInfoVideoPlaying;
+  if (!visible) return null;
 
   return (
-    
-    <div className="bg-slate-50 text-slate-800 antialiased" style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
-        <RecommendationsGeneratedToast />
-        {!isSocketConnected && (
-          <div
-            role="alert"
-            className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-red-700"
-            style={{ backgroundColor: 'rgba(239, 68, 68, 0.15)' }}
-          >
-            <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
-            disconnected to server &amp; reconnecting ...
-          </div>
-        )}
-        <div className="flex lg:h-full lg:overflow-hidden" style={{ width: '100%', height: '100%' }}>
-            <SideNavigation/>
-            <SideBarMobile />
-            <div
-              className={`flex-1 flex flex-col min-w-0 h-full thin-scrollbar lg:overflow-hidden ${
-                lockMainScroll ? 'overflow-hidden' : 'overflow-y-auto'
-              }`}
-            >
-
-                {/* Mobile/tablet sticky wrapper that bundles the title bar (Header),
-                    the mobile icons strip and the AI Cues panel so they stick together
-                    as one unit and don't overlap.
-                    On desktop (lg+): wrapper becomes static; mobile-only children hide
-                    themselves; Header remains visible and handles its own stickiness. */}
-                <div className="sticky top-0 z-40 bg-white shadow-sm lg:static lg:z-auto lg:shadow-none">
-                    <Header/>
-                    <div className="lg:hidden">
-                        <MobileHeaderControls/>
-                        <div className="border-b border-slate-200 bg-white">
-                            <RightPanel/>
-                        </div>
-                    </div>
-                </div>
-
-                <div
-                  className={`flex flex-1 flex-col lg:flex-row lg:overflow-hidden ${
-                    lockMainScroll ? 'min-h-0' : ''
-                  }`}
-                >
-                    {/* <!-- Main Content -->
-                        `z-0` makes main its own stacking context at z-0, so the
-                        loading overlay and any fields/content inside main can never
-                        paint above the sticky wrapper (z-40) holding the header,
-                        icons strip and AI Cues panel. */}
-                    <main
-                    className={`
-                        relative z-0 flex min-w-0 w-full flex-1 flex-col overflow-x-hidden bg-slate-100 px-3 py-1 pb-5 sm:p-6
-                        lg:order-1 lg:basis-[62%] thin-scrollbar
-                        ${isLanguageLoading || lockMainScroll ? 'min-h-0 overflow-hidden' : 'lg:overflow-y-auto'}
-                        ${lockMainScroll ? 'flex flex-col' : ''}
-                      `}
-                    >
-                        {isLanguageLoading && (
-                            <div
-                              className="
-                                fixed inset-0 lg:absolute lg:inset-0 z-30 bg-white/60 backdrop-blur-sm
-                                flex flex-col items-center justify-center px-4 text-center
-                              "
-                            >
-                              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500 mb-4"></div>
-                              <p className="text-sm text-slate-500">changing language, please wait</p>
-                            </div>
-                        )}
-                        <SectionVideoOverlay>
-                          {renderContent()}
-                        </SectionVideoOverlay>
-                    </main>
-
-                    {/* <!-- AI Cues Sidebar (Desktop only — on mobile this renders inside the sticky header above) --> */}
-                    <aside
-                    className="
-                        hidden flex-shrink-0 border-slate-200 bg-white overflow-x-hidden
-                        lg:flex lg:order-2 lg:h-full lg:w-[38%] lg:border-l lg:shadow-none lg:overflow-y-auto thin-scrollbar
-                      "
-                    >
-                    <RightPanel/>
-                    </aside>
-                </div>
-            </div>
-        </div>
+    <div
+      role="status"
+      aria-live="polite"
+      className="fixed bottom-5 left-5 z-[9999] flex items-center gap-3 rounded-xl border border-green-300 bg-green-50/95 px-4 py-3 text-green-900 shadow-lg backdrop-blur-sm pointer-events-none"
+    >
+      <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
+        <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping"></span>
+        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+      </span>
+      <div className="flex flex-col">
+        <strong className="text-sm font-bold">Recommendations Generated</strong>
+      </div>
     </div>
-    
-  )
+  );
 }
 
-// {/* <AuthContext>
-//       {/* <DataWrapper> */}
-//           <Router>
-//             <Routing/>
-//           </Router>
-//       {/* </DataWrapper> */}
-//     </AuthContext> */}
-//plan summarty,recoomendation(d),finacial (d)!!!imp
+// ─── Co-Present Right Pane Content ──────────────────────────────────────────
+function CoPresentContent({
+  currentNavigation,
+  salesData,
+  hotPageLoading,
+  formatCurrency,
+  recommendationCategoryData,
+}: {
+  currentNavigation: string;
+  salesData: any;
+  hotPageLoading: any;
+  formatCurrency: (num: number) => any;
+  recommendationCategoryData: any;
+}) {
+  if (currentNavigation === 'Plan Summary') {
+    return hotPageLoading?.['Plan Summary'] ? (
+      <HotPageLoader />
+    ) : (
+      <PlanSummary
+        data={salesData.planSummary}
+        formatCurrency={formatCurrency}
+      />
+    );
+  }
+
+  if (
+    typeof currentNavigation === 'string' &&
+    currentNavigation.startsWith('Recommendations::')
+  ) {
+    return (
+      <RecommendationCategoryPage
+        category={recommendationCategoryData}
+      />
+    );
+  }
+
+  if (currentNavigation === 'Recommendations') {
+    return <HotPageLoader />;
+  }
+
+  /* Default Client Info / Data Retrieval View */
+  return (
+    <div className="space-y-6">
+      <BasicInfo data={salesData.basicInfo} />
+      {hotPageLoading?.['Data Retrieval'] &&
+      !(salesData.financialGoals?.goals?.length) ? (
+        <HotPageLoader />
+      ) : (
+        <NewFinancialGoals />
+      )}
+    </div>
+  );
+}
+
+// ─── Main Application Component ────────────────────────────────────────────
+export default function App() {
+  const dispatch = useAppDispatch();
+  const {
+    isSocketConnected,
+    hotPageLoading,
+    isBasicInfoVideoPlaying,
+    isAudioPlayingState,
+    speakerEnabled,
+    toggleSpeakerPlayback,
+  } = useData();
+
+  //@ts-ignore
+  const { manualVadStatus, setManualVadStatus, VAD2 } = useVad();
+
+  const { navigation: currentNavigation, salesData } = useAppSelector(
+    (state) => state.salesCopilotReducer
+  );
+  const { roomId, name: clientName } = useAppSelector(
+    (state) => state.qpReducer
+  );
+
+  useWakeLock(true);
+
+  // Unified Workspace State
+  const [interactionMode, setInteractionMode] =
+    useState<InteractionMode>('social');
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
+  const [journeyOpen, setJourneyOpen] = useState(false);
+  const [avatarMinimized, setAvatarMinimized] = useState(false);
+  const [manualAvatarState, setManualAvatarState] =
+    useState<AvatarState | null>(null);
+
+  // Composer Draft & Transcript
+  const [draft, setDraft] = useState('');
+  const [messages, setMessages] = useState<TranscriptMessage[]>([
+    {
+      id: 1,
+      speaker: 'ai',
+      text: 'Hi James, before we look at plans, I’d like to understand what financial security means for your family.',
+      time: '05:08 PM',
+    },
+    {
+      id: 2,
+      speaker: 'customer',
+      text: 'I want to make sure my family can manage their regular expenses if something happens to me.',
+      time: '05:08 PM',
+    },
+    {
+      id: 3,
+      speaker: 'ai',
+      text: 'That makes sense. Roughly how many years would you want their income protected?',
+      time: '05:09 PM',
+    },
+  ]);
+
+  // Derived Avatar State from real application events
+  let derivedAvatarState: AvatarState = 'listening';
+  if (isBasicInfoVideoPlaying || isAudioPlayingState) {
+    derivedAvatarState = 'speaking';
+  } else if (
+    hotPageLoading?.['Data Retrieval'] ||
+    hotPageLoading?.['Plan Summary']
+  ) {
+    derivedAvatarState = 'processing';
+  } else if (manualVadStatus || VAD2?.listening) {
+    derivedAvatarState = 'listening';
+  } else {
+    derivedAvatarState = 'muted';
+  }
+
+  const activeAvatarState = manualAvatarState || derivedAvatarState;
+
+  // Query Params init
+  useEffect(() => {
+    function getMeetingInfo() {
+      const query = window.location.href.split('?')[1];
+      if (!query) return;
+      const parts = query.split('&');
+      const roomParam = parts[0] || '';
+      const nameParam = parts[1] || '';
+      const langParam = parts[2] || 'english';
+
+      const qParams = {
+        roomId: roomParam,
+        name: nameParam,
+        pref_language: langParam,
+      };
+
+      dispatch(resetSalesState());
+      dispatch(setQP(qParams));
+    }
+    getMeetingInfo();
+  }, [dispatch]);
+
+  // Recommendations categories lookup
+  const mockData = salesData.recommendations;
+  const recCategories: { category: string; title: string }[] = Array.isArray(
+    mockData
+  )
+    ? []
+    : (mockData as any)?.categories?.map((c: any) => ({
+        category: c.category,
+        title: c.title || c.category,
+      })) ?? [];
+
+  useEffect(() => {
+    if (currentNavigation === 'Recommendations' && recCategories.length > 0) {
+      dispatch(
+        setNavigation(`Recommendations::${recCategories[0].category}`)
+      );
+    }
+  }, [currentNavigation, recCategories, dispatch]);
+
+  let recommendationCategoryData: any = null;
+  if (
+    typeof currentNavigation === 'string' &&
+    currentNavigation.startsWith('Recommendations::')
+  ) {
+    const parts = currentNavigation.split('::');
+    const categoryKey = parts[1] || null;
+    const cats = (mockData as any)?.categories || [];
+    recommendationCategoryData =
+      cats.find((c: any) => c.category === categoryKey) || null;
+  }
+
+  const formatCurrency = (num: number) => {
+    if (isNaN(num)) return '₹ 0';
+    const crores = num / 10000000;
+    const lakhs = num / 100000;
+    let shorthand = '';
+
+    if (crores >= 1) {
+      shorthand = `(${crores.toFixed(1)} Cr)`;
+    } else if (lakhs >= 1) {
+      shorthand = `(${lakhs.toFixed(1)} Lk)`;
+    }
+
+    const formattedNum = new Intl.NumberFormat('en-IN').format(num);
+    return `₹ ${formattedNum} <span className="text-[#637590] font-normal text-xs">${shorthand}</span>`;
+  };
+
+  const handleSendMessage = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const text = draft.trim();
+    if (!text) return;
+    setMessages((prev) => [
+      ...prev,
+      { id: Date.now(), speaker: 'customer', text, time: 'Now' },
+    ]);
+    setDraft('');
+  };
+
+  const getBasicFieldValue = (fieldName: string, fallback: string) => {
+    const basicInfo = salesData.basicInfo;
+    if (!basicInfo) return fallback;
+    const boxes = [
+      basicInfo.boxA,
+      basicInfo.boxB,
+      basicInfo.boxC,
+      basicInfo.boxD,
+    ];
+    for (const box of boxes) {
+      if (box?.data) {
+        const item = box.data.find(
+          (f: any) =>
+            f.field?.toLowerCase().includes(fieldName.toLowerCase()) ||
+            fieldName.toLowerCase().includes(f.field?.toLowerCase() || '')
+        );
+        if (item && item.value) return item.value;
+      }
+    }
+    return fallback;
+  };
+
+  return (
+    <main className="app-shell ai-led-shell">
+      <RecommendationsGeneratedToast />
+
+      {/* Disconnect Alert */}
+      {!isSocketConnected && (
+        <div
+          role="alert"
+          className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold text-red-700 bg-red-100/95 border-b border-red-200"
+        >
+          <span className="inline-block h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+          disconnected to server &amp; reconnecting …
+        </div>
+      )}
+
+      {/* Journey Drawer */}
+      <JourneyDrawer
+        open={journeyOpen}
+        onClose={() => setJourneyOpen(false)}
+        onSelectMode={(mode) => setInteractionMode(mode)}
+      />
+
+      <section className="main-zone">
+        {/* Topbar Header */}
+        <Header
+          interactionMode={interactionMode}
+          setInteractionMode={setInteractionMode}
+          avatarState={activeAvatarState}
+          setManualAvatarState={setManualAvatarState}
+          onOpenJourney={() => setJourneyOpen(true)}
+          panelCollapsed={panelCollapsed}
+          onTogglePanel={() => setPanelCollapsed((prev) => !prev)}
+        />
+
+        {/* Content Workspace Grid */}
+        <div
+          className={`content-grid ${panelCollapsed ? 'panel-hidden' : ''}`}
+        >
+          <section
+            className={`data-panel mode-${interactionMode}`}
+            aria-label={`${currentNavigation} – ${interactionMode} mode`}
+          >
+            {/* 1. SOCIAL MODE */}
+            {interactionMode === 'social' ? (
+              <div
+                className={`social-stage state-${activeAvatarState} ${
+                  avatarMinimized ? 'avatar-minimized' : ''
+                }`}
+              >
+                <div className="social-aura" />
+                <div className="social-composition">
+                  {avatarMinimized ? (
+                    <button
+                      type="button"
+                      className={`minimized-avatar-dock state-${activeAvatarState}`}
+                      onClick={() => setAvatarMinimized(false)}
+                      aria-label="Restore AI avatar"
+                      title="Restore avatar"
+                    >
+                      <span>
+                        <img className="avatar-image" src="/avatar-vitt-refined.png" alt="VITT AI Companion" />
+                      </span>
+                      <AvatarStateOverlay state={activeAvatarState} />
+                      <Maximize2 size={17} />
+                    </button>
+                  ) : (
+                    <div
+                      className={`social-avatar avatar-state-visual state-${activeAvatarState}`}
+                    >
+                      <button
+                        type="button"
+                        className="avatar-minimize"
+                        onClick={() => setAvatarMinimized(true)}
+                        aria-label="Minimize AI avatar"
+                        title="Minimize avatar"
+                      >
+                        <Minimize2 size={17} />
+                      </button>
+
+                      <SectionVideoOverlay>
+                        <img className="avatar-image" src="/avatar-vitt-refined.png" alt="VITT AI Companion" />
+                      </SectionVideoOverlay>
+
+                      <AvatarStateOverlay state={activeAvatarState} />
+                    </div>
+                  )}
+
+                  <div className="social-live-caption" aria-live="polite">
+                    <p>
+                      <span className="caption-spoken">
+                        We’ve spoken about your family and current financial position.{' '}
+                      </span>
+                      <span className="caption-active">
+                        What would financial security for your family mean to you?
+                      </span>
+                    </p>
+                  </div>
+
+                  <Composer
+                    className="social-composer"
+                    draft={draft}
+                    setDraft={setDraft}
+                    onSend={handleSendMessage}
+                    voiceOn={speakerEnabled}
+                    onVoiceToggle={toggleSpeakerPlayback}
+                    micOn={manualVadStatus}
+                    onMicToggle={() => setManualVadStatus(!manualVadStatus)}
+                  />
+                </div>
+              </div>
+            ) : interactionMode === 'copresent' ? (
+              /* 2. CO-PRESENT MODE */
+              <div className={`copresent-stage state-${activeAvatarState}`}>
+                <aside
+                  className={`copresent-avatar ${
+                    avatarMinimized ? 'avatar-minimized' : ''
+                  }`}
+                >
+                  {avatarMinimized ? (
+                    <button
+                      type="button"
+                      className={`minimized-avatar-dock state-${activeAvatarState}`}
+                      onClick={() => setAvatarMinimized(false)}
+                      aria-label="Restore AI avatar"
+                      title="Restore avatar"
+                    >
+                      <span>
+                        <img className="avatar-image" src="/avatar-vitt-refined.png" alt="VITT AI Companion" />
+                      </span>
+                      <AvatarStateOverlay state={activeAvatarState} />
+                      <Maximize2 size={17} />
+                    </button>
+                  ) : (
+                    <div
+                      className={`copresent-portrait avatar-state-visual state-${activeAvatarState}`}
+                    >
+                      <button
+                        type="button"
+                        className="avatar-minimize"
+                        onClick={() => setAvatarMinimized(true)}
+                        aria-label="Minimize AI avatar"
+                        title="Minimize avatar"
+                      >
+                        <Minimize2 size={17} />
+                      </button>
+                      <SectionVideoOverlay>
+                        <img className="avatar-image" src="/avatar-vitt-refined.png" alt="VITT AI Companion" />
+                      </SectionVideoOverlay>
+                      <AvatarStateOverlay state={activeAvatarState} />
+                    </div>
+                  )}
+
+                  <div className="copresent-live-caption" aria-live="polite">
+                    <p>
+                      <span className="caption-spoken">
+                        We have captured your financial details.{' '}
+                      </span>
+                      <span className="caption-active">
+                        How much of your family's monthly expenses should be protected?
+                      </span>
+                    </p>
+                  </div>
+
+                  <Composer
+                    className="copresent-composer"
+                    draft={draft}
+                    setDraft={setDraft}
+                    onSend={handleSendMessage}
+                    voiceOn={speakerEnabled}
+                    onVoiceToggle={toggleSpeakerPlayback}
+                    micOn={manualVadStatus}
+                    onMicToggle={() => setManualVadStatus(!manualVadStatus)}
+                  />
+                </aside>
+
+                <section className="copresent-content">
+                  <CoPresentContent
+                    currentNavigation={currentNavigation}
+                    salesData={salesData}
+                    hotPageLoading={hotPageLoading}
+                    formatCurrency={formatCurrency}
+                    recommendationCategoryData={recommendationCategoryData}
+                  />
+                </section>
+
+                <aside className="copresent-mobile-dock" aria-label="AI conversation controls">
+                  <div className="mobile-dock-caption">
+                    <div className={`mobile-dock-avatar state-${activeAvatarState}`}>
+                      <img className="avatar-image" src="/avatar-vitt-refined.png" alt="VITT AI Companion" />
+                      <AvatarStateOverlay state={activeAvatarState} />
+                    </div>
+                    <p>
+                      <span className="caption-spoken">We have captured your financial details. </span>
+                      <span className="caption-active">How much should be protected?</span>
+                    </p>
+                  </div>
+                  <Composer
+                    className="copresent-composer"
+                    draft={draft}
+                    setDraft={setDraft}
+                    onSend={handleSendMessage}
+                    voiceOn={speakerEnabled}
+                    onVoiceToggle={toggleSpeakerPlayback}
+                    micOn={manualVadStatus}
+                    onMicToggle={() => setManualVadStatus(!manualVadStatus)}
+                  />
+                </aside>
+              </div>
+            ) : (
+              /* 3. CANVAS MODE */
+              <div className="mode-canvas">
+                <div className="canvas-scroll">
+                  {currentNavigation === 'Plan Summary' ? (
+                    hotPageLoading?.['Plan Summary'] ? (
+                      <HotPageLoader />
+                    ) : (
+                      <PlanSummary
+                        data={salesData.planSummary}
+                        formatCurrency={formatCurrency}
+                      />
+                    )
+                  ) : typeof currentNavigation === 'string' &&
+                    currentNavigation.startsWith('Recommendations::') ? (
+                    <RecommendationCategoryPage
+                      category={recommendationCategoryData}
+                    />
+                  ) : currentNavigation === 'Recommendations' ? (
+                    <HotPageLoader />
+                  ) : (
+                    <div className="space-y-6">
+                      <BasicInfo data={salesData.basicInfo} />
+                      {hotPageLoading?.['Data Retrieval'] &&
+                      !(salesData.financialGoals?.goals?.length) ? (
+                        <HotPageLoader />
+                      ) : (
+                        <NewFinancialGoals />
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <CanvasAvatarChip
+                  state={activeAvatarState}
+                  onClick={() => setInteractionMode('social')}
+                />
+              </div>
+            )}
+          </section>
+
+          {/* Right-Side Conversation & AI Cues Drawer */}
+          <ConversationPanel
+            collapsed={panelCollapsed}
+            onToggle={() => setPanelCollapsed((prev) => !prev)}
+            messages={messages}
+          />
+        </div>
+      </section>
+    </main>
+  );
+}

@@ -121,7 +121,13 @@ function resolveIncomingEvent(data: any) {
     return { event: "notifications", payload: data }
   }
 
-  if (Object.prototype.hasOwnProperty.call(data, "video_url")) {
+  if (
+    Object.prototype.hasOwnProperty.call(data, "video_url") ||
+    Object.prototype.hasOwnProperty.call(data, "videobase64") ||
+    Object.prototype.hasOwnProperty.call(data, "video_chunk") ||
+    Object.prototype.hasOwnProperty.call(data, "videobytes") ||
+    Object.prototype.hasOwnProperty.call(data, "video_stream")
+  ) {
     return { event: "video_playback_res", payload: data }
   }
 

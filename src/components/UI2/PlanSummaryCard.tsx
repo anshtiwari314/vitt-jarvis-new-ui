@@ -29,7 +29,7 @@ export default function PlanSummaryCard({
   formatCurrency,
 }: PlanSummaryCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
-  
+
   // 🟦 Normalize cols (convert array -> object, supports both 'heading' and 'field' keys)
   const getNormalizedCols = () => {
     if (Array.isArray(summaryItem.cols)) {
@@ -182,9 +182,8 @@ export default function PlanSummaryCard({
                 </span>
                 <FontAwesomeIcon
                   icon={isExpanded ? faChevronUp : faChevronDown}
-                  className={`w-3 h-3 transition-transform duration-500 ${
-                    isExpanded ? "rotate-180" : "rotate-0"
-                  }`}
+                  className={`w-3 h-3 transition-transform duration-500 ${isExpanded ? "rotate-180" : "rotate-0"
+                    }`}
                 />
               </button>
             </div>
@@ -264,9 +263,8 @@ export default function PlanSummaryCard({
               </span>
               <FontAwesomeIcon
                 icon={isExpanded ? faChevronUp : faChevronDown}
-                className={`w-3 h-3 transition-transform duration-500 ${
-                  isExpanded ? "rotate-180" : "rotate-0"
-                }`}
+                className={`w-3 h-3 transition-transform duration-500 ${isExpanded ? "rotate-180" : "rotate-0"
+                  }`}
               />
             </button>
           </div>

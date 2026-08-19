@@ -1,10 +1,10 @@
-import React,{useState,useEffect,useRef} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { setNavigation } from '../../reducers/salesCopilotReducer';
 import { useData } from '../../context/DataWrapper';
 import { useVad } from '../../context/VadWrapper';
 
-export default function SideNavigation(){
+export default function SideNavigation() {
     const dispatch = useAppDispatch();
     const currentNavigation = useAppSelector(state => state.salesCopilotReducer.navigation);
     const salesData = useAppSelector(state => state.salesCopilotReducer.salesData);
@@ -40,10 +40,10 @@ export default function SideNavigation(){
     const mockData = salesData.recommendations;
     // recommendations can be an array (old format) or { categories: [...] } (new format)
     const recCategories: { category: string; title: string }[] = Array.isArray(mockData)
-      ? []
-      : (mockData as any)?.categories?.map((c: any) => ({
-          category: c.category,
-          title: c.title || c.category,
+        ? []
+        : (mockData as any)?.categories?.map((c: any) => ({
+            category: c.category,
+            title: c.title || c.category,
         })) ?? [];
 
     const recNavKey = (cat: string) => `Recommendations::${cat}`;
@@ -101,7 +101,7 @@ export default function SideNavigation(){
                         className={navItemClass(currentNavigation === 'Data Retrieval')}
                         onClick={() => handleNavigationClick('Data Retrieval')}
                     >
-                        <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                         Client Info
                     </button>
 
@@ -146,7 +146,7 @@ export default function SideNavigation(){
                         className={navItemClass(currentNavigation === 'Plan Summary')}
                         onClick={() => handleNavigationClick('Plan Summary')}
                     >
-                        <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+                        <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>
                         Plan Summary
                     </button>
 
@@ -156,10 +156,10 @@ export default function SideNavigation(){
                             className={navItemClass(isRecommendationsActive)}
                             onClick={handleRecommendationsClick}
                         >
-                            <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                            <svg className={iconClass} fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
                             <span className="flex-1 text-left">Recommendations</span>
                             <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${recommendationsOpen ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                             </svg>
                         </button>
                         {recommendationsOpen && (
@@ -173,7 +173,7 @@ export default function SideNavigation(){
                                         className={navItemClass(currentNavigation === recNavKey(cat.category))}
                                         onClick={() => handleCategoryNavigation(recNavKey(cat.category))}
                                     >
-                                        <svg className="w-4 h-4 shrink-0" fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                        <svg className="w-4 h-4 shrink-0" fill="none" stroke={ICON_COLOR} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
                                         <span className="flex-1 text-left">{cat.title}</span>
                                     </button>
                                 ))}
@@ -191,8 +191,8 @@ export default function SideNavigation(){
                     </div>
                 </div>
             }
-            
-            <SystemStatus/>
+
+            <SystemStatus />
         </aside>
     );
 }
@@ -202,7 +202,7 @@ const SystemStatus = () => {
     const intervalRef = useRef(null);
     const currentIndexRef = useRef(-1); // Start with -1 to indicate no items are green initially
 
-    const {VAD2} = useVad()
+    const { VAD2 } = useVad()
     // Create refs for each individual indicator DOM element
     const audioRef = useRef(null);
     const transcriptionRef = useRef(null);
@@ -258,13 +258,13 @@ const SystemStatus = () => {
         return () => clearInterval(intervalRef.current);
     }, [isActive]);
 
-    useEffect(()=>{
-        if(VAD2?.listening){
+    useEffect(() => {
+        if (VAD2?.listening) {
             startAnimation()
-        }else{
+        } else {
             stopAnimation()
-        }       
-    },[VAD2])
+        }
+    }, [VAD2])
     return (
         <div className="p-4 border-t border-slate-200">
             <h3 className="text-sm font-semibold text-slate-600 mb-3">System Status</h3>

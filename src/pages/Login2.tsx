@@ -1,6 +1,6 @@
 "use client"
 
-import React,{ useState } from "react"
+import React, { useState } from "react"
 // import { useAuth } from '../context/AuthContext'; // Assuming you have this context
 import { v4 as uuidv4 } from "uuid"
 import { useAuth } from "../context/AuthContext"
@@ -71,7 +71,7 @@ export default function Login() {
     setLoading(true)
 
     // const url = `https://wpv7kxos9g.execute-api.ap-south-1.amazonaws.com/test/recruito-upload-apis/main_router`
-    const url='https://recruito.vitti.insure/lms_router'
+    const url = 'https://recruito.vitti.insure/lms_router'
     fetch(url, {
       method: "POST",
       headers: {
@@ -79,15 +79,15 @@ export default function Login() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        route_name:"main_router",
-        json_data:{
+        route_name: "main_router",
+        json_data: {
           trigger_func: "check_agent_login",
           params: {
             userid: email,
             password: pass,
           }
         }
-        }),
+      }),
       cache: "default",
     })
       .then((res) => {
@@ -152,7 +152,7 @@ export default function Login() {
         {/* Login Form */}
         <form
           className="space-y-6"
-          //onSubmit={handleSubmit}
+        //onSubmit={handleSubmit}
         >
           {/* Username/Email Input */}
           <div className="relative">
@@ -220,11 +220,11 @@ export default function Login() {
             </a>
           </p>
 
-          
+
         </div>
         <div className="text-sm text-center text-slate-500">
-        <div>v 1.0</div>
-          </div>
+          <div>v 1.0</div>
+        </div>
       </div>
     </div>
   )

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { ChevronDown, Copy, Check } from "lucide-react"
+import { ChevronDown, Copy, Check, BookmarkCheck } from "lucide-react"
 import { useData } from "../../context/DataWrapper"
+import { useAppDispatch, useAppSelector } from "../../store/store"
+import { setNavigation } from "../../reducers/salesCopilotReducer"
 
 type Benefit = {
   field: string
@@ -143,7 +145,7 @@ function renderTableCellContent(
             : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
         }`}
       >
-        <CheckIcon className="h-4 w-4" />
+        <Check className="h-4 w-4" />
       </button>
     )
   }
@@ -167,6 +169,32 @@ interface Props {
 }
 
 export default function RecommendationCategoryPage({ category }: Props) {
+  const dispatch = useAppDispatch()
+  const { socket } = useData()
+  const salesData = useAppSelector((state) => state.salesCopilotReducer.salesData)
+  const currentNavigation = useAppSelector((state) => state.salesCopilotReducer.navigation)
+  const qpParams = useAppSelector((state) => state.qpReducer)
+
+  const mockData = salesData?.recommendations
+  const allCategories: { category: string; title: string }[] = Array.isArray(mockData)
+    ? mockData.map((item: any) => ({
+        category: item.header || item.title || item.category || 'Recommendation',
+        title: item.header || item.title || item.category || 'Recommendation',
+      }))
+    : (mockData as any)?.categories?.map((c: any) => ({
+        category: c.category,
+        title: c.title || c.category,
+      })) ?? []
+
+  const handleCategorySwitch = (catKey: string) => {
+    const navKey = `Recommendations::${catKey}`
+    dispatch(setNavigation(navKey))
+    socket?.emit('ai_suggestion_req', {
+      roomid: qpParams.roomId,
+      topic: 'Recommendations',
+    })
+  }
+
   if (!category || !category.products || category.products.length === 0) {
     return (
       <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
@@ -241,6 +269,37 @@ export default function RecommendationCategoryPage({ category }: Props) {
 
   return (
     <div className="text-slate-800">
+      {/* Multiple Recommendation Categories Tab Selector */}
+      {allCategories.length > 1 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl bg-white p-2.5 border border-slate-200 shadow-sm">
+          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider px-3">
+            Recommendation Categories:
+          </span>
+          {allCategories.map((cat) => {
+            const catNavKey = `Recommendations::${cat.category}`
+            const isActive =
+              currentNavigation === catNavKey ||
+              (currentNavigation === 'Recommendations' &&
+                cat.category === category.category)
+            return (
+              <button
+                key={cat.category}
+                type="button"
+                onClick={() => handleCategorySwitch(cat.category)}
+                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+                  isActive
+                    ? 'bg-sky-600 text-white shadow-md'
+                    : 'bg-slate-50 text-slate-700 hover:bg-sky-50 hover:text-sky-700 border border-slate-200'
+                }`}
+              >
+                <BookmarkCheck size={14} />
+                {cat.title}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       <section className="rounded-[24px] border border-[#54B8FF] bg-white shadow-sm">
         {/* Header */}
         <div className="border-b border-slate-200 px-4 py-5 sm:px-6">

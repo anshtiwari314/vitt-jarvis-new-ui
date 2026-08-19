@@ -50,10 +50,10 @@ type BasicInfoProps = {
 // ─── Icon map keyed by box header ──────────────────────────────────────────
 
 const SECTION_ICONS: Record<string, React.ReactNode> = {
-  'Client Info':             <Users       size={18} className="text-blue-500"   />,
-  'Financial Profile':       <ShieldCheck size={18} className="text-emerald-500"/>,
-  'Needs & Risk Assesment':  <Target      size={18} className="text-orange-500" />,
-  'Lead & meeting context':  <Briefcase   size={18} className="text-purple-500" />,
+  'Client Info': <Users size={18} className="text-blue-500" />,
+  'Financial Profile': <ShieldCheck size={18} className="text-emerald-500" />,
+  'Needs & Risk Assesment': <Target size={18} className="text-orange-500" />,
+  'Lead & meeting context': <Briefcase size={18} className="text-purple-500" />,
 };
 
 function getIcon(header: string) {
@@ -318,9 +318,8 @@ function FieldCell({
             type="button"
             onClick={handleCopyClick}
             title="Copy"
-            className={`absolute z-10 right-1 p-2 text-gray-400 hover:text-gray-600 transition-colors ${
-              field.type === 'text-area' ? 'top-1' : 'top-1/2 -translate-y-1/2'
-            }`}
+            className={`absolute z-10 right-1 p-2 text-gray-400 hover:text-gray-600 transition-colors ${field.type === 'text-area' ? 'top-1' : 'top-1/2 -translate-y-1/2'
+              }`}
           >
             {copied ? <Check size={16} className="text-green-500" /> : <Copy size={16} />}
           </button>
@@ -361,11 +360,11 @@ function FamilyTable({ table }: { table: TableData }) {
   return (
     <div>
       <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="mb-1 flex items-center justify-between gap-1">
-            <label className="text-sm text-slate-500">
-              Members
-            </label>
-          </div>
+        <div className="mb-1 flex items-center justify-between gap-1">
+          <label className="text-sm text-slate-500">
+            Members
+          </label>
+        </div>
       </div>
       <div className="overflow-x-auto rounded-lg border border-blue-100 bg-white shadow-sm">
         <table className="w-full min-w-[420px] table-fixed text-left text-sm">
