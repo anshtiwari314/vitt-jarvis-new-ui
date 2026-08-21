@@ -27,12 +27,15 @@ import FlagModal from './FlagModal';
 import { AvatarState } from './AvatarStateOverlay';
 
 export type InteractionMode = 'social' | 'copresent' | 'canvas';
+export type SessionMode = 'direct' | 'assist';
 
 interface HeaderProps {
   interactionMode: InteractionMode;
   setInteractionMode: (mode: InteractionMode) => void;
   avatarState: AvatarState;
-  setManualAvatarState?: (state: AvatarState) => void;
+  setManualAvatarState?: (state: AvatarState | null) => void;
+  sessionMode: SessionMode;
+  setSessionMode: (mode: SessionMode) => void;
   onOpenJourney: () => void;
   panelCollapsed: boolean;
   onTogglePanel: () => void;
@@ -43,6 +46,8 @@ export default function Header({
   setInteractionMode,
   avatarState,
   setManualAvatarState,
+  sessionMode,
+  setSessionMode,
   onOpenJourney,
   panelCollapsed,
   onTogglePanel,
@@ -125,16 +130,18 @@ export default function Header({
     });
   };
 
-  const handleAvatarStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value as AvatarState;
-    if (val === 'listening') {
+  const handleMutedClick = () => {
+    if (avatarState === 'muted') {
       setManualVadStatus(true);
-    } else if (val === 'muted') {
+      setManualAvatarState?.(null);
+    } else {
       setManualVadStatus(false);
+      setManualAvatarState?.('muted');
     }
-    if (setManualAvatarState) {
-      setManualAvatarState(val);
-    }
+  };
+
+  const handleSessionModeClick = () => {
+    setSessionMode(sessionMode === 'direct' ? 'assist' : 'direct');
   };
 
   return (
@@ -152,8 +159,7 @@ export default function Header({
         </div>
 
         <div className="meeting-controls">
-          <div className="prototype-cluster">
-            {/* Mode selector */}
+          <div className="prototype-cluster session-pill-cluster">
             <label className="mode-selector">
               <span>View</span>
               <select
@@ -170,21 +176,25 @@ export default function Header({
               <ChevronDown size={14} />
             </label>
 
-            {/* Avatar State Selector */}
-            <label className="mode-selector avatar-state-selector">
-              <span>Avatar</span>
-              <select
-                value={avatarState}
-                onChange={handleAvatarStateChange}
-                aria-label="Avatar state"
-              >
-                <option value="listening">Listening</option>
-                <option value="processing">Processing</option>
-                <option value="speaking">Speaking</option>
-                <option value="muted">Muted</option>
-              </select>
-              <ChevronDown size={14} />
-            </label>
+            <button
+              type="button"
+              className={`session-pill ${avatarState === 'muted' ? 'active' : ''}`}
+              onClick={handleMutedClick}
+              aria-pressed={avatarState === 'muted'}
+              aria-label={avatarState === 'muted' ? 'Unmute microphone' : 'Mute microphone'}
+            >
+              Muted
+            </button>
+
+            <button
+              type="button"
+              className={`session-pill session-mode-pill ${sessionMode === 'direct' ? 'active' : ''}`}
+              onClick={handleSessionModeClick}
+              aria-pressed={sessionMode === 'direct'}
+              aria-label={`Switch to ${sessionMode === 'direct' ? 'assist' : 'direct'} mode`}
+            >
+              {sessionMode === 'direct' ? 'Direct' : 'Assist'}
+            </button>
           </div>
 
           {/* Mobile / Small Screen Chat History Trigger */}

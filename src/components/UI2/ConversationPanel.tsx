@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { PanelRightClose, MessageSquare, Sparkles } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { PanelRightClose, Sparkles } from 'lucide-react';
 import { useAppSelector } from '../../store/store';
 import { useData } from '../../context/DataWrapper';
 import { useDispatch } from 'react-redux';
 import { updateSalesCopilotState } from '../../reducers/salesCopilotReducer';
 import ReactHtmlParser from 'react-html-parser';
+import { SessionMode } from './Header';
 
 export type TranscriptMessage = {
   id: number | string;
@@ -54,15 +55,15 @@ function NotificationCardItem({ card }: { card: any }) {
   }
 
   return (
-    <div className="bg-slate-50 border border-slate-300 p-4 rounded-xl flex flex-col space-y-3 shadow-sm my-2">
-      <h4 className="font-semibold text-slate-700 flex items-center text-sm">
-        <Sparkles className="w-4 h-4 mr-2 text-sky-500" />
+    <div className="cue-card notification-card bg-slate-50 border border-slate-300">
+      <h4 className="cue-card-heading text-slate-700">
+        <Sparkles className="w-4 h-4 flex-shrink-0 text-sky-500" />
         Suggested Change
       </h4>
-      <div className="text-sm text-slate-700">
+      <div className="cue-card-body text-sm text-slate-700">
         {ReactHtmlParser(card.text || '')}
       </div>
-      <div className="flex justify-end space-x-2 mt-2">
+      <div className="cue-card-actions">
         {!selectedOption &&
           card.options?.map((option: string, idx: number) => (
             <button
@@ -94,17 +95,26 @@ interface ConversationPanelProps {
   collapsed: boolean;
   onToggle: () => void;
   messages?: TranscriptMessage[];
+  sessionMode?: SessionMode;
 }
 
 export default function ConversationPanel({
   collapsed,
   onToggle,
   messages = [],
+  sessionMode = 'assist',
 }: ConversationPanelProps) {
   const cues = useAppSelector(
     (state) => state.salesCopilotReducer.salesData.cues
   );
+  const showTranscriptTab = sessionMode === 'direct';
   const [activeTab, setActiveTab] = useState<'cues' | 'transcript'>('cues');
+
+  useEffect(() => {
+    if (!showTranscriptTab && activeTab === 'transcript') {
+      setActiveTab('cues');
+    }
+  }, [showTranscriptTab, activeTab]);
 
   return (
     <>
@@ -155,17 +165,19 @@ export default function ConversationPanel({
                   >
                     AI Cues
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('transcript')}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-md transition ${
-                      activeTab === 'transcript'
-                        ? 'bg-white text-sky-700 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    Transcript
-                  </button>
+                  {showTranscriptTab && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('transcript')}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-md transition ${
+                        activeTab === 'transcript'
+                          ? 'bg-white text-sky-700 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      Transcript
+                    </button>
+                  )}
                 </div>
               </div>
               <span>
@@ -173,7 +185,14 @@ export default function ConversationPanel({
               </span>
             </header>
 
-            <div className="conversation-log" aria-live="polite">
+            <div
+              className={`conversation-log ${
+                activeTab === 'cues'
+                  ? 'conversation-log-cues'
+                  : 'conversation-log-transcript'
+              }`}
+              aria-live="polite"
+            >
               {activeTab === 'cues' ? (
                 cues?.cards && cues.cards.length > 0 ? (
                   cues.cards.map((card: any, index: number) => {
@@ -190,17 +209,15 @@ export default function ConversationPanel({
                     return (
                       <div
                         key={index}
-                        className={`${colorStyles.card} p-4 rounded-xl shadow-sm space-y-2`}
+                        className={`cue-card ${colorStyles.card}`}
                       >
                         <h4
-                          className={`font-bold ${colorStyles.heading} flex items-center text-sm`}
+                          className={`cue-card-heading ${colorStyles.heading}`}
                         >
-                          <Sparkles className="w-4 h-4 mr-2" />
+                          <Sparkles className="w-4 h-4 mr-2 flex-shrink-0" />
                           {card?.header}
                         </h4>
-                        <ul
-                          className={`list-disc list-inside space-y-1 ${colorStyles.body} text-xs font-medium`}
-                        >
+                        <ul className={`cue-card-list ${colorStyles.body}`}>
                           {card.data?.map((item: any, subIndex: number) => (
                             <li key={subIndex}>
                               {ReactHtmlParser(item?.text ?? '')}

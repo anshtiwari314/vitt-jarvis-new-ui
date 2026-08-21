@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, ChevronDown, ChevronRight, BookmarkCheck } from 'lucide-react';
+import {
+  X,
+  ChevronDown,
+  UserRound,
+  PieChart,
+  Archive,
+} from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store/store';
 import { setNavigation } from '../../reducers/salesCopilotReducer';
 import { useData } from '../../context/DataWrapper';
@@ -7,13 +13,32 @@ import { useData } from '../../context/DataWrapper';
 interface JourneyDrawerProps {
   open: boolean;
   onClose: () => void;
-  onSelectMode?: (mode: 'canvas') => void;
+}
+
+const REC_SUB_ICON_COLOR = '#60A5FA';
+
+function RecSubIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke={REC_SUB_ICON_COLOR}
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+      />
+    </svg>
+  );
 }
 
 export default function JourneyDrawer({
   open,
   onClose,
-  onSelectMode,
 }: JourneyDrawerProps) {
   const dispatch = useAppDispatch();
   const { socket } = useData();
@@ -74,9 +99,6 @@ export default function JourneyDrawer({
   const handleSelect = (navKey: string) => {
     dispatch(setNavigation(navKey));
     emitTopicReq(navKey);
-    if (onSelectMode) {
-      onSelectMode('canvas');
-    }
     onClose();
   };
 
@@ -105,82 +127,79 @@ export default function JourneyDrawer({
           <button
             onClick={onClose}
             aria-label="Close journey"
-            className="p-2 rounded-lg hover:bg-slate-100 transition text-slate-500"
+            className="journey-close"
           >
             <X size={20} />
           </button>
         </header>
 
-        <nav className="space-y-2">
-          {/* 01 Understanding You */}
+        <nav>
           <button
-            className={isProfile ? 'active' : ''}
+            type="button"
+            className={`journey-item ${isProfile ? 'active' : ''}`}
             onClick={() => handleSelect('Data Retrieval')}
           >
-            <span className="journey-number">01</span>
-            <span>
+            <span className="journey-icon" aria-hidden="true">
+              <UserRound size={18} />
+            </span>
+            <span className="journey-copy">
               <strong>Understanding you</strong>
               <small>Profile, family and financial picture</small>
             </span>
           </button>
 
-          {/* 02 Priorities Identified */}
           <button
-            className={isSummary ? 'active' : ''}
+            type="button"
+            className={`journey-item ${isSummary ? 'active' : ''}`}
             onClick={() => handleSelect('Plan Summary')}
           >
-            <span className="journey-number">02</span>
-            <span>
+            <span className="journey-icon" aria-hidden="true">
+              <PieChart size={18} />
+            </span>
+            <span className="journey-copy">
               <strong>Priorities identified</strong>
               <small>Protection and retirement needs</small>
             </span>
           </button>
 
-          {/* 03 Recommendations Dropdown */}
-          <div className="space-y-1">
+          <div className="journey-group">
             <button
-              className={`w-full ${isRecs ? 'active' : ''}`}
+              type="button"
+              className={`journey-item journey-item-expandable ${
+                isRecs ? 'active' : ''
+              }`}
               onClick={handleRecommendationsClick}
             >
-              <span className="journey-number">03</span>
-              <span className="flex-1 text-left">
+              <span className="journey-icon" aria-hidden="true">
+                <Archive size={18} />
+              </span>
+              <span className="journey-copy">
                 <strong>Recommendation</strong>
                 <small>Suitable plans and rationale</small>
               </span>
               <ChevronDown
                 size={18}
-                className={`text-slate-400 transition-transform duration-200 ${
-                  recsExpanded ? 'rotate-180' : ''
-                }`}
+                className={`journey-chevron ${recsExpanded ? 'expanded' : ''}`}
+                aria-hidden="true"
               />
             </button>
 
             {recsExpanded && recCategories.length > 0 && (
-              <div className="ml-6 pl-4 border-l-2 border-slate-200 space-y-1 py-1">
+              <div className="journey-sublist ml-6 pl-4 border-l-2 border-slate-200 space-y-1 py-1">
                 {recCategories.map((cat) => {
                   const catNavKey = `Recommendations::${cat.category}`;
                   const isCatActive = currentNavigation === catNavKey;
                   return (
                     <button
                       key={cat.category}
-                      className={`w-full text-left px-3 py-2 text-xs font-semibold rounded-lg flex items-center justify-between transition-all ${
-                        isCatActive
-                          ? 'bg-sky-100 text-sky-800 border border-sky-300 font-bold shadow-sm'
-                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent'
+                      type="button"
+                      className={`journey-rec-subitem ${
+                        isCatActive ? 'active' : ''
                       }`}
                       onClick={() => handleSelect(catNavKey)}
                     >
-                      <span className="flex items-center gap-2">
-                        <BookmarkCheck
-                          size={15}
-                          className={isCatActive ? 'text-sky-600' : 'text-slate-400'}
-                        />
-                        {cat.title}
-                      </span>
-                      <ChevronRight
-                        size={14}
-                        className={isCatActive ? 'text-sky-600' : 'text-slate-400'}
-                      />
+                      <RecSubIcon className="journey-rec-subitem-icon" />
+                      <span className="journey-rec-subitem-label">{cat.title}</span>
                     </button>
                   );
                 })}

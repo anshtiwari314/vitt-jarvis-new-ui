@@ -16,7 +16,7 @@ import PlanSummary from '../components/UI2/PlanSummary';
 import RecommendationCategoryPage from '../components/UI2/RecommendationCategoryPage';
 import NewFinancialGoals from '../components/UI2/NewFinancialGoals';
 import SectionVideoOverlay from '../components/UI2/SectionVideoOverlay';
-import Header, { InteractionMode } from '../components/UI2/Header';
+import Header, { InteractionMode, SessionMode } from '../components/UI2/Header';
 import JourneyDrawer from '../components/UI2/JourneyDrawer';
 import AvatarStateOverlay, {
   AvatarState,
@@ -77,8 +77,8 @@ function RecommendationsGeneratedToast() {
   );
 }
 
-// ─── Co-Present Right Pane Content ──────────────────────────────────────────
-function CoPresentContent({
+// ─── Shared journey section content (Understanding / Priorities / Recommendations) ─
+function JourneySectionContent({
   currentNavigation,
   salesData,
   hotPageLoading,
@@ -117,7 +117,6 @@ function CoPresentContent({
     return <HotPageLoader />;
   }
 
-  /* Default Client Info / Data Retrieval View */
   return (
     <div className="space-y-6">
       <BasicInfo data={salesData.basicInfo} />
@@ -158,6 +157,7 @@ export default function App() {
   // Unified Workspace State
   const [interactionMode, setInteractionMode] =
     useState<InteractionMode>('social');
+  const [sessionMode, setSessionMode] = useState<SessionMode>('assist');
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [journeyOpen, setJourneyOpen] = useState(false);
   const [avatarMinimized, setAvatarMinimized] = useState(false);
@@ -187,14 +187,11 @@ export default function App() {
     },
   ]);
 
-  // Derived Avatar State from real application events
-  let derivedAvatarState: AvatarState = 'listening';
+  // Derived avatar state from video / audio events only
+  let derivedAvatarState: AvatarState = 'muted';
   if (isBasicInfoVideoPlaying || isAudioPlayingState) {
     derivedAvatarState = 'speaking';
-  } else if (
-    hotPageLoading?.['Data Retrieval'] ||
-    hotPageLoading?.['Plan Summary']
-  ) {
+  } else if (VAD2?.loading) {
     derivedAvatarState = 'processing';
   } else if (manualVadStatus || VAD2?.listening) {
     derivedAvatarState = 'listening';
@@ -202,7 +199,13 @@ export default function App() {
     derivedAvatarState = 'muted';
   }
 
-  const activeAvatarState = manualAvatarState || derivedAvatarState;
+  const activeAvatarState = manualAvatarState ?? derivedAvatarState;
+
+  useEffect(() => {
+    if (isBasicInfoVideoPlaying || isAudioPlayingState) {
+      setManualAvatarState(null);
+    }
+  }, [isBasicInfoVideoPlaying, isAudioPlayingState]);
 
   // Query Params init
   useEffect(() => {
@@ -284,6 +287,97 @@ export default function App() {
     setDraft('');
   };
 
+  const journeySectionProps = {
+    currentNavigation,
+    salesData,
+    hotPageLoading,
+    formatCurrency,
+    recommendationCategoryData,
+  };
+
+  const renderSocialStage = () => (
+    <div
+      className={`social-stage state-${activeAvatarState} ${
+        avatarMinimized ? 'avatar-minimized' : ''
+      }`}
+    >
+      <div className="social-aura" />
+      <div className="social-composition">
+        {avatarMinimized ? (
+          <button
+            type="button"
+            className={`minimized-avatar-dock state-${activeAvatarState}`}
+            onClick={() => setAvatarMinimized(false)}
+            aria-label="Restore AI avatar"
+            title="Restore avatar"
+          >
+            <span>
+              <img className="avatar-image" src="/avatar-vitt-refined.png" alt="VITT AI Companion" />
+            </span>
+            <AvatarStateOverlay state={activeAvatarState} />
+            <Maximize2 size={17} />
+          </button>
+        ) : (
+          <div
+            className={`social-avatar avatar-state-visual state-${activeAvatarState}`}
+          >
+            <button
+              type="button"
+              className="avatar-minimize"
+              onClick={() => setAvatarMinimized(true)}
+              aria-label="Minimize AI avatar"
+              title="Minimize avatar"
+            >
+              <Minimize2 size={17} />
+            </button>
+
+            <div className="avatar-media-shell">
+              <SectionVideoOverlay>
+                <img className="avatar-image" src="/avatar-vitt-refined.png" alt="VITT AI Companion" />
+              </SectionVideoOverlay>
+            </div>
+
+            <AvatarStateOverlay state={activeAvatarState} />
+          </div>
+        )}
+
+        <div className="social-live-caption" aria-live="polite">
+          <p>
+            <span className="caption-spoken">
+              We’ve spoken about your family and current financial position.{' '}
+            </span>
+            <span className="caption-active">
+              What would financial security for your family mean to you?
+            </span>
+          </p>
+        </div>
+
+        <Composer
+          className="social-composer"
+          draft={draft}
+          setDraft={setDraft}
+          onSend={handleSendMessage}
+          voiceOn={speakerEnabled}
+          onVoiceToggle={toggleSpeakerPlayback}
+          micOn={manualVadStatus}
+          onMicToggle={() => setManualVadStatus(!manualVadStatus)}
+        />
+      </div>
+    </div>
+  );
+
+  const renderCanvasView = () => (
+    <div className="mode-canvas">
+      <div className="canvas-scroll">
+        <JourneySectionContent {...journeySectionProps} />
+      </div>
+      <CanvasAvatarChip
+        state={activeAvatarState}
+        onClick={() => setInteractionMode('social')}
+      />
+    </div>
+  );
+
   const getBasicFieldValue = (fieldName: string, fallback: string) => {
     const basicInfo = salesData.basicInfo;
     if (!basicInfo) return fallback;
@@ -325,7 +419,6 @@ export default function App() {
       <JourneyDrawer
         open={journeyOpen}
         onClose={() => setJourneyOpen(false)}
-        onSelectMode={(mode) => setInteractionMode(mode)}
       />
 
       <section className="main-zone">
@@ -335,6 +428,8 @@ export default function App() {
           setInteractionMode={setInteractionMode}
           avatarState={activeAvatarState}
           setManualAvatarState={setManualAvatarState}
+          sessionMode={sessionMode}
+          setSessionMode={setSessionMode}
           onOpenJourney={() => setJourneyOpen(true)}
           panelCollapsed={panelCollapsed}
           onTogglePanel={() => setPanelCollapsed((prev) => !prev)}
@@ -350,72 +445,7 @@ export default function App() {
           >
             {/* 1. SOCIAL MODE */}
             {interactionMode === 'social' ? (
-              <div
-                className={`social-stage state-${activeAvatarState} ${
-                  avatarMinimized ? 'avatar-minimized' : ''
-                }`}
-              >
-                <div className="social-aura" />
-                <div className="social-composition">
-                  {avatarMinimized ? (
-                    <button
-                      type="button"
-                      className={`minimized-avatar-dock state-${activeAvatarState}`}
-                      onClick={() => setAvatarMinimized(false)}
-                      aria-label="Restore AI avatar"
-                      title="Restore avatar"
-                    >
-                      <span>
-                        <img className="avatar-image" src="/avatar-vitt-refined.png" alt="VITT AI Companion" />
-                      </span>
-                      <AvatarStateOverlay state={activeAvatarState} />
-                      <Maximize2 size={17} />
-                    </button>
-                  ) : (
-                    <div
-                      className={`social-avatar avatar-state-visual state-${activeAvatarState}`}
-                    >
-                      <button
-                        type="button"
-                        className="avatar-minimize"
-                        onClick={() => setAvatarMinimized(true)}
-                        aria-label="Minimize AI avatar"
-                        title="Minimize avatar"
-                      >
-                        <Minimize2 size={17} />
-                      </button>
-
-                      <SectionVideoOverlay>
-                        <img className="avatar-image" src="/avatar-vitt-refined.png" alt="VITT AI Companion" />
-                      </SectionVideoOverlay>
-
-                      <AvatarStateOverlay state={activeAvatarState} />
-                    </div>
-                  )}
-
-                  <div className="social-live-caption" aria-live="polite">
-                    <p>
-                      <span className="caption-spoken">
-                        We’ve spoken about your family and current financial position.{' '}
-                      </span>
-                      <span className="caption-active">
-                        What would financial security for your family mean to you?
-                      </span>
-                    </p>
-                  </div>
-
-                  <Composer
-                    className="social-composer"
-                    draft={draft}
-                    setDraft={setDraft}
-                    onSend={handleSendMessage}
-                    voiceOn={speakerEnabled}
-                    onVoiceToggle={toggleSpeakerPlayback}
-                    micOn={manualVadStatus}
-                    onMicToggle={() => setManualVadStatus(!manualVadStatus)}
-                  />
-                </div>
-              </div>
+              renderSocialStage()
             ) : interactionMode === 'copresent' ? (
               /* 2. CO-PRESENT MODE */
               <div className={`copresent-stage state-${activeAvatarState}`}>
@@ -451,9 +481,11 @@ export default function App() {
                       >
                         <Minimize2 size={17} />
                       </button>
-                      <SectionVideoOverlay>
-                        <img className="avatar-image" src="/avatar-vitt-refined.png" alt="VITT AI Companion" />
-                      </SectionVideoOverlay>
+                      <div className="avatar-media-shell">
+                        <SectionVideoOverlay>
+                          <img className="avatar-image" src="/avatar-vitt-refined.png" alt="VITT AI Companion" />
+                        </SectionVideoOverlay>
+                      </div>
                       <AvatarStateOverlay state={activeAvatarState} />
                     </div>
                   )}
@@ -482,13 +514,7 @@ export default function App() {
                 </aside>
 
                 <section className="copresent-content">
-                  <CoPresentContent
-                    currentNavigation={currentNavigation}
-                    salesData={salesData}
-                    hotPageLoading={hotPageLoading}
-                    formatCurrency={formatCurrency}
-                    recommendationCategoryData={recommendationCategoryData}
-                  />
+                  <JourneySectionContent {...journeySectionProps} />
                 </section>
 
                 <aside className="copresent-mobile-dock" aria-label="AI conversation controls">
@@ -515,43 +541,8 @@ export default function App() {
                 </aside>
               </div>
             ) : (
-              /* 3. CANVAS MODE */
-              <div className="mode-canvas">
-                <div className="canvas-scroll">
-                  {currentNavigation === 'Plan Summary' ? (
-                    hotPageLoading?.['Plan Summary'] ? (
-                      <HotPageLoader />
-                    ) : (
-                      <PlanSummary
-                        data={salesData.planSummary}
-                        formatCurrency={formatCurrency}
-                      />
-                    )
-                  ) : typeof currentNavigation === 'string' &&
-                    currentNavigation.startsWith('Recommendations::') ? (
-                    <RecommendationCategoryPage
-                      category={recommendationCategoryData}
-                    />
-                  ) : currentNavigation === 'Recommendations' ? (
-                    <HotPageLoader />
-                  ) : (
-                    <div className="space-y-6">
-                      <BasicInfo data={salesData.basicInfo} />
-                      {hotPageLoading?.['Data Retrieval'] &&
-                      !(salesData.financialGoals?.goals?.length) ? (
-                        <HotPageLoader />
-                      ) : (
-                        <NewFinancialGoals />
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <CanvasAvatarChip
-                  state={activeAvatarState}
-                  onClick={() => setInteractionMode('social')}
-                />
-              </div>
+              /* 3. CANVAS MODE — form full width */
+              renderCanvasView()
             )}
           </section>
 
@@ -560,6 +551,7 @@ export default function App() {
             collapsed={panelCollapsed}
             onToggle={() => setPanelCollapsed((prev) => !prev)}
             messages={messages}
+            sessionMode={sessionMode}
           />
         </div>
       </section>

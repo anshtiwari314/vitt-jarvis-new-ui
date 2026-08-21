@@ -24,7 +24,7 @@ export default function AvatarStateOverlay({
 }) {
   return (
     <span className={`avatar-state-overlay state-${state} ${className}`} aria-hidden="true">
-      {state === 'listening' && <Mic size={17} />}
+      {state === 'listening' && <Mic size={20} strokeWidth={2.4} />}
       {state === 'processing' && (
         <span className="processing-dots">
           <i />
@@ -33,7 +33,7 @@ export default function AvatarStateOverlay({
         </span>
       )}
       {state === 'speaking' && <ActivityWaveform />}
-      {state === 'muted' && <MicOff size={17} />}
+      {state === 'muted' && <MicOff size={20} strokeWidth={2.4} />}
     </span>
   );
 }

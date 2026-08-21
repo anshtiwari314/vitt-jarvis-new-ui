@@ -149,19 +149,19 @@ export default function SectionVideoOverlay({
         <div
           className={
             showVideo
-              ? 'flex min-h-0 w-full flex-1 flex-col font-sans text-gray-800'
+              ? 'avatar-video-shell flex min-h-0 w-full flex-1 flex-col font-sans text-gray-800'
               : 'hidden'
           }
         >
           <div
-            className="relative flex min-h-0 w-full flex-1 flex-col touch-none"
+            className="avatar-video-frame relative flex min-h-0 w-full flex-1 flex-col touch-none"
             style={{ overscrollBehavior: 'none' }}
             onTouchMove={(e) => e.preventDefault()}
           >
-            <div className="flex min-h-0 w-full flex-1 items-center justify-center">
+            <div className="flex min-h-0 w-full flex-1 items-end justify-center overflow-hidden">
               <video
                 ref={videoRef}
-                className="block max-h-full max-w-full h-auto w-auto rounded-xl shadow-sm"
+                className="avatar-video block h-auto max-h-full w-auto max-w-full rounded-xl shadow-sm"
                 playsInline
                 preload="auto"
                 onEnded={handleVideoEnd}

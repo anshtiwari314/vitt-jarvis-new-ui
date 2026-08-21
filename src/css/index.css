@@ -150,12 +150,14 @@
 /* Right-side transcript and chat composer. */
 .conversation-panel{
   min-height:0;
-  display:grid;
-  grid-template-rows:minmax(0,1fr) auto;
+  height:100%;
+  display:flex;
+  flex-direction:column;
   background:#f8fafc;
 }
 .conversation-panel.collapsed{display:block;background:#fff}
 .conversation-header{
+  flex:0 0 auto;
   min-height:76px;
   padding:18px 48px 14px 22px;
   border-bottom:1px solid #dce5ec;
@@ -165,8 +167,10 @@
 .conversation-header span{display:flex;align-items:center;gap:7px;color:#657990;font-size:12px}
 .conversation-header span i{width:8px;height:8px;border-radius:50%;background:#18b66a;box-shadow:0 0 0 4px rgba(24,182,106,.12)}
 .conversation-log{
+  flex:1 1 auto;
   min-height:0;
   overflow-y:auto;
+  overflow-x:hidden;
   padding:52px 18px 24px;
   display:flex;
   flex-direction:column;
@@ -293,11 +297,115 @@
 .journey-drawer header div{display:grid;gap:4px}.journey-drawer header span{font-size:12px;color:#718198;text-transform:uppercase;letter-spacing:.08em}.journey-drawer header strong{font-size:20px}
 .journey-drawer header button{width:38px;height:38px;border:0;border-radius:9px;background:#f1f5f8;display:grid;place-items:center;cursor:pointer}
 .journey-drawer nav{display:grid;gap:9px;padding-top:20px}
-.journey-drawer nav button{min-height:79px;border:1px solid transparent;border-radius:13px;background:transparent;padding:12px;display:grid;grid-template-columns:39px 1fr;align-items:center;gap:12px;text-align:left;cursor:pointer}
-.journey-drawer nav button:hover{background:#f3f7fa}.journey-drawer nav button.active{background:#eaf6fd;border-color:#cce6f6}
-.journey-number{width:36px;height:36px;border-radius:10px;background:#eef3f7;display:grid;place-items:center;color:#5e7187;font-size:12px;font-weight:800}
-.journey-drawer nav button.active .journey-number{background:#3d94c8;color:#fff}
-.journey-drawer nav button>span:last-child{display:grid;gap:5px}.journey-drawer nav strong{font-size:15px}.journey-drawer nav small{color:#6d7e91;font-size:12px;line-height:1.35}
+.journey-drawer nav > button.journey-item,
+.journey-drawer .journey-group > button.journey-item{
+  width:100%;
+  min-height:79px;
+  border:1px solid transparent;
+  border-radius:13px;
+  background:transparent;
+  padding:12px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-align:left;
+  cursor:pointer;
+}
+.journey-drawer nav > button.journey-item:hover,
+.journey-drawer .journey-group > button.journey-item:hover{background:#f3f7fa}
+.journey-drawer nav > button.journey-item.active,
+.journey-drawer .journey-group > button.journey-item.active{background:#eaf6fd;border-color:#cce6f6}
+.journey-icon{
+  flex:0 0 36px;
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  background:#eef3f7;
+  display:grid;
+  place-items:center;
+  color:#60a5fa;
+}
+.journey-item.active .journey-icon{background:#dbeafe;color:#3b82f6}
+.journey-copy{
+  flex:1 1 auto;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+}
+.journey-copy strong{
+  display:block;
+  font-size:15px;
+  line-height:1.25;
+  color:#1e293b;
+}
+.journey-copy small{
+  display:block;
+  color:#6d7e91;
+  font-size:12px;
+  line-height:1.35;
+}
+.journey-chevron{
+  flex:0 0 auto;
+  margin-left:auto;
+  color:#94a3b8;
+  transition:transform .2s ease;
+}
+.journey-chevron.expanded{transform:rotate(180deg)}
+.journey-group{display:grid;gap:4px}
+/* Recommendation sub-cards — slightly shorter than parent journey items */
+.journey-drawer .journey-sublist button.journey-rec-subitem{
+  width:100%;
+  min-height:64px;
+  padding:10px 12px;
+  border:1px solid transparent;
+  border-radius:13px;
+  background:transparent;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  text-align:left;
+  cursor:pointer;
+  font-size:14px;
+  line-height:1.35;
+  font-weight:500;
+  color:#475569;
+  transition:background .2s ease,color .2s ease;
+}
+.journey-drawer .journey-sublist button.journey-rec-subitem:hover{
+  background:#f1f5f9;
+  color:#1e293b;
+}
+.journey-drawer .journey-sublist button.journey-rec-subitem.active{
+  background:#eaf6fd;
+  border-color:#cce6f6;
+  color:#0369a1;
+  font-weight:600;
+}
+.journey-rec-subitem-icon{
+  flex:0 0 16px;
+  width:16px;
+  height:16px;
+}
+.journey-rec-subitem-label{
+  flex:1 1 auto;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.journey-close{
+  width:38px;
+  height:38px;
+  border:0;
+  border-radius:9px;
+  background:#f1f5f8;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  color:#64748b;
+}
+.journey-close:hover{background:#e2e8f0;color:#334155}
 
 /* Social chat entry remains immediately available while transcript stays secondary. */
 .mode-social .social-composition,
@@ -367,8 +475,26 @@
 }
 .social-composer{order:3}
 
+/* Cue cards fill the panel width and align from the left edge. */
+.conversation-log-cues{
+  align-items:stretch;
+  align-content:flex-start;
+  width:100%;
+  min-height:100%;
+  padding:12px 18px 20px;
+}
+.conversation-log-cues .cue-card,
+.conversation-log-cues .notification-card{
+  width:100%;
+  max-width:none;
+  flex:0 0 auto;
+  align-self:stretch;
+  box-sizing:border-box;
+  text-align:left;
+}
+
 /* Transcript is a centered chronological log, not a chat-bubble exchange. */
-.conversation-log{align-items:center}
+.conversation-log-transcript{align-items:center}
 .transcript-entry,
 .transcript-entry.ai,
 .transcript-entry.customer{
@@ -1265,6 +1391,8 @@
 .mode-copresent .copresent-portrait{
   isolation:isolate;
   overflow:hidden;
+  padding-bottom:24px;
+  box-sizing:border-box;
   border-radius:24px 24px 10px 10px;
   background:
     linear-gradient(90deg,
@@ -1708,6 +1836,156 @@
   .mode-canvas .canvas-scroll{padding-bottom:112px}
 }
 
+/* Session pill controls: Social, Muted, Direct/Assist */
+.session-pill-cluster{display:flex;align-items:center;gap:6px}
+.session-pill{
+  height:36px;
+  min-width:72px;
+  padding:0 14px;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  background:rgba(255,255,255,.56);
+  color:#64748b;
+  font-size:13px;
+  font-weight:700;
+  line-height:1;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:background .18s ease,border-color .18s ease,color .18s ease,box-shadow .18s ease;
+}
+.session-pill:hover{
+  border-color:#cbd5e1;
+  background:#f1f5f9;
+  color:#334155;
+}
+.session-pill.active{
+  border-color:#c7d2fe;
+  background:rgba(248,248,255,.96);
+  color:#5b5bd6;
+  box-shadow:0 0 0 3px rgba(91,91,214,.08);
+}
+.session-pill:focus-visible{
+  outline:3px solid rgba(91,91,214,.22);
+  outline-offset:2px;
+}
+.session-mode-pill{min-width:78px}
+
+/* Follow-up cue cards: full-width, left-aligned, content fills the card */
+.cue-card{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  width:100%;
+  min-width:0;
+  max-width:none;
+  padding:14px 16px;
+  border-radius:12px;
+  box-shadow:0 2px 5px rgba(35,58,80,.05);
+  overflow:hidden;
+  word-break:break-word;
+  overflow-wrap:anywhere;
+  text-align:left;
+  box-sizing:border-box;
+}
+.cue-card-heading{
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-start;
+  gap:8px;
+  width:100%;
+  margin:0 0 8px;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.35;
+  text-align:left;
+}
+.cue-card-body{
+  width:100%;
+  flex:1 1 auto;
+  font-size:12px;
+  font-weight:500;
+  line-height:1.45;
+  text-align:left;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+.cue-card-list{
+  width:100%;
+  flex:1 1 auto;
+  margin:0;
+  padding:0 0 0 1.15rem;
+  list-style:disc outside;
+  font-size:12px;
+  font-weight:500;
+  line-height:1.45;
+  text-align:left;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+.cue-card-list li{
+  margin:0 0 6px;
+  padding-left:.15rem;
+  text-align:left;
+}
+.cue-card-list li:last-child{margin-bottom:0}
+.conversation-log-cues .cue-card:only-child{
+  flex:1 1 auto;
+  min-height:0;
+}
+.conversation-log-cues .cue-card:only-child .cue-card-list,
+.conversation-log-cues .cue-card:only-child .cue-card-body{
+  flex:1 1 auto;
+}
+
+/* Avatar state overlay: keep mic icon visible above portrait */
+.mode-social .social-composition>.social-avatar .avatar-image,
+.content-grid:not(.panel-hidden) .mode-social .social-composition>.social-avatar .avatar-image,
+.mode-copresent .copresent-portrait .avatar-image{
+  border-radius:24px 24px 10px 10px;
+  overflow:hidden;
+}
+.avatar-state-overlay{
+  z-index:6;
+  bottom:8px;
+  min-width:48px;
+  height:40px;
+  padding:0 13px;
+  box-shadow:0 8px 24px rgba(63,62,151,.2);
+}
+.avatar-state-overlay svg{
+  flex-shrink:0;
+  display:block;
+}
+.minimized-avatar-dock .avatar-state-overlay,
+.canvas-ai-indicator .avatar-state-overlay{
+  min-width:32px;
+  height:30px;
+  padding:0 7px;
+}
+
+@media(max-width:720px){
+  .session-pill-cluster{
+    grid-column:1/-1;
+    grid-row:2;
+    width:100%;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:6px;
+  }
+  .session-pill{
+    width:100%;
+    min-width:0;
+    height:40px;
+    padding:0 8px;
+    font-size:12px;
+  }
+  .avatar-state-overlay{
+    bottom:10px;
+    min-width:44px;
+    height:36px;
+  }
+}
+
 /* V24: a real office environment for the avatar video surface. */
 .mode-social .social-composition>.social-avatar,
 .content-grid:not(.panel-hidden) .mode-social .social-composition>.social-avatar,
@@ -1930,6 +2208,99 @@
     background: #eef5fc !important;
     color: #3588e9 !important;
     border-color: #3588e9 !important;
+  }
+}
+
+/* V25: bounded avatar stage so mic overlay, caption, and composer stay visible */
+.mode-social .social-composition,
+.content-grid:not(.panel-hidden) .mode-social .social-composition{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:flex-start;
+  gap:10px;
+  min-height:0;
+  height:100%;
+  max-height:100%;
+  padding:8px 0 12px;
+  box-sizing:border-box;
+}
+.mode-social .social-composition>.social-avatar,
+.content-grid:not(.panel-hidden) .mode-social .social-composition>.social-avatar{
+  flex:0 0 auto;
+  min-height:0 !important;
+  max-height:clamp(220px,42vh,380px) !important;
+  height:clamp(220px,42vh,380px) !important;
+  width:100% !important;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:flex-end;
+  padding-bottom:0 !important;
+}
+.mode-social .social-composition>.social-avatar .avatar-media-shell{
+  position:relative;
+  flex:1 1 auto;
+  min-height:0;
+  width:100%;
+  max-height:calc(100% - 48px);
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  overflow:hidden;
+}
+.mode-social .social-composition>.social-avatar .avatar-media-shell .avatar-video-shell,
+.mode-social .social-composition>.social-avatar .avatar-media-shell .avatar-video-frame{
+  min-height:0;
+  max-height:100%;
+  width:100%;
+}
+.mode-social .social-composition>.social-avatar .avatar-image,
+.mode-social .social-composition>.social-avatar .avatar-video{
+  display:block;
+  max-height:100%;
+  max-width:100%;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  object-position:center bottom;
+}
+.mode-social .social-composition>.social-live-caption{
+  flex:0 0 auto;
+  width:100%;
+  max-width:none;
+  margin-top:0;
+}
+.mode-social .social-composition>.social-composer{
+  flex:0 0 auto;
+  width:100%;
+  max-width:none;
+  margin:0 0 8px;
+}
+.mode-social .social-composition>.social-avatar .avatar-state-overlay{
+  bottom:10px;
+  z-index:8;
+}
+.conversation-panel:not(.collapsed) .conversation-log-cues,
+.content-grid:not(.panel-hidden) .conversation-log-cues{
+  padding-top:12px;
+}
+.session-pill-cluster .mode-selector{
+  height:36px;
+  min-width:116px;
+}
+@media(max-width:720px){
+  .content-grid:not(.panel-hidden) .conversation-log-cues{
+    padding:12px 14px calc(16px + env(safe-area-inset-bottom));
+  }
+  .session-pill-cluster .mode-selector{
+    width:100%;
+    min-width:0;
+    height:40px;
+  }
+  .mode-social .social-composition>.social-avatar{
+    max-height:min(42vh,320px) !important;
   }
 }
 
