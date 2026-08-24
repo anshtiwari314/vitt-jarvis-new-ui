@@ -163,6 +163,7 @@ export default function SectionVideoOverlay({
                 ref={videoRef}
                 className="avatar-video block h-auto max-h-full w-auto max-w-full rounded-xl shadow-sm"
                 playsInline
+                muted
                 preload="auto"
                 onEnded={handleVideoEnd}
                 onError={handleVideoEnd}

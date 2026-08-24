@@ -93,7 +93,7 @@ const VIDEO_LAYOUT = {
     stageStack: {
       width: '60%',
       maxWidth: '720px',
-      height: '80%',
+      height: '100%',
       display: 'grid',
       gridTemplateRows: 'minmax(0, 1fr) auto',
       gap: '10px',
