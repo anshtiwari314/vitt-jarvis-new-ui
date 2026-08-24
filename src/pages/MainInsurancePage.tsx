@@ -100,7 +100,7 @@ const VIDEO_LAYOUT = {
       overflow: 'visible',
       boxSizing:'border-box',
       alignSelf: 'center',
-      border:'0.1rem solid green'
+      //border:'0.1rem solid green'
     } as React.CSSProperties,
     portrait: {
       width: '100%',
@@ -110,7 +110,7 @@ const VIDEO_LAYOUT = {
       boxSizing:'border-box',
       background: 'transparent',
       position: 'relative',
-    border:'0.1rem solid blue',
+    //border:'0.1rem solid blue',
     padding:'0',
     margin:'0'
     } as React.CSSProperties,
@@ -124,7 +124,7 @@ const VIDEO_LAYOUT = {
       position: 'relative',
       isolation: 'isolate',
       zIndex: 1,
-      border:'0.1rem solid orange',
+      //border:'0.1rem solid orange',
       padding:'0',
     margin:'0'
     } as React.CSSProperties,
@@ -138,7 +138,7 @@ const VIDEO_LAYOUT = {
       zIndex: 1,
       padding:'0',
     
-     border:'0.1rem solid pink'
+     //border:'0.1rem solid pink'
     } as React.CSSProperties,
     canvasToggle: {
       zIndex: 100,
@@ -697,6 +697,14 @@ export default function App() {
   };
   const [manualAvatarState, setManualAvatarState] =
     useState<AvatarState | null>(null);
+  /** Greyed/muted avatar until user turns mic on for the first time. */
+  const [avatarSessionEngaged, setAvatarSessionEngaged] = useState(false);
+
+  useEffect(() => {
+    if (manualVadStatus) {
+      setAvatarSessionEngaged(true);
+    }
+  }, [manualVadStatus]);
 
   // Composer Draft & Transcript
   const [draft, setDraft] = useState('');
@@ -733,7 +741,9 @@ export default function App() {
     derivedAvatarState = 'muted';
   }
 
-  const activeAvatarState = manualAvatarState ?? derivedAvatarState;
+  const activeAvatarState = !avatarSessionEngaged
+    ? 'muted'
+    : manualAvatarState ?? derivedAvatarState;
 
   useEffect(() => {
     if (isBasicInfoVideoPlaying || isAudioPlayingState) {

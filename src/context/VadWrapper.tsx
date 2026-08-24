@@ -256,10 +256,12 @@ export default function VadWrapper({children}){
     
 
       const VAD2 = useMicVAD({
-        workletURL: `./vad.worklet.bundle.min.js`,
-        //modelURL: "http://localhost:8080/silero_vad.onnx",
+        workletURL: './vad.worklet.bundle.min.js',
         //@ts-ignore
-        modelURL:`./silero_vad.onnx`,
+        modelURL: './silero_vad_legacy.onnx',
+        ortConfig: (ort) => {
+          ort.env.wasm.numThreads = 1
+        },
         onVADMisfire: () => {
           console.log("Vad misfire")
           // Misfire: resume audio that was paused on speech start

@@ -12,6 +12,8 @@ import GlobalRoute from './components/GlobalRoute'
 import Login from './pages/Login'
 import Login2 from './pages/Login2'
 import MainInsurancePage from './pages/MainInsurancePage';
+import { MainPageWakeWordProvider } from './context/MainPageWakeWordContext';
+import MainPageWakeWordGate from './components/MainPageWakeWordGate';
 import {HashRouter as Router ,Routes,Route} from 'react-router-dom'
 import { LeadDashboard } from './pages/LeadDashboard';
 import { useAuth } from './context/AuthContext';
@@ -53,7 +55,7 @@ export default function RenderChildren(){
             <Route path='/lead-management' element={<PrivateRoute component={<LeadDashboard/>}/>}/>
             {/* <Route path='/signup' element={<PrivateRoute component={<SignIn/>}/>}/> */}
             {/* @ts-ignore */}
-            <Route path='/mainpage' element={<PrivateRoute component={<DataWrapper><VadWrapper><MainInsurancePage/></VadWrapper></DataWrapper>}/>}/>
+            <Route path='/mainpage' element={<PrivateRoute component={<DataWrapper><VadWrapper><MainPageWakeWordProvider><MainPageWakeWordGate /><MainInsurancePage/></MainPageWakeWordProvider></VadWrapper></DataWrapper>}/>}/>
             <Route path='*' element={<ErrorPage/>}/>
       </Routes>
     </Router>

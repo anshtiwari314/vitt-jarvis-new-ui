@@ -1214,7 +1214,9 @@
 .avatar-state-visual{transition:filter .25s ease,box-shadow .25s ease}
 .avatar-state-visual.state-listening{animation:listening-frame 2s ease-in-out infinite}
 .avatar-state-visual.state-processing{animation:processing-glow 1.8s ease-in-out infinite}
-.avatar-state-visual.state-muted .avatar-image{filter:grayscale(.62) saturate(.62) opacity(.8)}
+.avatar-state-visual.state-muted .avatar-image,
+.avatar-state-visual.state-muted .companion-video,
+.avatar-state-visual.state-muted .companion-video-player .companion-video{filter:grayscale(.62) saturate(.62) opacity(.8)}
 .avatar-state-overlay{
   position:absolute;
   z-index:5;
@@ -1809,9 +1811,14 @@
 .avatar-state-visual.state-processing{animation:indigo-processing-glow 1.8s ease-in-out infinite}
 .avatar-state-visual.state-speaking{animation:indigo-speaking-frame 2.2s ease-in-out infinite}
 .avatar-state-visual.state-muted .avatar-image,
+.avatar-state-visual.state-muted .companion-video,
+.avatar-state-visual.state-muted .companion-video-player .companion-video,
 .canvas-ai-indicator.state-muted .avatar-image,
+.canvas-ai-indicator.state-muted .companion-video,
 .minimized-avatar-dock.state-muted .avatar-image,
-.mobile-dock-avatar.state-muted .avatar-image{
+.minimized-avatar-dock.state-muted .companion-video,
+.mobile-dock-avatar.state-muted .avatar-image,
+.mobile-dock-avatar.state-muted .companion-video{
   filter:grayscale(1) saturate(0) contrast(.96) brightness(.94)!important;
   opacity:.86;
 }

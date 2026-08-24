@@ -3,15 +3,33 @@ dist/
 plans-and-features/
 agent.md
 
-# ML / wake-word models & runtime binaries — do not commit (fetch at install/build)
+# ML / wake-word models & runtime binaries — fetched via scripts/fetch-models.sh
 public/openwakeword/models/*.onnx
-public/davoice/models/*.onnx
-public/porcupine/*.pv
+!public/openwakeword/models/.gitkeep
 public/openwakeword/ort/*
 !public/openwakeword/ort/.gitkeep
+
+# VAD assets (copied from @ricky0123/vad-web on install)
+public/silero_vad*.onnx
+public/vad.worklet.bundle.min.js
+vad.worklet.bundle.min.js
+
+# DaVoice / Porcupine (if added later)
+public/davoice/models/*.onnx
+!public/davoice/models/.gitkeep
 public/davoice/wasm/*
 !public/davoice/wasm/.gitkeep
+public/porcupine/*.pv
 
-# Catch-all for common model formats anywhere in the repo
+# Never commit model weights or voice-engine binaries anywhere in the repo
 *.onnx
 *.pv
+*.wasm
+
+# Allow source/worklet JS under public (not generated weights)
+!public/openwakeword/mic-worklet.js
+!public/davoice/audio-worklet-processor.js
+
+# Large debug captures
+*.har
+localhost.har
