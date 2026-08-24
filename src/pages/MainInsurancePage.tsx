@@ -141,9 +141,6 @@ const VIDEO_LAYOUT = {
      border:'0.1rem solid pink'
     } as React.CSSProperties,
     canvasToggle: {
-      position: 'absolute',
-      top: '10px',
-      right: '80px',
       zIndex: 100,
       width: '32px',
       height: '32px',
@@ -304,9 +301,6 @@ const VIDEO_LAYOUT = {
       zIndex: 1,
     } as React.CSSProperties,
     canvasToggle: {
-      position: 'absolute',
-      top: '10px',
-      right: '10px',
       zIndex: 50,
       width: '32px',
       height: '32px',
