@@ -15,12 +15,12 @@ import BasicInfo from '../components/UI2/BasicInfo';
 import PlanSummary from '../components/UI2/PlanSummary';
 import RecommendationCategoryPage from '../components/UI2/RecommendationCategoryPage';
 import NewFinancialGoals from '../components/UI2/NewFinancialGoals';
-import SectionVideoOverlay from '../components/UI2/SectionVideoOverlay';
 import Header, { InteractionMode, SessionMode } from '../components/UI2/Header';
 import JourneyDrawer from '../components/UI2/JourneyDrawer';
 import AvatarStateOverlay, {
   AvatarState,
 } from '../components/UI2/AvatarStateOverlay';
+import CompanionVideo from '../components/UI2/CompanionVideo';
 import Composer from '../components/UI2/Composer';
 import ConversationPanel, {
   TranscriptMessage,
@@ -31,6 +31,525 @@ import { resetSalesState, setNavigation } from '../reducers/salesCopilotReducer'
 import { useData } from '../context/DataWrapper';
 import { useVad } from '../context/VadWrapper';
 import { useWakeLock } from '../functions/useWakeLock';
+
+/** Edit these inline styles to change video size/layout in Social, Co-present & Canvas modes. */
+type SubtitleStyles = {
+  container: React.CSSProperties;
+  /** Base styles for all subtitle text. `color` applies to spoken + active unless they set their own. */
+  text: React.CSSProperties;
+  spoken: React.CSSProperties;
+  active: React.CSSProperties;
+};
+
+/** Mic / listening / speaking indicator pill on the video portrait. */
+type StateOverlayStyles = {
+  base: React.CSSProperties;
+  listening?: React.CSSProperties;
+  processing?: React.CSSProperties;
+  speaking?: React.CSSProperties;
+  muted?: React.CSSProperties;
+};
+
+function resolveSubtitleSpanStyle(
+  text: React.CSSProperties,
+  span: React.CSSProperties,
+): React.CSSProperties {
+  return {
+    ...span,
+    color: span.color ?? text.color,
+    fontSize: span.fontSize ?? text.fontSize,
+    lineHeight: span.lineHeight ?? text.lineHeight,
+    textShadow: span.textShadow ?? text.textShadow,
+  };
+}
+
+function resolveStateOverlayStyle(
+  styles: StateOverlayStyles,
+  state: AvatarState,
+): React.CSSProperties {
+  const stateStyle =
+    state === 'listening'
+      ? styles.listening
+      : state === 'processing'
+        ? styles.processing
+        : state === 'speaking'
+          ? styles.speaking
+          : styles.muted;
+  return { ...styles.base, ...stateStyle };
+}
+
+const VIDEO_LAYOUT = {
+  social: {
+    composition: {
+      height: '100%',
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      overflow: 'visible',
+      //border:'0.1rem solid red'
+    } as React.CSSProperties,
+    stageStack: {
+      width: '60%',
+      maxWidth: '720px',
+      height: '80%',
+      display: 'grid',
+      gridTemplateRows: 'minmax(0, 1fr) auto',
+      gap: '10px',
+      overflow: 'visible',
+      boxSizing:'border-box',
+      alignSelf: 'center',
+      border:'0.1rem solid green'
+    } as React.CSSProperties,
+    portrait: {
+      width: '100%',
+      height: '100%',
+      borderRadius: '12px',
+      overflow: 'visible',
+      boxSizing:'border-box',
+      background: 'transparent',
+      position: 'relative',
+    border:'0.1rem solid blue',
+    padding:'0',
+    margin:'0'
+    } as React.CSSProperties,
+    videoShell: {
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      //overflow: 'hidden',
+      position: 'relative',
+      isolation: 'isolate',
+      zIndex: 1,
+      border:'0.1rem solid orange',
+      padding:'0',
+    margin:'0'
+    } as React.CSSProperties,
+    video: {
+      width: '100%',
+      height: '100%',
+      objectFit: 'contain',
+      objectPosition: 'center',
+      borderRadius: '12px',
+      position: 'relative',
+      zIndex: 1,
+      padding:'0',
+    
+     border:'0.1rem solid pink'
+    } as React.CSSProperties,
+    canvasToggle: {
+      position: 'absolute',
+      top: '10px',
+      right: '80px',
+      zIndex: 100,
+      width: '32px',
+      height: '32px',
+      display: 'grid',
+      placeItems: 'center',
+      padding: 0,
+      border: '1px solid rgba(180,202,216,.9)',
+      borderRadius: '10px',
+      background: 'rgba(255,255,255,.94)',
+      color: '#537087',
+      boxShadow: '0 6px 16px rgba(38,66,88,.14)',
+      cursor: 'pointer',
+      pointerEvents: 'auto',
+    } as React.CSSProperties,
+    composer: {
+      width: '100%',
+      display: 'grid',
+      gridTemplateColumns: '42px minmax(0, 1fr) 42px 42px',
+      alignItems: 'center',
+      gap: '6px',
+      padding: '6px',
+      margin: '0',
+      border: '1px solid #cad8e3',
+      borderRadius: '15px',
+      background: '#fff',
+      boxShadow: '0 10px 28px rgba(35,58,80,.12)',
+      flexShrink: 0,
+      position: 'relative',
+      zIndex: 10,
+      //border:'0.3rem solid black'
+    } as React.CSSProperties,
+    subtitle: {
+      container: {
+        position: 'absolute',
+        margin:'0 auto',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 5,
+        width: '90%',
+        //margin: 0,
+        padding: '14px 10px',
+        border: '0.05rem solid rgba(240,240,240,1)',
+        borderRadius: '10px',
+        
+        background: 'rgba(255,255,255,1)',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+        textAlign: 'center',
+        pointerEvents: 'none',
+      } as React.CSSProperties,
+      text: {
+        margin: 0,
+        color: 'black',
+        display: 'block',
+        fontSize: '15px',
+        lineHeight: 1.4,
+        textShadow: 'none',
+      } as React.CSSProperties,
+      spoken: {
+        fontWeight: 500,
+      } as React.CSSProperties,
+      active: {
+        fontWeight: 700,
+      } as React.CSSProperties,
+    } satisfies SubtitleStyles,
+    stateOverlay: {
+      base: {
+        position: 'absolute',
+        left: '50%',
+        bottom: '15%',
+        transform: 'translateX(-50%)',
+        zIndex: 8,
+        minWidth: '48px',
+        height: '40px',
+        padding: '0 13px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: '1px solid rgba(174,204,217,.9)',
+        borderRadius: '999px',
+        background: 'rgba(255,255,255,.9)',
+        color: '#168a63',
+        boxShadow: '0 7px 20px rgba(28,62,82,.14)',
+      } as React.CSSProperties,
+      listening: {
+        color: '#138e68',
+      } as React.CSSProperties,
+      processing: {
+        color: '#2b76ad',
+      } as React.CSSProperties,
+      speaking: {
+        color: '#188b58',
+      } as React.CSSProperties,
+      muted: {
+        color: '#7a8793',
+        background: 'rgba(245,247,248,.94)',
+      } as React.CSSProperties,
+    } satisfies StateOverlayStyles,
+  },
+  copresent: {
+    avatarAside: {
+      height: '80%',
+      width: '100%',
+      minHeight: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'stretch',
+      justifyContent: 'stretch',
+      overflow: 'hidden',
+      padding: '12px',
+      boxSizing: 'border-box',
+      //border:'0.1rem solid red'
+    } as React.CSSProperties,
+    stageStack: {
+      width: '100%',
+      maxWidth: '100%',
+      height: '60%',
+      maxHeight: '100%',
+      minHeight: 0,
+      flex: 1,
+      display: 'grid',
+      gridTemplateRows: 'minmax(0, 1fr) auto',
+      gap: '10px',
+      overflow: 'hidden',
+      alignSelf: 'stretch',
+      //border:'0.1rem solid blue'
+    } as React.CSSProperties,
+    portrait: {
+      width: '100%',
+      height: '90%',
+      minHeight: 0,
+      maxHeight: '100%',
+      borderRadius: '12px',
+      overflow: 'hidden',
+      background: '#000',
+      position: 'relative',
+      //border:'0.1rem solid green'
+    } as React.CSSProperties,
+    videoShell: {
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      overflow: 'hidden',
+      position: 'relative',
+      isolation: 'isolate',
+      zIndex: 1,
+      //border:'0.1rem solid brown'
+    } as React.CSSProperties,
+    video: {
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover',
+      objectPosition: 'center',
+      borderRadius: '12px',
+      position: 'relative',
+      zIndex: 1,
+    } as React.CSSProperties,
+    canvasToggle: {
+      position: 'absolute',
+      top: '10px',
+      right: '10px',
+      zIndex: 50,
+      width: '32px',
+      height: '32px',
+      display: 'grid',
+      placeItems: 'center',
+      padding: 0,
+      border: '1px solid rgba(180,202,216,.9)',
+      borderRadius: '10px',
+      background: 'rgba(255,255,255,.94)',
+      color: '#537087',
+      boxShadow: '0 6px 16px rgba(38,66,88,.14)',
+      cursor: 'pointer',
+      pointerEvents: 'auto',
+    } as React.CSSProperties,
+    mobileDockAvatar: {
+      width: '48px',
+      height: '48px',
+      borderRadius: '10px',
+      overflow: 'hidden',
+      background: '#000',
+      position: 'relative',
+      flexShrink: 0,
+    } as React.CSSProperties,
+    mobileDockVideo: {
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover',
+      objectPosition: 'center',
+    } as React.CSSProperties,
+    composer: {
+      width: '100%',
+      display: 'grid',
+      gridTemplateColumns: '40px minmax(0, 1fr) 40px 40px',
+      alignItems: 'center',
+      gap: '6px',
+      padding: '6px',
+      margin: '0',
+      border: '1px solid #cad8e3',
+      borderRadius: '14px',
+      background: '#fff',
+      boxShadow: '0 8px 20px rgba(35,58,80,.09)',
+      flexShrink: 0,
+      position: 'relative',
+      zIndex: 10,
+      gridRow: 2,
+      alignSelf: 'stretch',
+      visibility: 'visible',
+    } as React.CSSProperties,
+    subtitle: {
+      container: {
+        position: 'absolute',
+        margin:'0 auto',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 5,
+        width: '90%',
+        //margin: 0,
+        padding: '14px 10px',
+        border: '0.05rem solid rgba(240,240,240,1)',
+        borderRadius: '10px',
+        
+        background: 'rgba(255,255,255,1)',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+        textAlign: 'center',
+        pointerEvents: 'none',
+      } as React.CSSProperties,
+      text: {
+        margin: 0,
+        display: 'block',
+        color:'black',
+        fontSize: '14px',
+        lineHeight: 1.42,
+        textShadow: 'none',
+      } as React.CSSProperties,
+      spoken: {
+        fontWeight: 500,
+      } as React.CSSProperties,
+      active: {
+        fontWeight: 700,
+      } as React.CSSProperties,
+    } satisfies SubtitleStyles,
+    stateOverlay: {
+      base: {
+        position: 'absolute',
+        left: '50%',
+        bottom: '15%',
+        transform: 'translateX(-50%)',
+        zIndex: 8,
+        minWidth: '48px',
+        height: '40px',
+        padding: '0 13px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: '1px solid rgba(174,204,217,.9)',
+        borderRadius: '999px',
+        background: 'rgba(255,255,255,.9)',
+        color: '#168a63',
+        boxShadow: '0 7px 20px rgba(28,62,82,.14)',
+      } as React.CSSProperties,
+      listening: {
+        color: '#138e68',
+      } as React.CSSProperties,
+      processing: {
+        color: '#2b76ad',
+      } as React.CSSProperties,
+      speaking: {
+        color: '#188b58',
+      } as React.CSSProperties,
+      muted: {
+        color: '#7a8793',
+        background: 'rgba(245,247,248,.94)',
+      } as React.CSSProperties,
+    } satisfies StateOverlayStyles,
+    mobileDockSubtitle: {
+      container: {
+        margin: 0,
+        padding: 0,
+        background: 'transparent',
+        boxShadow: 'none',
+        border: 0,
+        textAlign: 'left',
+      } as React.CSSProperties,
+      text: {
+        margin: 0,
+        fontSize: '12px',
+        lineHeight: 1.32,
+        textShadow: 'none',
+      } as React.CSSProperties,
+      spoken: {
+        color: '#7b8794',
+        fontWeight: 500,
+      } as React.CSSProperties,
+      active: {
+        color: '#1e293b',
+        fontWeight: 700,
+      } as React.CSSProperties,
+    } satisfies SubtitleStyles,
+    mobileDockStateOverlay: {
+      base: {
+        position: 'absolute',
+        left: '50%',
+        bottom: '2px',
+        transform: 'translateX(-50%)',
+        zIndex: 8,
+        minWidth: '34px',
+        height: '18px',
+        padding: '0 4px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: 0,
+        borderRadius: '999px',
+        background: 'rgba(18,49,63,.72)',
+        color: '#fff',
+        boxShadow: 'none',
+      } as React.CSSProperties,
+    } satisfies StateOverlayStyles,
+  },
+  canvas: {
+    portrait: {
+      width: '68px',
+      height: '68px',
+      borderRadius: '15px',
+      overflow: 'hidden',
+      background: '#000',
+      flexShrink: 0,
+    } as React.CSSProperties,
+    video: {
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover',
+      objectPosition: 'center',
+    } as React.CSSProperties,
+    stateOverlay: {
+      base: {
+        position: 'static',
+        minWidth: '28px',
+        height: '27px',
+        padding: '0 6px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: 0,
+        borderRadius: '999px',
+        background: 'transparent',
+        color: '#188b58',
+        boxShadow: 'none',
+        transform: 'none',
+      } as React.CSSProperties,
+    } satisfies StateOverlayStyles,
+    maxToggle: {
+      position: 'static',
+      width: '22px',
+      height: '22px',
+      display: 'grid',
+      placeItems: 'center',
+      padding: 0,
+      border: '1px solid rgba(180,202,216,.9)',
+      borderRadius: '7px',
+      background: 'rgba(255,255,255,.94)',
+      color: '#537087',
+      boxShadow: '0 3px 8px rgba(38,66,88,.1)',
+      cursor: 'pointer',
+      flexShrink: 0,
+      zIndex: 50,
+    } as React.CSSProperties,
+  },
+  minimized: {
+    dock: {
+      width: '80px',
+      height: '80px',
+      borderRadius: '10px',
+      overflow: 'hidden',
+      background: '#000',
+      display: 'block',
+    } as React.CSSProperties,
+    video: {
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover',
+      objectPosition: 'center',
+    } as React.CSSProperties,
+    stateOverlay: {
+      base: {
+        position: 'static',
+        minWidth: '28px',
+        height: '27px',
+        padding: '0 6px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        border: 0,
+        borderRadius: '999px',
+        background: 'transparent',
+        color: '#188b58',
+        boxShadow: 'none',
+        transform: 'none',
+      } as React.CSSProperties,
+    } satisfies StateOverlayStyles,
+  },
+};
 
 function HotPageLoader() {
   return (
@@ -157,10 +676,31 @@ export default function App() {
   // Unified Workspace State
   const [interactionMode, setInteractionMode] =
     useState<InteractionMode>('social');
+  const [canvasReturnMode, setCanvasReturnMode] =
+    useState<Extract<InteractionMode, 'social' | 'copresent'>>('social');
   const [sessionMode, setSessionMode] = useState<SessionMode>('assist');
   const [panelCollapsed, setPanelCollapsed] = useState(false);
   const [journeyOpen, setJourneyOpen] = useState(false);
   const [avatarMinimized, setAvatarMinimized] = useState(false);
+
+  const handleSetInteractionMode = (mode: InteractionMode) => {
+    if (
+      mode === 'canvas' &&
+      (interactionMode === 'social' || interactionMode === 'copresent')
+    ) {
+      setCanvasReturnMode(interactionMode);
+    }
+    setInteractionMode(mode);
+  };
+
+  const handleEnterCanvasMode = () => {
+    setAvatarMinimized(false);
+    handleSetInteractionMode('canvas');
+  };
+
+  const handleExitCanvasMode = () => {
+    setInteractionMode(canvasReturnMode);
+  };
   const [manualAvatarState, setManualAvatarState] =
     useState<AvatarState | null>(null);
 
@@ -295,74 +835,156 @@ export default function App() {
     recommendationCategoryData,
   };
 
+  const renderVideoStageStack = ({
+    stackClassName,
+    frameClassName,
+    portraitClassName,
+    captionClassName,
+    composerClassName,
+    captionSpoken,
+    captionActive,
+    stageStackStyle,
+    portraitStyle,
+    videoShellStyle,
+    videoStyle,
+    composerStyle,
+    canvasToggleStyle,
+    subtitleStyles,
+    stateOverlayStyles,
+  }: {
+    stackClassName: string;
+    frameClassName: string;
+    portraitClassName: string;
+    captionClassName: string;
+    composerClassName: string;
+    captionSpoken: string;
+    captionActive: string;
+    stageStackStyle: React.CSSProperties;
+    portraitStyle: React.CSSProperties;
+    videoShellStyle: React.CSSProperties;
+    videoStyle: React.CSSProperties;
+    composerStyle: React.CSSProperties;
+    canvasToggleStyle: React.CSSProperties;
+    subtitleStyles: SubtitleStyles;
+    stateOverlayStyles: StateOverlayStyles;
+  }) => (
+    <div className={stackClassName} style={stageStackStyle}>
+      <div
+        className={frameClassName}
+        style={{ minHeight: 0, height: '100%', position: 'relative', overflow: 'visible' }}
+      >
+        <div
+          className={`${portraitClassName} avatar-state-visual state-${activeAvatarState}`}
+          style={portraitStyle}
+        >
+          <div className="companion-video-shell" style={videoShellStyle}>
+            <CompanionVideo style={videoStyle}>
+              <button
+                type="button"
+                className="avatar-minimize"
+                style={canvasToggleStyle}
+                onClick={handleEnterCanvasMode}
+                aria-label="Switch to canvas mode"
+                title="Switch to canvas mode"
+              >
+                <Minimize2 size={15} strokeWidth={2.2} />
+              </button>
+            </CompanionVideo>
+          </div>
+          
+          <AvatarStateOverlay
+            state={activeAvatarState}
+            style={resolveStateOverlayStyle(stateOverlayStyles, activeAvatarState)}
+          />
+        </div>
+
+        
+
+        <div
+          className={captionClassName}
+          style={subtitleStyles.container}
+          aria-live="polite"
+        >
+          <p style={subtitleStyles.text}>
+            <span
+              className="caption-spoken"
+              style={resolveSubtitleSpanStyle(subtitleStyles.text, subtitleStyles.spoken)}
+            >
+              {captionSpoken}
+            </span>
+            <span
+              className="caption-active"
+              style={resolveSubtitleSpanStyle(subtitleStyles.text, subtitleStyles.active)}
+            >
+              {captionActive}
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <Composer
+        className={composerClassName}
+        style={composerStyle}
+        draft={draft}
+        setDraft={setDraft}
+        onSend={handleSendMessage}
+        voiceOn={speakerEnabled}
+        onVoiceToggle={toggleSpeakerPlayback}
+        micOn={manualVadStatus}
+        onMicToggle={() => setManualVadStatus(!manualVadStatus)}
+      />
+    </div>
+  );
+
+  const renderMinimizedVideoDock = () => (
+    <button
+      type="button"
+      className={`minimized-avatar-dock state-${activeAvatarState}`}
+      onClick={() => setAvatarMinimized(false)}
+      aria-label="Restore AI video"
+      title="Restore video"
+    >
+      <span className="minimized-video-dock" style={VIDEO_LAYOUT.minimized.dock}>
+        <CompanionVideo style={VIDEO_LAYOUT.minimized.video} />
+      </span>
+      <AvatarStateOverlay
+        state={activeAvatarState}
+        style={resolveStateOverlayStyle(VIDEO_LAYOUT.minimized.stateOverlay, activeAvatarState)}
+      />
+      <Maximize2 size={17} />
+    </button>
+  );
+
   const renderSocialStage = () => (
     <div
       className={`social-stage state-${activeAvatarState} ${
         avatarMinimized ? 'avatar-minimized' : ''
       }`}
     >
-      <div className="social-aura" />
-      <div className="social-composition">
-        {avatarMinimized ? (
-          <button
-            type="button"
-            className={`minimized-avatar-dock state-${activeAvatarState}`}
-            onClick={() => setAvatarMinimized(false)}
-            aria-label="Restore AI avatar"
-            title="Restore avatar"
-          >
-            <span>
-              <img className="avatar-image" src="/avatar-vitt-refined.png" alt="VITT AI Companion" />
-            </span>
-            <AvatarStateOverlay state={activeAvatarState} />
-            <Maximize2 size={17} />
-          </button>
-        ) : (
-          <div
-            className={`social-avatar avatar-state-visual state-${activeAvatarState}`}
-          >
-            <button
-              type="button"
-              className="avatar-minimize"
-              onClick={() => setAvatarMinimized(true)}
-              aria-label="Minimize AI avatar"
-              title="Minimize avatar"
-            >
-              <Minimize2 size={17} />
-            </button>
-
-            <div className="avatar-media-shell">
-              <SectionVideoOverlay>
-                <img className="avatar-image" src="/avatar-vitt-refined.png" alt="VITT AI Companion" />
-              </SectionVideoOverlay>
-            </div>
-
-            <AvatarStateOverlay state={activeAvatarState} />
-          </div>
-        )}
-
-        <div className="social-live-caption" aria-live="polite">
-          <p>
-            <span className="caption-spoken">
-              We’ve spoken about your family and current financial position.{' '}
-            </span>
-            <span className="caption-active">
-              What would financial security for your family mean to you?
-            </span>
-          </p>
-        </div>
-
-        <Composer
-          className="social-composer"
-          draft={draft}
-          setDraft={setDraft}
-          onSend={handleSendMessage}
-          voiceOn={speakerEnabled}
-          onVoiceToggle={toggleSpeakerPlayback}
-          micOn={manualVadStatus}
-          onMicToggle={() => setManualVadStatus(!manualVadStatus)}
-        />
+      <div className="social-composition" style={VIDEO_LAYOUT.social.composition}>
+        {avatarMinimized
+          ? renderMinimizedVideoDock()
+          : renderVideoStageStack({
+              stackClassName: 'social-stage-stack',
+              frameClassName: 'social-avatar-frame',
+              portraitClassName: 'social-avatar',
+              captionClassName: 'social-live-caption',
+              composerClassName: 'social-composer',
+              captionSpoken:
+                'We’ve spoken about your family and current financial position. ',
+              captionActive:
+                'What would financial security for your family mean to you?',
+              stageStackStyle: VIDEO_LAYOUT.social.stageStack,
+              portraitStyle: VIDEO_LAYOUT.social.portrait,
+              videoShellStyle: VIDEO_LAYOUT.social.videoShell,
+              videoStyle: VIDEO_LAYOUT.social.video,
+              composerStyle: VIDEO_LAYOUT.social.composer,
+              canvasToggleStyle: VIDEO_LAYOUT.social.canvasToggle,
+              subtitleStyles: VIDEO_LAYOUT.social.subtitle,
+              stateOverlayStyles: VIDEO_LAYOUT.social.stateOverlay,
+            })}
       </div>
+      
     </div>
   );
 
@@ -373,7 +995,14 @@ export default function App() {
       </div>
       <CanvasAvatarChip
         state={activeAvatarState}
-        onClick={() => setInteractionMode('social')}
+        onMaximize={handleExitCanvasMode}
+        portraitStyle={VIDEO_LAYOUT.canvas.portrait}
+        videoStyle={VIDEO_LAYOUT.canvas.video}
+        stateOverlayStyle={resolveStateOverlayStyle(
+          VIDEO_LAYOUT.canvas.stateOverlay,
+          activeAvatarState,
+        )}
+        maxToggleStyle={VIDEO_LAYOUT.canvas.maxToggle}
       />
     </div>
   );
@@ -425,7 +1054,7 @@ export default function App() {
         {/* Topbar Header */}
         <Header
           interactionMode={interactionMode}
-          setInteractionMode={setInteractionMode}
+          setInteractionMode={handleSetInteractionMode}
           avatarState={activeAvatarState}
           setManualAvatarState={setManualAvatarState}
           sessionMode={sessionMode}
@@ -453,64 +1082,29 @@ export default function App() {
                   className={`copresent-avatar ${
                     avatarMinimized ? 'avatar-minimized' : ''
                   }`}
+                  style={VIDEO_LAYOUT.copresent.avatarAside}
                 >
-                  {avatarMinimized ? (
-                    <button
-                      type="button"
-                      className={`minimized-avatar-dock state-${activeAvatarState}`}
-                      onClick={() => setAvatarMinimized(false)}
-                      aria-label="Restore AI avatar"
-                      title="Restore avatar"
-                    >
-                      <span>
-                        <img className="avatar-image" src="/avatar-vitt-refined.png" alt="VITT AI Companion" />
-                      </span>
-                      <AvatarStateOverlay state={activeAvatarState} />
-                      <Maximize2 size={17} />
-                    </button>
-                  ) : (
-                    <div
-                      className={`copresent-portrait avatar-state-visual state-${activeAvatarState}`}
-                    >
-                      <button
-                        type="button"
-                        className="avatar-minimize"
-                        onClick={() => setAvatarMinimized(true)}
-                        aria-label="Minimize AI avatar"
-                        title="Minimize avatar"
-                      >
-                        <Minimize2 size={17} />
-                      </button>
-                      <div className="avatar-media-shell">
-                        <SectionVideoOverlay>
-                          <img className="avatar-image" src="/avatar-vitt-refined.png" alt="VITT AI Companion" />
-                        </SectionVideoOverlay>
-                      </div>
-                      <AvatarStateOverlay state={activeAvatarState} />
-                    </div>
-                  )}
-
-                  <div className="copresent-live-caption" aria-live="polite">
-                    <p>
-                      <span className="caption-spoken">
-                        We have captured your financial details.{' '}
-                      </span>
-                      <span className="caption-active">
-                        How much of your family's monthly expenses should be protected?
-                      </span>
-                    </p>
-                  </div>
-
-                  <Composer
-                    className="copresent-composer"
-                    draft={draft}
-                    setDraft={setDraft}
-                    onSend={handleSendMessage}
-                    voiceOn={speakerEnabled}
-                    onVoiceToggle={toggleSpeakerPlayback}
-                    micOn={manualVadStatus}
-                    onMicToggle={() => setManualVadStatus(!manualVadStatus)}
-                  />
+                  {avatarMinimized
+                    ? renderMinimizedVideoDock()
+                    : renderVideoStageStack({
+                        stackClassName: 'copresent-stage-stack',
+                        frameClassName: 'copresent-avatar-frame',
+                        portraitClassName: 'copresent-portrait',
+                        captionClassName: 'copresent-live-caption',
+                        composerClassName: 'copresent-composer',
+                        captionSpoken:
+                          'We have captured your financial details. ',
+                        captionActive:
+                          "How much of your family's monthly expenses should be protected?",
+                        stageStackStyle: VIDEO_LAYOUT.copresent.stageStack,
+                        portraitStyle: VIDEO_LAYOUT.copresent.portrait,
+                        videoShellStyle: VIDEO_LAYOUT.copresent.videoShell,
+                        videoStyle: VIDEO_LAYOUT.copresent.video,
+                        composerStyle: VIDEO_LAYOUT.copresent.composer,
+                        canvasToggleStyle: VIDEO_LAYOUT.copresent.canvasToggle,
+                        subtitleStyles: VIDEO_LAYOUT.copresent.subtitle,
+                        stateOverlayStyles: VIDEO_LAYOUT.copresent.stateOverlay,
+                      })}
                 </aside>
 
                 <section className="copresent-content">
@@ -519,17 +1113,43 @@ export default function App() {
 
                 <aside className="copresent-mobile-dock" aria-label="AI conversation controls">
                   <div className="mobile-dock-caption">
-                    <div className={`mobile-dock-avatar state-${activeAvatarState}`}>
-                      <img className="avatar-image" src="/avatar-vitt-refined.png" alt="VITT AI Companion" />
-                      <AvatarStateOverlay state={activeAvatarState} />
+                    <div
+                      className={`mobile-dock-avatar state-${activeAvatarState}`}
+                      style={VIDEO_LAYOUT.copresent.mobileDockAvatar}
+                    >
+                      <CompanionVideo style={VIDEO_LAYOUT.copresent.mobileDockVideo} />
+                      <AvatarStateOverlay
+                        state={activeAvatarState}
+                        style={resolveStateOverlayStyle(
+                          VIDEO_LAYOUT.copresent.mobileDockStateOverlay,
+                          activeAvatarState,
+                        )}
+                      />
                     </div>
-                    <p>
-                      <span className="caption-spoken">We have captured your financial details. </span>
-                      <span className="caption-active">How much should be protected?</span>
+                    <p style={VIDEO_LAYOUT.copresent.mobileDockSubtitle.text}>
+                      <span
+                        className="caption-spoken"
+                        style={resolveSubtitleSpanStyle(
+                          VIDEO_LAYOUT.copresent.mobileDockSubtitle.text,
+                          VIDEO_LAYOUT.copresent.mobileDockSubtitle.spoken,
+                        )}
+                      >
+                        We have captured your financial details.{' '}
+                      </span>
+                      <span
+                        className="caption-active"
+                        style={resolveSubtitleSpanStyle(
+                          VIDEO_LAYOUT.copresent.mobileDockSubtitle.text,
+                          VIDEO_LAYOUT.copresent.mobileDockSubtitle.active,
+                        )}
+                      >
+                        How much should be protected?
+                      </span>
                     </p>
                   </div>
                   <Composer
                     className="copresent-composer"
+                    style={VIDEO_LAYOUT.copresent.composer}
                     draft={draft}
                     setDraft={setDraft}
                     onSend={handleSendMessage}
@@ -552,6 +1172,7 @@ export default function App() {
             onToggle={() => setPanelCollapsed((prev) => !prev)}
             messages={messages}
             sessionMode={sessionMode}
+
           />
         </div>
       </section>

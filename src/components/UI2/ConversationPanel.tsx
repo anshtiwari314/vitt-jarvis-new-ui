@@ -131,58 +131,64 @@ export default function ConversationPanel({
           collapsed ? 'collapsed' : ''
         }`}
       >
-        <button
-          className="panel-toggle"
-          onClick={onToggle}
-          aria-label={
-            collapsed
-              ? 'Open conversation history'
-              : 'Close conversation history'
-          }
-          title={
-            collapsed
-              ? 'Open conversation history'
-              : 'Close conversation history'
-          }
-        >
-          <PanelRightClose size={20} />
-        </button>
+        {collapsed && (
+          <button
+            className="panel-toggle"
+            onClick={onToggle}
+            aria-label="Open conversation history"
+            title="Open conversation history"
+          >
+            <PanelRightClose size={20} />
+          </button>
+        )}
 
         {!collapsed && (
           <>
             <header className="conversation-header">
-              <div className="flex items-center justify-between">
-                <h2>Session Insights</h2>
-                <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('cues')}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-md transition ${
-                      activeTab === 'cues'
-                        ? 'bg-white text-sky-700 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    AI Cues
-                  </button>
-                  {showTranscriptTab && (
+              <div className="conversation-header-row">
+                <div className="conversation-header-copy">
+                  <h2>Session Insights</h2>
+                  <span>
+                    <i /> Live assist active
+                  </span>
+                </div>
+                <div className="conversation-header-toolbar">
+                  <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
                     <button
                       type="button"
-                      onClick={() => setActiveTab('transcript')}
+                      onClick={() => setActiveTab('cues')}
                       className={`px-2.5 py-1 text-xs font-bold rounded-md transition ${
-                        activeTab === 'transcript'
+                        activeTab === 'cues'
                           ? 'bg-white text-sky-700 shadow-sm'
                           : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
-                      Transcript
+                      AI Cues
                     </button>
-                  )}
+                    {showTranscriptTab && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('transcript')}
+                        className={`px-2.5 py-1 text-xs font-bold rounded-md transition ${
+                          activeTab === 'transcript'
+                            ? 'bg-white text-sky-700 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        Transcript
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    className="panel-toggle conversation-close"
+                    onClick={onToggle}
+                    aria-label="Close conversation history"
+                    title="Close conversation history"
+                  >
+                    <PanelRightClose size={20} />
+                  </button>
                 </div>
               </div>
-              <span>
-                <i /> Live assist active
-              </span>
             </header>
 
             <div

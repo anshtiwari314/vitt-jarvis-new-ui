@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   X,
-  ChevronDown,
+  ChevronRight,
   UserRound,
   PieChart,
   Archive,
@@ -177,7 +177,7 @@ export default function JourneyDrawer({
                 <strong>Recommendation</strong>
                 <small>Suitable plans and rationale</small>
               </span>
-              <ChevronDown
+              <ChevronRight
                 size={18}
                 className={`journey-chevron ${recsExpanded ? 'expanded' : ''}`}
                 aria-hidden="true"

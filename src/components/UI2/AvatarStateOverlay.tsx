@@ -18,12 +18,18 @@ export function ActivityWaveform({ className = '' }: { className?: string }) {
 export default function AvatarStateOverlay({
   state,
   className = '',
+  style,
 }: {
   state: AvatarState;
   className?: string;
+  style?: React.CSSProperties;
 }) {
   return (
-    <span className={`avatar-state-overlay state-${state} ${className}`} aria-hidden="true">
+    <span
+      className={`avatar-state-overlay state-${state} ${className}`}
+      style={style}
+      aria-hidden="true"
+    >
       {state === 'listening' && <Mic size={20} strokeWidth={2.4} />}
       {state === 'processing' && (
         <span className="processing-dots">

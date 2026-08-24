@@ -3,6 +3,7 @@ import { Volume2, VolumeX, Mic, Send } from 'lucide-react';
 
 interface ComposerProps {
   className?: string;
+  style?: React.CSSProperties;
   draft: string;
   setDraft: (value: string) => void;
   onSend: (event: FormEvent<HTMLFormElement>) => void;
@@ -14,6 +15,7 @@ interface ComposerProps {
 
 export default function Composer({
   className = '',
+  style,
   draft,
   setDraft,
   onSend,
@@ -23,7 +25,7 @@ export default function Composer({
   onMicToggle,
 }: ComposerProps) {
   return (
-    <form className={`social-composer ${className}`} onSubmit={onSend}>
+    <form className={className} style={style} onSubmit={onSend}>
       <button
         type="button"
         className="voice-output"

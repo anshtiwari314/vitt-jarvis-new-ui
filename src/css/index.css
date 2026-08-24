@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-:root{--ink:#1e2b41;--muted:#637590;--line:#dce4ed;--workspace:#f2f6fa}
+:root{--ink:#1e2b41;--muted:#637590;--line:#dce4ed;--workspace:#f2f6fa;--avatar-stage-width:60%}
 *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#fff;color:var(--ink);font-family:Arial,Helvetica,sans-serif}button{font:inherit;color:inherit}
 .app-shell{height:100vh;display:grid;grid-template-columns:22% 78%;background:#fff}.left-rail{min-width:260px;display:flex;flex-direction:column;background:#fff;border-right:1px solid var(--line);z-index:3}.rail-top{height:122px;flex:0 0 122px;display:flex;align-items:center;border-bottom:1px solid var(--line);padding:0 26px;gap:68px}.rail-top button{border:0;background:none;color:#687c94;cursor:pointer;padding:8px}.rail-top button svg{width:34px;height:34px;stroke-width:1.8}.rail-top div{display:flex;align-items:center;gap:10px;white-space:nowrap;font-size:19px}.rail-top span{color:var(--muted)}
 .left-rail nav{padding:24px 16px;display:grid;gap:8px}.left-rail nav button{min-height:58px;width:100%;border:0;background:transparent;border-radius:11px;padding:0 18px;display:flex;align-items:center;gap:20px;color:#42536c;cursor:pointer;font-size:19px;text-align:left}.left-rail nav button svg{color:#549dff;width:26px;height:26px;stroke-width:2}.left-rail nav button.active{background:#dff2fd}.left-rail nav .nav-arrow{margin-left:auto;color:#8799ae;width:19px}.system-status{margin-top:auto;border-top:1px solid var(--line);padding:26px 22px 48px;color:var(--muted)}.system-status h3{margin:0 0 20px;color:#42526b;font-size:19px}.system-status p{margin:14px 0;font-size:18px;display:flex;gap:12px;align-items:center}.system-status i{width:14px;height:14px;background:#d5dae2;border-radius:50%}
@@ -142,8 +142,8 @@
   width:100%;
   height:100%;
   max-width:none;
-  object-fit:cover;
-  object-position:center 8%;
+  object-fit:contain;
+  object-position:center;
   filter:none;
 }
 
@@ -163,7 +163,24 @@
   border-bottom:1px solid #dce5ec;
   background:#fff;
 }
-.conversation-header h2{margin:0 0 6px;font-size:21px}
+.conversation-header-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+.conversation-header-copy{
+  display:grid;
+  gap:6px;
+  min-width:0;
+}
+.conversation-header h2{margin:0;font-size:21px}
+.conversation-header-toolbar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-shrink:0;
+}
 .conversation-header span{display:flex;align-items:center;gap:7px;color:#657990;font-size:12px}
 .conversation-header span i{width:8px;height:8px;border-radius:50%;background:#18b66a;box-shadow:0 0 0 4px rgba(24,182,106,.12)}
 .conversation-log{
@@ -351,7 +368,7 @@
   color:#94a3b8;
   transition:transform .2s ease;
 }
-.journey-chevron.expanded{transform:rotate(180deg)}
+.journey-chevron.expanded{transform:rotate(90deg)}
 .journey-group{display:grid;gap:4px}
 /* Recommendation sub-cards — slightly shorter than parent journey items */
 .journey-drawer .journey-sublist button.journey-rec-subitem{
@@ -554,8 +571,8 @@
   width:100%;
   height:100%;
   max-width:none;
-  object-fit:cover;
-  object-position:center 8%;
+  object-fit:contain;
+  object-position:center;
   filter:none;
 }
 .copresent-live-caption{
@@ -798,9 +815,10 @@
 }
 
 .social-avatar,.copresent-portrait{position:relative}
-.avatar-minimize{
+.avatar-minimize,
+.avatar-maximize{
   position:absolute;
-  z-index:5;
+  z-index:12;
   top:12px;
   right:12px;
   width:36px;
@@ -815,8 +833,67 @@
   backdrop-filter:blur(10px);
   cursor:pointer;
 }
-.avatar-minimize:hover{background:#fff;color:#187fae}
-.avatar-minimize:focus-visible,.minimized-avatar-dock:focus-visible{outline:3px solid rgba(37,139,195,.28);outline-offset:2px}
+.avatar-minimize:hover,
+.avatar-maximize:hover{background:#fff;color:#187fae}
+.avatar-minimize:focus-visible,
+.avatar-maximize:focus-visible,
+.minimized-avatar-dock:focus-visible{outline:3px solid rgba(37,139,195,.28);outline-offset:2px}
+.social-avatar-frame .avatar-minimize,
+.copresent-avatar-frame .avatar-minimize{
+  z-index:50;
+}
+.social-stage-stack .companion-video-shell,
+.copresent-stage-stack .companion-video-shell,
+.social-avatar-frame .companion-video-shell,
+.copresent-avatar-frame .companion-video-shell{
+  position:relative;
+  isolation:isolate;
+}
+.companion-video-shell .companion-video{
+  position:relative;
+  z-index:1;
+}
+.companion-video-player{
+  position:relative;
+  width:100%;
+  height:100%;
+  isolation:isolate;
+}
+.companion-video-player .companion-video{
+  position:relative;
+  z-index:1;
+}
+.companion-video-player .avatar-minimize,
+.companion-video-shell .avatar-minimize{
+  top:8px;
+  right:8px;
+  z-index:20;
+}
+.canvas-ai-indicator .chip-controls{
+  display:flex;
+  flex:1;
+  min-width:0;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  align-self:stretch;
+}
+.canvas-ai-indicator .canvas-chip-maximize{
+  position:static;
+  top:auto;
+  right:auto;
+  width:22px;
+  height:22px;
+  padding:0;
+  border-radius:7px;
+  box-shadow:0 3px 8px rgba(38,66,88,.1);
+  flex-shrink:0;
+}
+.canvas-ai-indicator .canvas-chip-maximize svg{
+  width:11px;
+  height:11px;
+}
 .minimized-avatar-dock{
   order:1;
   width:116px;
@@ -918,7 +995,6 @@
   justify-content:space-between;
   border:1px solid #c9dce7;
   color:#1ca567;
-  cursor:pointer;
 }
 .canvas-ai-indicator .activity-waveform{flex:1}
 
@@ -1125,7 +1201,7 @@
 
 .mode-copresent .copresent-avatar{padding-bottom:14px}
 .mode-copresent .copresent-portrait{align-self:stretch;min-height:0;border-radius:18px 18px 8px 8px}
-.mode-copresent .copresent-live-caption{position:relative;z-index:4;margin-top:-25px;width:94%;color:#1e293b;backdrop-filter:blur(14px)}
+.mode-copresent .copresent-live-caption{position:absolute;z-index:5;margin-top:0;width:100%;color:#fff;backdrop-filter:none}
 .copresent-composer{grid-template-columns:40px minmax(0,1fr) 40px 40px;gap:6px}
 
 .avatar-state-visual{transition:filter .25s ease,box-shadow .25s ease}
@@ -1391,7 +1467,7 @@
 .mode-copresent .copresent-portrait{
   isolation:isolate;
   overflow:hidden;
-  padding-bottom:24px;
+  padding-bottom:0;
   box-sizing:border-box;
   border-radius:24px 24px 10px 10px;
   background:
@@ -1635,6 +1711,16 @@
   box-shadow:none;
   backdrop-filter:blur(10px);
 }
+.conversation-panel:not(.collapsed) .panel-toggle.conversation-close{
+  position:static;
+  flex:0 0 auto;
+  transform:none;
+}
+.content-grid:not(.panel-hidden) .conversation-panel .panel-toggle.conversation-close{
+  position:static;
+  top:auto;
+  right:auto;
+}
 .conversation-panel:not(.collapsed) .panel-toggle{
   border-color:#d7e7f1;
   background:#eef6fb;
@@ -1800,9 +1886,13 @@
   border-radius:19px;
 }
 .canvas-ai-indicator .chip-portrait{
+  position:relative;
   width:68px;
   height:68px;
   border-radius:15px;
+}
+.canvas-ai-indicator .chip-controls{
+  min-height:68px;
 }
 .canvas-ai-indicator .avatar-state-overlay{
   min-width:30px;
@@ -1827,6 +1917,19 @@
     width:62px;
     height:62px;
     border-radius:14px;
+  }
+  .canvas-ai-indicator .chip-controls{
+    min-height:62px;
+    gap:4px;
+  }
+  .canvas-ai-indicator .canvas-chip-maximize{
+    width:20px;
+    height:20px;
+    border-radius:6px;
+  }
+  .canvas-ai-indicator .canvas-chip-maximize svg{
+    width:10px;
+    height:10px;
   }
   .canvas-ai-indicator .avatar-state-overlay{
     min-width:27px;
@@ -1937,32 +2040,6 @@
   flex:1 1 auto;
 }
 
-/* Avatar state overlay: keep mic icon visible above portrait */
-.mode-social .social-composition>.social-avatar .avatar-image,
-.content-grid:not(.panel-hidden) .mode-social .social-composition>.social-avatar .avatar-image,
-.mode-copresent .copresent-portrait .avatar-image{
-  border-radius:24px 24px 10px 10px;
-  overflow:hidden;
-}
-.avatar-state-overlay{
-  z-index:6;
-  bottom:8px;
-  min-width:48px;
-  height:40px;
-  padding:0 13px;
-  box-shadow:0 8px 24px rgba(63,62,151,.2);
-}
-.avatar-state-overlay svg{
-  flex-shrink:0;
-  display:block;
-}
-.minimized-avatar-dock .avatar-state-overlay,
-.canvas-ai-indicator .avatar-state-overlay{
-  min-width:32px;
-  height:30px;
-  padding:0 7px;
-}
-
 @media(max-width:720px){
   .session-pill-cluster{
     grid-column:1/-1;
@@ -1978,11 +2055,6 @@
     height:40px;
     padding:0 8px;
     font-size:12px;
-  }
-  .avatar-state-overlay{
-    bottom:10px;
-    min-width:44px;
-    height:36px;
   }
 }
 
@@ -2095,95 +2167,6 @@
   background-color: #3588e9 !important;
 }
 
-/* Mobile Co-Present Dock & Layout */
-.copresent-mobile-dock {
-  display: none;
-}
-
-@media (max-width: 720px) {
-  .mode-copresent .copresent-stage {
-    display: block !important;
-    min-height: calc(100vh - 126px) !important;
-    padding-bottom: 160px !important;
-    background: #edf3f7 !important;
-  }
-  
-  .mode-copresent .copresent-avatar {
-    display: none !important;
-  }
-  
-  .mode-copresent .copresent-content {
-    display: block !important;
-    width: 100% !important;
-    padding: 12px 10px 160px 10px !important;
-    overflow: visible !important;
-  }
-
-  .copresent-mobile-dock {
-    display: grid !important;
-    position: fixed !important;
-    z-index: 30 !important;
-    left: 10px !important;
-    right: 10px !important;
-    bottom: calc(10px + env(safe-area-inset-bottom)) !important;
-    gap: 7px !important;
-    padding: 8px !important;
-    border: 1px solid #c8d8e3 !important;
-    border-radius: 17px !important;
-    background: rgba(255, 255, 255, 0.97) !important;
-    box-shadow: 0 14px 34px rgba(27, 50, 69, 0.2) !important;
-    backdrop-filter: blur(12px) !important;
-  }
-
-  .mobile-dock-caption {
-    display: grid !important;
-    grid-template-columns: 48px minmax(0, 1fr) !important;
-    align-items: center !important;
-    gap: 9px !important;
-    min-height: 49px !important;
-  }
-
-  .mobile-dock-caption p {
-    margin: 0 !important;
-    font-size: 12px !important;
-    line-height: 1.32 !important;
-    text-align: left !important;
-  }
-
-  .mobile-dock-avatar {
-    position: relative !important;
-    width: 48px !important;
-    height: 48px !important;
-    overflow: hidden !important;
-    border-radius: 12px !important;
-    background: #dcecf3 !important;
-  }
-
-  .mobile-dock-avatar .avatar-image {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    object-position: center 15% !important;
-  }
-
-  .mobile-dock-avatar .avatar-state-overlay {
-    position: absolute !important;
-    left: 50% !important;
-    bottom: 2px !important;
-    transform: translateX(-50%) !important;
-    min-width: 24px !important;
-    height: 20px !important;
-    padding: 0 4px !important;
-    font-size: 10px !important;
-  }
-
-  .copresent-mobile-dock .copresent-composer {
-    box-shadow: none !important;
-    border-color: #d4e0e8 !important;
-    background: #f8fafc !important;
-  }
-}
-
 /* Mobile / Small Screen Chat History Trigger */
 .mobile-history-trigger {
   display: none;
@@ -2211,98 +2194,336 @@
   }
 }
 
-/* V25: bounded avatar stage so mic overlay, caption, and composer stay visible */
-.mode-social .social-composition,
-.content-grid:not(.panel-hidden) .mode-social .social-composition{
-  display:flex;
-  flex-direction:column;
-  align-items:stretch;
-  justify-content:flex-start;
-  gap:10px;
-  min-height:0;
-  height:100%;
-  max-height:100%;
-  padding:8px 0 12px;
-  box-sizing:border-box;
-}
-.mode-social .social-composition>.social-avatar,
-.content-grid:not(.panel-hidden) .mode-social .social-composition>.social-avatar{
-  flex:0 0 auto;
-  min-height:0 !important;
-  max-height:clamp(220px,42vh,380px) !important;
-  height:clamp(220px,42vh,380px) !important;
-  width:100% !important;
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-  align-items:stretch;
-  justify-content:flex-end;
-  padding-bottom:0 !important;
-}
-.mode-social .social-composition>.social-avatar .avatar-media-shell{
-  position:relative;
+/* Avatar media shell fills the portrait slot; image fits without side clipping. */
+.ai-led-shell .main-zone{
   flex:1 1 auto;
   min-height:0;
+}
+.ai-led-shell .content-grid{
+  min-height:0;
+}
+.ai-led-shell .content-grid>.data-panel{
+  min-height:0;
+}
+.ai-led-shell .data-panel.mode-social{
+  height:100%;
+  min-height:0;
+  overflow:hidden;
+  padding:0;
+  display:flex;
+  flex-direction:column;
+}
+.ai-led-shell .mode-social .social-stage{
+  flex:1 1 auto;
+  min-height:0 !important;
+  height:100%;
+  max-height:100%;
+  overflow:hidden;
+}
+.ai-led-shell .mode-social .social-composition,
+.ai-led-shell .content-grid:not(.panel-hidden) .mode-social .social-composition{
+  height:100%;
+  max-height:100%;
+  min-height:0;
+  overflow:hidden;
+  display:grid;
+  grid-template-rows:minmax(0,1fr) auto auto;
+  align-content:stretch;
+  padding-bottom:10px;
+  box-sizing:border-box;
+}
+.ai-led-shell .mode-social .social-composition>.social-avatar,
+.ai-led-shell .content-grid:not(.panel-hidden) .mode-social .social-composition>.social-avatar{
+  min-height:0 !important;
+  overflow:hidden;
+}
+.ai-led-shell .mode-social .social-composition>.social-live-caption,
+.ai-led-shell .mode-social .social-composition>.social-composer{
+  flex-shrink:0;
+  width:min(720px,100%);
+  max-width:100%;
+}
+
+.mode-social .social-composition>.social-avatar .avatar-media-shell,
+.mode-copresent .copresent-portrait .avatar-media-shell{
+  position:relative;
   width:100%;
-  max-height:calc(100% - 48px);
+  height:100%;
+  min-height:0;
+  max-width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  padding-bottom:24px;
+  box-sizing:border-box;
+}
+.mode-social .social-composition>.social-avatar .avatar-media-shell .avatar-video-shell,
+.mode-social .social-composition>.social-avatar .avatar-media-shell .avatar-video-frame,
+.mode-copresent .copresent-portrait .avatar-media-shell .avatar-video-shell,
+.mode-copresent .copresent-portrait .avatar-media-shell .avatar-video-frame{
+  width:100%;
+  height:100%;
+  min-height:0;
+  max-width:100%;
   display:flex;
   align-items:flex-end;
   justify-content:center;
   overflow:hidden;
 }
-.mode-social .social-composition>.social-avatar .avatar-media-shell .avatar-video-shell,
-.mode-social .social-composition>.social-avatar .avatar-media-shell .avatar-video-frame{
-  min-height:0;
-  max-height:100%;
-  width:100%;
-}
 .mode-social .social-composition>.social-avatar .avatar-image,
-.mode-social .social-composition>.social-avatar .avatar-video{
+.mode-social .social-composition>.social-avatar .avatar-video,
+.mode-social .social-composition>.social-avatar .avatar-media-shell .avatar-image,
+.mode-social .social-composition>.social-avatar .avatar-media-shell .avatar-video,
+.content-grid:not(.panel-hidden) .mode-social .social-composition>.social-avatar .avatar-image,
+.content-grid:not(.panel-hidden) .mode-social .social-composition>.social-avatar .avatar-media-shell .avatar-image{
   display:block;
-  max-height:100%;
-  max-width:100%;
   width:auto;
   height:auto;
+  max-width:100%;
+  max-height:100%;
   object-fit:contain;
-  object-position:center bottom;
+  object-position:center;
 }
-.mode-social .social-composition>.social-live-caption{
-  flex:0 0 auto;
+.mode-copresent .copresent-portrait .avatar-media-shell .avatar-image,
+.mode-copresent .copresent-portrait .avatar-media-shell .avatar-video,
+.mode-copresent .copresent-portrait .avatar-image{
+  display:block;
+  width:auto;
+  height:auto;
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+  object-position:center;
+  filter:none;
+}
+
+/* Co-present: keep avatar column + input dock within viewport height */
+.ai-led-shell .data-panel.mode-copresent{
+  height:100%;
+  min-height:0;
+  overflow:hidden;
+  padding:0;
+}
+.ai-led-shell .mode-copresent .copresent-stage{
+  height:100%;
+  min-height:0 !important;
+  max-height:100%;
+  overflow:hidden;
+}
+.ai-led-shell .mode-copresent .copresent-avatar{
+  min-height:0;
+  overflow:hidden;
+  grid-template-rows:minmax(0,1fr) auto auto;
+}
+.ai-led-shell .mode-copresent .copresent-portrait{
+  min-height:0;
+  max-height:100%;
+  overflow:hidden;
+}
+
+@media(max-width:1050px){
+  .ai-led-shell .mode-social .social-composition>.social-avatar,
+  .ai-led-shell .content-grid:not(.panel-hidden) .mode-social .social-composition>.social-avatar{
+    min-height:0 !important;
+    width:100% !important;
+  }
+}
+@media(max-width:720px){
+  .ai-led-shell .mode-social .social-composition>.social-avatar,
+  .ai-led-shell .content-grid:not(.panel-hidden) .mode-social .social-composition>.social-avatar{
+    min-height:0 !important;
+  }
+}
+
+/* Video stage: ALL sizing comes from VIDEO_LAYOUT inline styles in MainInsurancePage.tsx */
+.social-stage-stack,
+.copresent-stage-stack{
+  box-sizing:border-box;
+}
+.social-avatar-frame,
+.copresent-avatar-frame{
+  position:relative;
+  box-sizing:border-box;
+}
+.social-stage-stack .social-live-caption,
+.copresent-stage-stack .copresent-live-caption,
+.social-avatar-frame .social-live-caption,
+.copresent-avatar-frame .copresent-live-caption{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:5;
   width:100%;
-  max-width:none;
-  margin-top:0;
+  margin:0;
+  padding:28px 14px 12px;
+  border:0;
+  border-radius:0 0 10px 10px;
+  background:transparent;
+  box-shadow:none;
+  text-align:center;
+  pointer-events:none;
 }
-.mode-social .social-composition>.social-composer{
-  flex:0 0 auto;
-  width:100%;
-  max-width:none;
-  margin:0 0 8px;
+.social-stage-stack .social-live-caption p,
+.copresent-stage-stack .copresent-live-caption p,
+.social-avatar-frame .social-live-caption p,
+.copresent-avatar-frame .copresent-live-caption p{
+  margin:0;
+  color:#fff;
+  display:block;
+  text-shadow:0 1px 4px rgba(0,0,0,0.6);
 }
-.mode-social .social-composition>.social-avatar .avatar-state-overlay{
+.social-stage-stack .caption-spoken,
+.copresent-stage-stack .caption-spoken{
+  color:rgba(255,255,255,.78);
+}
+.social-stage-stack .caption-active,
+.copresent-stage-stack .caption-active{
+  color:#fff;
+}
+.social-stage-stack .social-composer,
+.copresent-stage-stack .copresent-composer{
+  flex-shrink:0;
+  visibility:visible;
+  opacity:1;
+}
+.ai-led-shell .social-stage-stack,
+.ai-led-shell .copresent-stage-stack{
+  overflow:visible !important;
+}
+.ai-led-shell .social-stage-stack .social-composer,
+.ai-led-shell .copresent-stage-stack .copresent-composer,
+.ai-led-shell .copresent-mobile-dock .copresent-composer{
+  display:grid !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  flex-shrink:0 !important;
+}
+.mode-social .social-aura,
+.social-aura{
+  display:none;
+}
+.mode-copresent .copresent-avatar:before,
+.copresent-avatar:before{
+  display:none;
+}
+.mode-social .social-composition>.social-avatar .avatar-state-overlay,
+.mode-copresent .copresent-portrait .avatar-state-overlay{
   bottom:10px;
   z-index:8;
 }
-.conversation-panel:not(.collapsed) .conversation-log-cues,
-.content-grid:not(.panel-hidden) .conversation-log-cues{
-  padding-top:12px;
-}
-.session-pill-cluster .mode-selector{
-  height:36px;
-  min-width:116px;
-}
-@media(max-width:720px){
-  .content-grid:not(.panel-hidden) .conversation-log-cues{
-    padding:12px 14px calc(16px + env(safe-area-inset-bottom));
-  }
-  .session-pill-cluster .mode-selector{
-    width:100%;
-    min-width:0;
-    height:40px;
-  }
-  .mode-social .social-composition>.social-avatar{
-    max-height:min(42vh,320px) !important;
-  }
+.mode-social .social-composition::before,
+.mode-copresent .copresent-avatar::before,
+.social-stage-stack::before,
+.copresent-stage-stack::before,
+.social-avatar-frame::before,
+.copresent-avatar-frame::before,
+.social-stage-stack .social-avatar::before,
+.copresent-stage-stack .copresent-portrait::before,
+.social-stage-stack .social-live-caption::before,
+.copresent-stage-stack .copresent-live-caption::before,
+.social-stage-stack .social-composer::before,
+.copresent-stage-stack .copresent-composer::before{
+  display:none !important;
+  content:none !important;
 }
 
+.ai-led-shell .social-stage-stack .social-avatar,
+.ai-led-shell .copresent-stage-stack .copresent-portrait,
+.ai-led-shell .mode-social .social-composition>.social-avatar,
+.ai-led-shell .content-grid:not(.panel-hidden) .mode-social .social-composition>.social-avatar,
+.ai-led-shell .mode-copresent .copresent-portrait,
+.ai-led-shell .copresent-stage-stack .copresent-portrait,
+.ai-led-shell .companion-video-shell,
+.ai-led-shell .companion-video,
+.ai-led-shell .chip-portrait,
+.ai-led-shell .mobile-dock-avatar,
+.ai-led-shell .minimized-video-dock{
+  min-height:0 !important;
+  max-height:none !important;
+}
+.ai-led-shell .social-stage-stack,
+.ai-led-shell .copresent-stage-stack,
+.ai-led-shell .mode-social .social-composition,
+.ai-led-shell .content-grid:not(.panel-hidden) .mode-social .social-composition,
+.ai-led-shell .mode-copresent .copresent-avatar{
+  min-height:0 !important;
+}
 
+/* Co-present: stack wraps video + composer — override legacy 3-row avatar grid */
+.ai-led-shell .mode-copresent .copresent-avatar:has(.copresent-stage-stack){
+  display:flex !important;
+  flex-direction:column !important;
+  grid-template-rows:unset !important;
+  align-items:stretch !important;
+  justify-content:stretch !important;
+  overflow:hidden !important;
+}
+.ai-led-shell .mode-copresent .copresent-avatar .copresent-stage-stack{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  width:100% !important;
+  height:100% !important;
+  max-height:100% !important;
+  display:grid !important;
+  grid-template-rows:minmax(0,1fr) auto !important;
+  overflow:hidden !important;
+}
+.ai-led-shell .mode-copresent .copresent-stage-stack .copresent-composer{
+  display:grid !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  grid-row:2 !important;
+  align-self:stretch !important;
+  width:100% !important;
+  flex-shrink:0 !important;
+}
 
+/* Stage-stack portrait/video: undo legacy .social-avatar rules (absolute, flex-end, backdrop). */
+.social-stage-stack .social-avatar,
+.copresent-stage-stack .copresent-portrait,
+.social-avatar-frame .social-avatar,
+.copresent-avatar-frame .copresent-portrait{
+  position:relative !important;
+  left:auto !important;
+  bottom:auto !important;
+  transform:none !important;
+  display:block !important;
+  align-items:stretch !important;
+  justify-content:stretch !important;
+  overflow:visible !important;
+  height:100% !important;
+  max-height:none !important;
+  background:unset !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  isolation:auto !important;
+  padding-bottom:0 !important;
+}
+.social-stage-stack .social-avatar::before,
+.social-stage-stack .social-avatar::after,
+.copresent-stage-stack .copresent-portrait::before,
+.copresent-stage-stack .copresent-portrait::after,
+.social-avatar-frame .social-avatar::before,
+.social-avatar-frame .social-avatar::after,
+.copresent-avatar-frame .copresent-portrait::before,
+.copresent-avatar-frame .copresent-portrait::after{
+  display:none !important;
+  content:none !important;
+}
+.social-avatar-frame,
+.copresent-avatar-frame{
+  overflow:visible !important;
+}
+.social-stage-stack .companion-video-shell,
+.copresent-stage-stack .companion-video-shell,
+.social-avatar-frame .companion-video-shell,
+.copresent-avatar-frame .companion-video-shell{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  overflow:visible !important;
+  height:100% !important;
+  width:100% !important;
+}
