@@ -637,7 +637,7 @@ function JourneySectionContent({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="journey-section-content min-h-0 min-w-0 w-full">
       <BasicInfo data={salesData.basicInfo} />
       {hotPageLoading?.['Data Retrieval'] &&
       !(salesData.financialGoals?.goals?.length) ? (
@@ -1108,7 +1108,9 @@ export default function App() {
                 </aside>
 
                 <section className="copresent-content">
-                  <JourneySectionContent {...journeySectionProps} />
+                  <div className="copresent-content-scroll">
+                    <JourneySectionContent {...journeySectionProps} />
+                  </div>
                 </section>
 
                 <aside className="copresent-mobile-dock" aria-label="AI conversation controls">
