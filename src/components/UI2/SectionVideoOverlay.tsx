@@ -12,12 +12,15 @@ export default function SectionVideoOverlay({
     isVideoPreloaded,
     startBasicInfoVideo,
     endBasicInfoVideo,
+    speakerEnabled,
   } = useData();
   const videoRef = useRef<HTMLVideoElement>(null);
   const playStartedForUrlRef = useRef<string | null>(null);
   const autoStartTriggeredRef = useRef<string | null>(null);
 
   const showVideo = isBasicInfoVideoPlaying && !!basicInfoVideoUrl;
+  // Speaker off → muted (fillers still play). Speaker on → play with audio.
+  const videoMuted = !speakerEnabled;
 
   useEffect(() => {
     if (!isBasicInfoVideoPlaying) return;
@@ -52,10 +55,17 @@ export default function SectionVideoOverlay({
     }
 
     if (video.src !== targetSrc) {
-      video.src = basicInfoVideoUrl;
+      video.src = targetSrc;
       video.load();
     }
   }, [basicInfoVideoUrl]);
+
+  // Keep <video> mute in sync with Composer volume (speaker) toggle
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = videoMuted;
+  }, [videoMuted, basicInfoVideoUrl, isBasicInfoVideoPlaying]);
 
   useEffect(() => {
     if (!basicInfoVideoUrl || isBasicInfoVideoPlaying) return;
@@ -108,10 +118,22 @@ export default function SectionVideoOverlay({
       }
 
       playStartedForUrlRef.current = basicInfoVideoUrl;
+      video.muted = videoMuted;
       video.currentTime = 0;
       const playPromise = video.play();
       if (playPromise && typeof playPromise.catch === 'function') {
         playPromise.catch((err: unknown) => {
+          // Browser may block unmuted autoplay — fall back to muted so video still shows
+          if (!video.muted) {
+            video.muted = true;
+            video.play().catch((retryErr: unknown) => {
+              if (playStartedForUrlRef.current === basicInfoVideoUrl) {
+                playStartedForUrlRef.current = null;
+              }
+              console.warn('Section video play failed:', retryErr);
+            });
+            return;
+          }
           if (playStartedForUrlRef.current === basicInfoVideoUrl) {
             playStartedForUrlRef.current = null;
           }
@@ -135,7 +157,7 @@ export default function SectionVideoOverlay({
       video.removeEventListener('loadeddata', startPlayback);
       video.removeEventListener('canplaythrough', startPlayback);
     };
-  }, [isBasicInfoVideoPlaying, basicInfoVideoUrl]);
+  }, [isBasicInfoVideoPlaying, basicInfoVideoUrl, videoMuted]);
 
   const handleVideoEnd = () => {
     playStartedForUrlRef.current = null;
@@ -163,10 +185,13 @@ export default function SectionVideoOverlay({
                 ref={videoRef}
                 className="avatar-video block h-auto max-h-full w-auto max-w-full rounded-xl shadow-sm"
                 playsInline
-                muted
+                muted={videoMuted}
                 preload="auto"
                 onEnded={handleVideoEnd}
-                onError={handleVideoEnd}
+                onError={(e) => {
+                  console.warn('Section video failed to load:', basicInfoVideoUrl, e);
+                  handleVideoEnd();
+                }}
               />
             </div>
           </div>

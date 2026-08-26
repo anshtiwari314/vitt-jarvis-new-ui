@@ -1,15 +1,33 @@
 const aiSuggestionResponseExamples = {
   // Media playback uses dedicated WebSocket routes (not ai_suggestion_res):
-  // route_type: "video_playback_res" → { video_url, activate_speaker?, keep_button_active? }
-  // route_type: "audio_playback_res" → { audio_url | audiobase64, activate_speaker?, keep_button_active? }
+  // { route_type: "video_playback_res", data: { video_url, videobase64, filler?, activate_speaker?, keep_button_active? } }
+  // { route_type: "video_bytes_playback_res", data: { video_chunk | videobytes, ... } }
   // activate_speaker: true → turns speaker on and plays even when playback btn is off
   // keep_button_active: true → keeps speaker on after this clip finishes (default: auto-off)
+  // filler: true → queue muted fillers; filler: false → clear queue and play immediately
   video_playback_res_example: {
     route_type: "video_playback_res",
-    video_url:
-      "https://navtalk.s3.us-east-2.amazonaws.com/video/eda4fad9-958e-4052-9894-cb82699c34a8.mp4",
-    activate_speaker: true,
-    keep_button_active: false,
+    data: {
+      video_url:
+        "https://navtalk.s3.us-east-2.amazonaws.com/video/eda4fad9-958e-4052-9894-cb82699c34a8.mp4",
+      videobase64: null,
+      filler: true,
+      keep_button_active: false,
+      activate_speaker: false,
+    },
+  },
+  video_bytes_playback_res_example: {
+    route_type: "video_bytes_playback_res",
+    data: {
+      video_chunk: "BASE64_CHUNK",
+      chunk_index: 0,
+      total_chunks: 1,
+      is_last_chunk: true,
+      mime_type: "video/mp4",
+      activate_speaker: true,
+      keep_button_active: false,
+      filler: false,
+    },
   },
   audio_playback_res_example: {
     route_type: "audio_playback_res",

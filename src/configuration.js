@@ -3,9 +3,9 @@ export const config = {
     // Base websocket server URL. The client will append `wsEndpoint` when no path is present.
     // Example production value: 'https://your-domain.com'
     // wsUrl:'ws://localhost:8032',
-    wsUrl: 'ws://localhost:5000',
+    //wsUrl: 'ws://localhost:5000',
     // wsUrl: 'wss://recruito.vitti.insure',
-
+    wsUrl:'wss://cb13-2406-b400-b1-d1ef-ad92-fb1b-d1a3-6ac9.ngrok-free.app',
     // WebSocket stream route — enable exactly one (prod OR dev)
     //kotak_prod_stream_req: 'kotak_prod_stream_req',
     dev_stream_req: 'ai_suggestion_req_ins_v2',

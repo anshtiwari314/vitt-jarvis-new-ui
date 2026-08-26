@@ -21,6 +21,7 @@ import AvatarStateOverlay, {
   AvatarState,
 } from '../components/UI2/AvatarStateOverlay';
 import CompanionVideo from '../components/UI2/CompanionVideo';
+import SectionVideoOverlay from '../components/UI2/SectionVideoOverlay';
 import Composer from '../components/UI2/Composer';
 import ConversationPanel, {
   TranscriptMessage,
@@ -882,18 +883,20 @@ export default function App() {
           style={portraitStyle}
         >
           <div className="companion-video-shell" style={videoShellStyle}>
-            <CompanionVideo style={videoStyle}>
-              <button
-                type="button"
-                className="avatar-minimize"
-                style={canvasToggleStyle}
-                onClick={handleEnterCanvasMode}
-                aria-label="Switch to canvas mode"
-                title="Switch to canvas mode"
-              >
-                <Minimize2 size={15} strokeWidth={2.2} />
-              </button>
-            </CompanionVideo>
+            <SectionVideoOverlay>
+              <CompanionVideo style={videoStyle}>
+                <button
+                  type="button"
+                  className="avatar-minimize"
+                  style={canvasToggleStyle}
+                  onClick={handleEnterCanvasMode}
+                  aria-label="Switch to canvas mode"
+                  title="Switch to canvas mode"
+                >
+                  <Minimize2 size={15} strokeWidth={2.2} />
+                </button>
+              </CompanionVideo>
+            </SectionVideoOverlay>
           </div>
           
           <AvatarStateOverlay
@@ -949,7 +952,9 @@ export default function App() {
       title="Restore video"
     >
       <span className="minimized-video-dock" style={VIDEO_LAYOUT.minimized.dock}>
-        <CompanionVideo style={VIDEO_LAYOUT.minimized.video} />
+        <SectionVideoOverlay>
+          <CompanionVideo style={VIDEO_LAYOUT.minimized.video} />
+        </SectionVideoOverlay>
       </span>
       <AvatarStateOverlay
         state={activeAvatarState}
@@ -1123,7 +1128,9 @@ export default function App() {
                       className={`mobile-dock-avatar state-${activeAvatarState}`}
                       style={VIDEO_LAYOUT.copresent.mobileDockAvatar}
                     >
-                      <CompanionVideo style={VIDEO_LAYOUT.copresent.mobileDockVideo} />
+                      <SectionVideoOverlay>
+                        <CompanionVideo style={VIDEO_LAYOUT.copresent.mobileDockVideo} />
+                      </SectionVideoOverlay>
                       <AvatarStateOverlay
                         state={activeAvatarState}
                         style={resolveStateOverlayStyle(

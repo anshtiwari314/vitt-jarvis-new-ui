@@ -122,11 +122,17 @@ function resolveIncomingEvent(data: any) {
   }
 
   if (
-    Object.prototype.hasOwnProperty.call(data, "video_url") ||
-    Object.prototype.hasOwnProperty.call(data, "videobase64") ||
     Object.prototype.hasOwnProperty.call(data, "video_chunk") ||
     Object.prototype.hasOwnProperty.call(data, "videobytes") ||
+    Object.prototype.hasOwnProperty.call(data, "chunk") ||
     Object.prototype.hasOwnProperty.call(data, "video_stream")
+  ) {
+    return { event: "video_bytes_playback_res", payload: data }
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(data, "video_url") ||
+    Object.prototype.hasOwnProperty.call(data, "videobase64")
   ) {
     return { event: "video_playback_res", payload: data }
   }

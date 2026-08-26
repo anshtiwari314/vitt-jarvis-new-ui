@@ -86,7 +86,7 @@ const [pref_language,setPref_language]=useState("English")
   // --- Audio / video playback (shared queue, play btn must be on) ---
   type MediaQueueItem =
     | { type: "audio"; url: string; keepButtonActive: boolean }
-    | { type: "video"; url: string; keepButtonActive: boolean }
+    | { type: "video"; url: string; keepButtonActive: boolean; filler: boolean }
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const mediaQueueRef = useRef<MediaQueueItem[]>([])
@@ -106,6 +106,7 @@ const [pref_language,setPref_language]=useState("English")
   const [basicInfoVideoUrl, setBasicInfoVideoUrl] = useState("")
   const [isBasicInfoVideoPlaying, setIsBasicInfoVideoPlaying] = useState(false)
   const isBasicInfoVideoPlayingRef = useRef(false)
+  const isFillerPlaybackRef = useRef(false)
 
   type VideoPreloadEntry = {
     status: "loading" | "ready" | "error"
@@ -260,55 +261,162 @@ const [pref_language,setPref_language]=useState("English")
     return null
   }
 
-  function handleVideoPlaybackResponse(data: any) {
+  /** Normalize server envelope: { route_type, data: {...} } or flat payload. */
+  function unwrapPlaybackPayload(raw: any): any {
+    if (!raw || typeof raw !== "object") return raw
+    if (
+      raw.data !== null &&
+      typeof raw.data === "object" &&
+      !Array.isArray(raw.data) &&
+      (
+        Object.prototype.hasOwnProperty.call(raw.data, "video_url") ||
+        Object.prototype.hasOwnProperty.call(raw.data, "videobase64") ||
+        Object.prototype.hasOwnProperty.call(raw.data, "video_chunk") ||
+        Object.prototype.hasOwnProperty.call(raw.data, "videobytes") ||
+        Object.prototype.hasOwnProperty.call(raw.data, "chunk") ||
+        Object.prototype.hasOwnProperty.call(raw.data, "video_stream") ||
+        Object.prototype.hasOwnProperty.call(raw.data, "filler") ||
+        Object.prototype.hasOwnProperty.call(raw.data, "activate_speaker") ||
+        Object.prototype.hasOwnProperty.call(raw.data, "keep_button_active")
+      )
+    ) {
+      return raw.data
+    }
+    return raw
+  }
+
+  function resolveVideoUrlFromPayload(data: any): string | null {
+    if (typeof data?.video_url === "string" && data.video_url.trim()) {
+      return data.video_url.trim()
+    }
+    // video_url null/empty → fall back to videobase64
+    if (
+      data?.video_url === null ||
+      data?.video_url === undefined ||
+      (typeof data?.video_url === "string" && !data.video_url.trim())
+    ) {
+      if (typeof data?.videobase64 === "string" && data.videobase64.trim()) {
+        const rawB64 = data.videobase64.trim()
+        return rawB64.startsWith("data:") ? rawB64 : `data:video/mp4;base64,${rawB64}`
+      }
+    }
+    return null
+  }
+
+  function parseFillerFlag(data: any): boolean {
+    return data?.filler === true
+  }
+
+  function isFillerMediaItem(item: MediaQueueItem | null): boolean {
+    return item?.type === "video" && item.filler
+  }
+
+  function clearMediaQueueAndStopPlayback() {
+    mediaQueueRef.current = []
+    currentMediaItemRef.current = null
+    isMediaBusyRef.current = false
+    isFillerPlaybackRef.current = false
+    videoChunksRef.current = []
+    stopCurrentAudio()
+    setIsBasicInfoVideoPlaying(false)
+    isBasicInfoVideoPlayingRef.current = false
+    setBasicInfoVideoUrl("")
+  }
+
+  function handleVideoPlaybackResponse(raw: any) {
+    const data = unwrapPlaybackPayload(raw)
     console.log("video_playback_res received", data)
+    const videoUrl = resolveVideoUrlFromPayload(data)
+    if (!videoUrl) return
+
+    const isFiller = parseFillerFlag(data)
+    const keepButtonActive = parseKeepButtonActive(data)
+
+    // activate_speaker: true → turn on the Composer speaker icon
+    activateSpeakerIfRequested(data)
+
+    if (!isFiller) {
+      if (!canPlayIncomingMedia(data)) return
+      clearMediaQueueAndStopPlayback()
+      enqueueMedia({
+        type: "video",
+        url: videoUrl,
+        keepButtonActive,
+        filler: false,
+      })
+      return
+    }
+
+    // Fillers play immediately (muted when speaker off); queue if another filler is playing
+    enqueueMedia({
+      type: "video",
+      url: videoUrl,
+      keepButtonActive,
+      filler: true,
+    })
+  }
+
+  function handleVideoBytesPlaybackResponse(raw: any) {
+    const data = unwrapPlaybackPayload(raw)
+    console.log("video_bytes_playback_res received", data)
     let videoUrl = ""
 
-    if (typeof data?.video_url === "string" && data.video_url.trim()) {
-      videoUrl = data.video_url.trim()
-    } else if (typeof data?.videobase64 === "string" && data.videobase64.trim()) {
-      const rawB64 = data.videobase64.trim()
-      videoUrl = rawB64.startsWith("data:") ? rawB64 : `data:video/mp4;base64,${rawB64}`
-    } else {
-      const chunkData = data?.video_chunk ?? data?.videobytes ?? data?.chunk ?? data?.video_stream
-      if (chunkData !== undefined && chunkData !== null) {
-        const parsedBytes = parseChunkToUint8Array(chunkData)
-        if (parsedBytes) {
-          videoChunksRef.current.push(parsedBytes)
-        }
+    const chunkData = data?.video_chunk ?? data?.videobytes ?? data?.chunk ?? data?.video_stream
+    if (chunkData !== undefined && chunkData !== null) {
+      const parsedBytes = parseChunkToUint8Array(chunkData)
+      if (parsedBytes) {
+        videoChunksRef.current.push(parsedBytes)
+      }
 
-        const isLastChunk =
-          data?.is_last_chunk === true ||
-          data?.is_final === true ||
-          data?.stream_end === true ||
-          data?.is_last === true ||
-          (data?.is_last_chunk === undefined && data?.is_final === undefined && data?.stream_end === undefined)
+      const isLastChunk =
+        data?.is_last_chunk === true ||
+        data?.is_final === true ||
+        data?.stream_end === true ||
+        data?.is_last === true ||
+        (data?.is_last_chunk === undefined && data?.is_final === undefined && data?.stream_end === undefined)
 
-        if (isLastChunk) {
-          if (videoChunksRef.current.length > 0) {
-            const mimeType = typeof data?.mime_type === "string" ? data.mime_type : "video/mp4"
-            const blob = new Blob(videoChunksRef.current, { type: mimeType })
-            videoUrl = URL.createObjectURL(blob)
-            videoChunksRef.current = []
-          }
-        } else {
-          return
+      if (isLastChunk) {
+        if (videoChunksRef.current.length > 0) {
+          const mimeType = typeof data?.mime_type === "string" ? data.mime_type : "video/mp4"
+          const blob = new Blob(videoChunksRef.current as BlobPart[], { type: mimeType })
+          videoUrl = URL.createObjectURL(blob)
+          videoChunksRef.current = []
         }
+      } else {
+        return
       }
     }
 
     if (!videoUrl) return
-    if (!canPlayIncomingMedia(data)) return
+
+    const isFiller = parseFillerFlag(data)
+    const keepButtonActive = parseKeepButtonActive(data)
+
+    // activate_speaker: true → turn on the Composer speaker icon
     activateSpeakerIfRequested(data)
+
+    if (!isFiller) {
+      if (!canPlayIncomingMedia(data)) return
+      clearMediaQueueAndStopPlayback()
+      enqueueMedia({
+        type: "video",
+        url: videoUrl,
+        keepButtonActive,
+        filler: false,
+      })
+      return
+    }
+
     enqueueMedia({
       type: "video",
       url: videoUrl,
-      keepButtonActive: parseKeepButtonActive(data),
+      keepButtonActive,
+      filler: true,
     })
   }
 
   const startBasicInfoVideo = useCallback(() => {
-    if (!speakerEnabledRef.current) {
+    if (!speakerEnabledRef.current && !isFillerPlaybackRef.current) {
       cancelBasicInfoVideoSession()
       return
     }
@@ -366,6 +474,7 @@ const [pref_language,setPref_language]=useState("English")
   function cancelBasicInfoVideoSession() {
     setIsBasicInfoVideoPlaying(false)
     isBasicInfoVideoPlayingRef.current = false
+    isFillerPlaybackRef.current = false
     setBasicInfoVideoUrl("")
     if (isMediaBusyRef.current && !isAudioStillPlaying.current) {
       isMediaBusyRef.current = false
@@ -376,6 +485,7 @@ const [pref_language,setPref_language]=useState("English")
   const endBasicInfoVideo = useCallback(() => {
     setIsBasicInfoVideoPlaying(false)
     isBasicInfoVideoPlayingRef.current = false
+    isFillerPlaybackRef.current = false
     setBasicInfoVideoUrl("")
     isMediaBusyRef.current = false
     advanceMediaQueue()
@@ -402,8 +512,9 @@ const [pref_language,setPref_language]=useState("English")
   function toggleSpeakerPlayback() {
     setSpeakerEnabled((prev) => {
       if (prev) {
+        // Mute only — keep current video on screen (muted via SectionVideoOverlay)
         speakerEnabledRef.current = false
-        clearAllMedia()
+        stopCurrentAudio()
         return false
       }
       speakerEnabledRef.current = true
@@ -415,6 +526,8 @@ const [pref_language,setPref_language]=useState("English")
     mediaQueueRef.current = []
     currentMediaItemRef.current = null
     isMediaBusyRef.current = false
+    isFillerPlaybackRef.current = false
+    videoChunksRef.current = []
     stopCurrentAudio()
     setIsBasicInfoVideoPlaying(false)
     isBasicInfoVideoPlayingRef.current = false
@@ -510,24 +623,26 @@ const [pref_language,setPref_language]=useState("English")
     })
   }
 
-  function startQueuedVideo(url: string) {
+  function startQueuedVideo(url: string, isFiller = false) {
     if (typeof url !== "string" || !url.trim()) {
       isMediaBusyRef.current = false
+      isFillerPlaybackRef.current = false
       advanceMediaQueue()
       return
     }
+    isFillerPlaybackRef.current = isFiller
     setBasicInfoVideoUrl(url)
-    if (isVideoPreloaded(url)) {
-      startBasicInfoVideo()
-    }
+    startBasicInfoVideo()
   }
 
   function processMediaQueue() {
-    if (!speakerEnabledRef.current) return
     if (isMediaBusyRef.current) return
 
     const next = mediaQueueRef.current[0]
     if (!next) return
+
+    const isFillerVideo = next.type === "video" && next.filler
+    if (!speakerEnabledRef.current && !isFillerVideo) return
 
     mediaQueueRef.current.shift()
     currentMediaItemRef.current = next
@@ -542,19 +657,22 @@ const [pref_language,setPref_language]=useState("English")
     }
 
     isMediaBusyRef.current = true
-    startQueuedVideo(next.url)
+    startQueuedVideo(next.url, isFillerVideo)
   }
 
   function enqueueMedia(item: MediaQueueItem) {
-    if (!speakerEnabledRef.current) return
+    const isFillerVideo = item.type === "video" && item.filler
+    if (!speakerEnabledRef.current && !isFillerVideo) return
     mediaQueueRef.current.push(item)
     processMediaQueue()
   }
 
-  // When play is turned off, stop everything and discard the queue.
+  // Speaker off: mute video + stop audio, but never tear down a playing video.
   useEffect(() => {
     if (speakerEnabled) return
-    clearAllMedia()
+    stopCurrentAudio()
+    // Drop queued audio / non-filler items; keep fillers + currently playing video.
+    mediaQueueRef.current = mediaQueueRef.current.filter(isFillerMediaItem)
   }, [speakerEnabled])
 
   function extractAndPlayAudio(data: any) {
@@ -619,6 +737,7 @@ useEffect(()=>{
         tempSocket.on('notifications', updateNotifications)
         tempSocket.on('audio_playback_res', handleAudioPlaybackResponse)
         tempSocket.on('video_playback_res', handleVideoPlaybackResponse)
+        tempSocket.on('video_bytes_playback_res', handleVideoBytesPlaybackResponse)
 
     setSocket(tempSocket)
 
@@ -630,6 +749,7 @@ useEffect(()=>{
       tempSocket.off("notifications", updateNotifications)
       tempSocket.off("audio_playback_res", handleAudioPlaybackResponse)
       tempSocket.off("video_playback_res", handleVideoPlaybackResponse)
+      tempSocket.off("video_bytes_playback_res", handleVideoBytesPlaybackResponse)
       clearVideoPreloadCache()
       tempSocket.disconnect()
     }
