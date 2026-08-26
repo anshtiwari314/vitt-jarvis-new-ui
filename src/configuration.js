@@ -5,7 +5,7 @@ export const config = {
     // wsUrl:'ws://localhost:8032',
     //wsUrl: 'ws://localhost:5000',
     // wsUrl: 'wss://recruito.vitti.insure',
-    wsUrl:'wss://cb13-2406-b400-b1-d1ef-ad92-fb1b-d1a3-6ac9.ngrok-free.app',
+    wsUrl:'wss://6626-2406-b400-b1-d1ef-40f2-154b-7adf-9b13.ngrok-free.app',
     // WebSocket stream route — enable exactly one (prod OR dev)
     //kotak_prod_stream_req: 'kotak_prod_stream_req',
     dev_stream_req: 'ai_suggestion_req_ins_v2',

@@ -1,0 +1,4 @@
+# Prevent CRLF in shell scripts — a trailing \r on paths like ./dist creates
+# an invalid "dist\r" file on Linux and breaks Windows git checkout.
+*.sh text eol=lf
+build.sh text eol=lf

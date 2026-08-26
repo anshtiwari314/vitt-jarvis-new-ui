@@ -9,11 +9,12 @@
     "predev": "npm run fetch-models",
     "dev": "vite --host",
     "build": "sh ./build.sh",
-    "oldbuild": "tsc && vite build && cp ./lame.min.js ./dist",
+    "oldbuild": "tsc && vite build && cp ./lame.min.js ./dist/",
     "preview": "vite preview",
     "sass": "sass --watch ./src/css/roshanFile.scss ./src/css/roshanFile.css"
   },
   "dependencies": {
+    "@anam-ai/js-sdk": "^4.26.0",
     "@emotion/react": "^11.13.5",
     "@emotion/styled": "^11.13.5",
     "@ffmpeg/ffmpeg": "^0.11.6",

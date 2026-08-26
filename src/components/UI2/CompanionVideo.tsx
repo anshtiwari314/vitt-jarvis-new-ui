@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useVideoContentCorner } from '../../functions/useVideoContentCorner';
+import { useData } from '../../context/DataWrapper';
 
 export const COMPANION_VIDEO_URL =
   'https://navtalk.s3.us-east-2.amazonaws.com/video/eda4fad9-958e-4052-9894-cb82699c34a8.mp4';
@@ -25,6 +26,7 @@ export default function CompanionVideo({
   pinOverlayToVideo = true,
   overlayInset = 8,
 }: CompanionVideoProps) {
+  const { isAvatarStreamConnected, registerAvatarVideoElement, speakerEnabled } = useData();
   const playerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayPosition = useVideoContentCorner(
@@ -49,7 +51,7 @@ export default function CompanionVideo({
       }
     };
 
-    if (!autoPlay) {
+    if (!autoPlay && !isAvatarStreamConnected) {
       freezeAtStart();
       video.addEventListener('loadeddata', freezeAtStart);
       video.addEventListener('play', freezeAtStart);
@@ -58,19 +60,25 @@ export default function CompanionVideo({
         video.removeEventListener('play', freezeAtStart);
       };
     }
-  }, [autoPlay]);
+  }, [autoPlay, isAvatarStreamConnected]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    return registerAvatarVideoElement(video);
+  }, [registerAvatarVideoElement]);
 
   const video = (
     <video
       ref={videoRef}
       className={className}
       style={style}
-      src={COMPANION_VIDEO_URL}
+      src={isAvatarStreamConnected ? undefined : COMPANION_VIDEO_URL}
       autoPlay={autoPlay}
       loop={loop}
-      muted
+      muted={isAvatarStreamConnected ? !speakerEnabled : true}
       playsInline
-      preload="metadata"
+      preload={isAvatarStreamConnected ? 'none' : 'metadata'}
     />
   );
 

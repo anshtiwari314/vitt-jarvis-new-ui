@@ -2,7 +2,7 @@ npm run fetch-models
 
 npm run oldbuild
 
-cp ./lame.min.js ./dist
+cp ./lame.min.js ./dist/
 
 echo node_modules/onnxruntime-web/dist/ort-wasm.wasm 
 

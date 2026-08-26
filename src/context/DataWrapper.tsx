@@ -1,6 +1,7 @@
 import React from "react"
 import { useState, createContext, useContext, useEffect, useRef, useCallback } from "react"
 import { v4 as uuidv4 } from 'uuid'
+import { AnamEvent, createClient, type AgentAudioInputStream, type AnamClient } from "@anam-ai/js-sdk"
 import {
   initSalesState,
   updateBasicInfo,
@@ -31,6 +32,9 @@ import { createAppWebSocket, type AppWebSocket } from "../lib/websocketClient"
 // }
 
 const Context = createContext<any>("")
+const ANAM_SESSION_ENDPOINT =
+  import.meta.env.VITE_ANAM_SESSION_ENDPOINT ||
+  "https://6626-2406-b400-b1-d1ef-40f2-154b-7adf-9b13.ngrok-free.app/api/anam/session"
 
 export function useData() {
   const context = useContext(Context)
@@ -98,10 +102,21 @@ const [pref_language,setPref_language]=useState("English")
   const audioUnlockedRef = useRef(false)
   const pendingAutoplayRef = useRef(false)
   const [isAudioPlayingState, setIsAudioPlayingState] = useState(false)
+  const [isAvatarStreamConnected, setIsAvatarStreamConnected] = useState(false)
   const [speakerEnabled, setSpeakerEnabled] = useState(false)
   const speakerEnabledRef = useRef(false)
   const lastSentSpeakerStateRef = useRef<"on" | "off" | null>(null)
   const suppressSpeakerEmitRef = useRef(false)
+  const avatarVideoElementsRef = useRef<Set<HTMLVideoElement>>(new Set())
+  const anamClientRef = useRef<AnamClient | null>(null)
+  const anamOutputStreamRef = useRef<MediaStream | null>(null)
+  const anamAudioInputStreamRef = useRef<AgentAudioInputStream | null>(null)
+  const anamSessionStartPromiseRef = useRef<Promise<void> | null>(null)
+  const prefetchedAnamSessionTokenRef = useRef<string | null>(null)
+  const avatarAudioAbortControllerRef = useRef<AbortController | null>(null)
+  const avatarSocketStreamActiveRef = useRef(false)
+  const avatarVideoIdCounterRef = useRef(0)
+  const primaryAvatarVideoElementRef = useRef<HTMLVideoElement | null>(null)
 
   const [basicInfoVideoUrl, setBasicInfoVideoUrl] = useState("")
   const [isBasicInfoVideoPlaying, setIsBasicInfoVideoPlaying] = useState(false)
@@ -237,6 +252,73 @@ const [pref_language,setPref_language]=useState("English")
     extractAndPlayAudio(data)
   }
 
+  function finalizeAvatarSocketSpeech() {
+    if (!avatarSocketStreamActiveRef.current) return
+
+    try {
+      anamAudioInputStreamRef.current?.endSequence()
+    } catch (err) {
+      console.warn("Failed ending websocket avatar speech sequence:", err)
+    }
+
+    avatarSocketStreamActiveRef.current = false
+    isAudioStillPlaying.current = false
+    setIsAudioPlayingState(false)
+    setAudioUrl("")
+    isMediaBusyRef.current = false
+    advanceMediaQueue()
+  }
+
+  async function startAvatarSocketSpeechIfNeeded() {
+    if (avatarSocketStreamActiveRef.current) return
+
+    clearMediaQueueAndStopPlayback()
+    await ensureAvatarSessionStarted()
+
+    avatarSocketStreamActiveRef.current = true
+    isMediaBusyRef.current = true
+    isAudioStillPlaying.current = true
+    setIsAudioPlayingState(true)
+  }
+
+  function handleAnamSarvamTts(raw: any) {
+    const data = unwrapPlaybackPayload(raw)
+    const eventType = typeof data?.type === "string" ? data.type : ""
+
+    activateSpeakerIfRequested(data)
+    if (!speakerEnabledRef.current && !parseActivateSpeaker(data)) {
+      return
+    }
+
+    if (
+      eventType === "end" ||
+      data?.done === true ||
+      data?.is_final === true ||
+      data?.stream_end === true
+    ) {
+      finalizeAvatarSocketSpeech()
+      return
+    }
+
+    const audioChunk =
+      typeof data?.chunk === "string" ? data.chunk :
+      typeof data?.audio === "string" ? data.audio :
+      typeof data?.audio_chunk === "string" ? data.audio_chunk :
+      typeof data?.audio_base64 === "string" ? data.audio_base64 :
+      null
+
+    if (!audioChunk) return
+
+    void startAvatarSocketSpeechIfNeeded()
+      .then(() => {
+        anamAudioInputStreamRef.current?.sendAudioChunk(audioChunk)
+      })
+      .catch((err) => {
+        console.warn("Failed handling anam_saravm_tts audio chunk:", err)
+        finalizeAvatarSocketSpeech()
+      })
+  }
+
   const videoChunksRef = useRef<Uint8Array[]>([])
 
   function parseChunkToUint8Array(chunk: any): Uint8Array | null {
@@ -275,7 +357,11 @@ const [pref_language,setPref_language]=useState("English")
         Object.prototype.hasOwnProperty.call(raw.data, "videobytes") ||
         Object.prototype.hasOwnProperty.call(raw.data, "chunk") ||
         Object.prototype.hasOwnProperty.call(raw.data, "video_stream") ||
+        Object.prototype.hasOwnProperty.call(raw.data, "type") ||
         Object.prototype.hasOwnProperty.call(raw.data, "filler") ||
+        Object.prototype.hasOwnProperty.call(raw.data, "done") ||
+        Object.prototype.hasOwnProperty.call(raw.data, "is_final") ||
+        Object.prototype.hasOwnProperty.call(raw.data, "stream_end") ||
         Object.prototype.hasOwnProperty.call(raw.data, "activate_speaker") ||
         Object.prototype.hasOwnProperty.call(raw.data, "keep_button_active")
       )
@@ -306,6 +392,190 @@ const [pref_language,setPref_language]=useState("English")
   function parseFillerFlag(data: any): boolean {
     return data?.filler === true
   }
+
+  function getShouldMuteAvatarOutput() {
+    return !speakerEnabledRef.current || !audioUnlockedRef.current
+  }
+
+  function syncAvatarVideoElements() {
+    const outputStream = anamOutputStreamRef.current
+    const shouldMute = getShouldMuteAvatarOutput()
+
+    avatarVideoElementsRef.current.forEach((video) => {
+      video.muted = shouldMute
+      video.playsInline = true
+      video.autoplay = true
+
+      if (outputStream) {
+        if (video.srcObject !== outputStream) {
+          video.srcObject = outputStream
+        }
+        const playPromise = video.play()
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch((err) => {
+            console.warn("Avatar video play failed:", err)
+          })
+        }
+      } else if (video.srcObject) {
+        video.srcObject = null
+      }
+    })
+  }
+
+  async function prefetchAnamSessionToken(): Promise<string | null> {
+    if (prefetchedAnamSessionTokenRef.current) {
+      return prefetchedAnamSessionTokenRef.current
+    }
+
+    try {
+      const response = await fetch(ANAM_SESSION_ENDPOINT, { method: "POST" })
+      if (!response.ok) {
+        throw new Error(`Anam session request failed with ${response.status}`)
+      }
+
+      const payload = await response.json()
+      const nextToken =
+        payload?.sessionToken ||
+        payload?.anamSessionToken ||
+        payload?.token ||
+        null
+
+      prefetchedAnamSessionTokenRef.current = typeof nextToken === "string" ? nextToken : null
+      return prefetchedAnamSessionTokenRef.current
+    } catch (err) {
+      console.warn("Failed to prefetch Anam session token:", err)
+      return null
+    }
+  }
+
+  function clearAvatarVideoOutputs() {
+    avatarVideoElementsRef.current.forEach((video) => {
+      if (video.srcObject) {
+        video.srcObject = null
+      }
+    })
+  }
+
+  function ensureAvatarVideoElementId(video: HTMLVideoElement) {
+    if (!video.id) {
+      avatarVideoIdCounterRef.current += 1
+      video.id = `anam-avatar-video-${avatarVideoIdCounterRef.current}`
+    }
+    return video.id
+  }
+
+  async function ensureAvatarSessionStarted() {
+    if (anamOutputStreamRef.current && anamAudioInputStreamRef.current && anamClientRef.current) {
+      syncAvatarVideoElements()
+      return
+    }
+
+    if (anamSessionStartPromiseRef.current) {
+      return anamSessionStartPromiseRef.current
+    }
+
+    anamSessionStartPromiseRef.current = (async () => {
+      const sessionToken =
+        prefetchedAnamSessionTokenRef.current || await prefetchAnamSessionToken()
+      const targetVideoElement =
+        primaryAvatarVideoElementRef.current || Array.from(avatarVideoElementsRef.current)[0] || null
+
+      if (!sessionToken) {
+        throw new Error("No Anam session token available")
+      }
+      if (!targetVideoElement) {
+        throw new Error("No avatar video element is available")
+      }
+
+      const client = createClient(sessionToken, {
+        disableInputAudio: true,
+      })
+      client.addListener(AnamEvent.VIDEO_STREAM_STARTED, (videoStream) => {
+        anamOutputStreamRef.current = videoStream
+        setIsAvatarStreamConnected(true)
+        syncAvatarVideoElements()
+      })
+
+      anamClientRef.current = client
+      await client.streamToVideoElement(ensureAvatarVideoElementId(targetVideoElement))
+      anamAudioInputStreamRef.current = client.createAgentAudioInputStream({
+        encoding: "pcm_s16le",
+        sampleRate: 16000,
+        channels: 1,
+      })
+      prefetchedAnamSessionTokenRef.current = null
+      setIsAvatarStreamConnected(true)
+      syncAvatarVideoElements()
+    })()
+
+    try {
+      await anamSessionStartPromiseRef.current
+    } catch (err) {
+      anamClientRef.current = null
+      anamOutputStreamRef.current = null
+      anamAudioInputStreamRef.current = null
+      setIsAvatarStreamConnected(false)
+      clearAvatarVideoOutputs()
+      throw err
+    } finally {
+      anamSessionStartPromiseRef.current = null
+    }
+  }
+
+  async function stopAvatarSession() {
+    avatarAudioAbortControllerRef.current?.abort()
+    avatarAudioAbortControllerRef.current = null
+
+    try {
+      anamAudioInputStreamRef.current?.endSequence()
+    } catch (err) {
+      console.warn("Failed ending avatar audio sequence:", err)
+    }
+
+    try {
+      anamClientRef.current?.interruptPersona()
+    } catch (err) {
+      console.warn("Failed interrupting avatar persona:", err)
+    }
+
+    try {
+      await anamClientRef.current?.stopStreaming()
+    } catch (err) {
+      console.warn("Failed stopping avatar stream:", err)
+    }
+
+    anamClientRef.current = null
+    anamOutputStreamRef.current = null
+    anamAudioInputStreamRef.current = null
+    setIsAvatarStreamConnected(false)
+    clearAvatarVideoOutputs()
+  }
+
+  const registerAvatarVideoElement = useCallback((element: HTMLVideoElement | null) => {
+    if (!element) {
+      return () => {}
+    }
+
+    avatarVideoElementsRef.current.add(element)
+    if (!primaryAvatarVideoElementRef.current) {
+      primaryAvatarVideoElementRef.current = element
+    }
+    ensureAvatarVideoElementId(element)
+    syncAvatarVideoElements()
+    void ensureAvatarSessionStarted().catch((err) => {
+      console.warn("Unable to start avatar stream:", err)
+    })
+
+    return () => {
+      avatarVideoElementsRef.current.delete(element)
+      if (primaryAvatarVideoElementRef.current === element) {
+        primaryAvatarVideoElementRef.current = Array.from(avatarVideoElementsRef.current)[0] || null
+      }
+      if (element.srcObject) {
+        element.srcObject = null
+      }
+    }
+  }, [])
 
   function isFillerMediaItem(item: MediaQueueItem | null): boolean {
     return item?.type === "video" && item.filler
@@ -459,6 +729,20 @@ const [pref_language,setPref_language]=useState("English")
 
 
   function stopCurrentAudio() {
+    avatarAudioAbortControllerRef.current?.abort()
+    avatarAudioAbortControllerRef.current = null
+    try {
+      anamAudioInputStreamRef.current?.endSequence()
+    } catch (err) {
+      console.warn("Failed ending active avatar audio sequence:", err)
+    }
+    try {
+      anamClientRef.current?.interruptPersona()
+    } catch (err) {
+      console.warn("Failed interrupting active avatar speech:", err)
+    }
+    avatarSocketStreamActiveRef.current = false
+
     const audioElem = audioRef.current
     if (audioElem) {
       audioElem.pause()
@@ -736,6 +1020,7 @@ useEffect(()=>{
         tempSocket.on('ai_suggestion_res', updateSalesState)
         tempSocket.on('notifications', updateNotifications)
         tempSocket.on('audio_playback_res', handleAudioPlaybackResponse)
+        tempSocket.on('anam_saravm_tts', handleAnamSarvamTts)
         tempSocket.on('video_playback_res', handleVideoPlaybackResponse)
         tempSocket.on('video_bytes_playback_res', handleVideoBytesPlaybackResponse)
 
@@ -748,6 +1033,7 @@ useEffect(()=>{
       tempSocket.off("ai_suggestion_res", updateSalesState)
       tempSocket.off("notifications", updateNotifications)
       tempSocket.off("audio_playback_res", handleAudioPlaybackResponse)
+      tempSocket.off("anam_saravm_tts", handleAnamSarvamTts)
       tempSocket.off("video_playback_res", handleVideoPlaybackResponse)
       tempSocket.off("video_bytes_playback_res", handleVideoBytesPlaybackResponse)
       clearVideoPreloadCache()
@@ -1150,6 +1436,7 @@ useEffect(()=>{
         }
         pendingAutoplayRef.current = false
       }
+      syncAvatarVideoElements()
       document.removeEventListener('click', unlockAudio)
       document.removeEventListener('touchstart', unlockAudio)
       document.removeEventListener('keydown', unlockAudio)
@@ -1163,6 +1450,16 @@ useEffect(()=>{
       document.removeEventListener('keydown', unlockAudio)
     }
   }, [audioUrl])
+
+  useEffect(() => {
+    syncAvatarVideoElements()
+  }, [speakerEnabled, isAvatarStreamConnected])
+
+  useEffect(() => {
+    return () => {
+      void stopAvatarSession()
+    }
+  }, [])
   // -----------------------------
 
   const values = {
@@ -1177,6 +1474,7 @@ useEffect(()=>{
     pref_language,setPref_language,
     audioRef, audioUrl, setAudioUrl, mediaQueueRef, isAudioStillPlaying, isAudioPlayingState,
     speakerEnabled, setSpeakerEnabled, toggleSpeakerPlayback,
+    isAvatarStreamConnected, registerAvatarVideoElement,
     basicInfoVideoUrl, isBasicInfoVideoPlaying, startBasicInfoVideo, endBasicInfoVideo,
     isVideoPreloaded,
     hotPageLoading,
