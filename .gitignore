@@ -2,6 +2,7 @@ node_modules/
 dist/
 plans-and-features/
 agent.md
+.env
 
 # ML / wake-word models & runtime binaries — fetched via scripts/fetch-models.sh
 public/openwakeword/models/*.onnx

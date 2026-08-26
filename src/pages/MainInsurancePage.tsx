@@ -654,6 +654,7 @@ export default function App() {
     isAudioPlayingState,
     speakerEnabled,
     toggleSpeakerPlayback,
+    speakThroughAvatar,
   } = useData();
 
   //@ts-ignore
@@ -830,6 +831,7 @@ export default function App() {
       { id: Date.now(), speaker: 'customer', text, time: 'Now' },
     ]);
     setDraft('');
+    void speakThroughAvatar(text);
   };
 
   const journeySectionProps = {

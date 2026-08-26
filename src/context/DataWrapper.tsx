@@ -22,6 +22,7 @@ import { useDispatch } from "react-redux"
 import { useAppSelector } from "../store/store"
 import {config as AppConfig, wsEndpoint} from '../configuration.js'
 import { createAppWebSocket, type AppWebSocket } from "../lib/websocketClient"
+import { streamAnamTts } from "../lib/anamTtsClient"
 // interface DataContextType {
 //   socket: Socket | null
 //   setSocket: (socket: Socket | null) => void
@@ -32,9 +33,7 @@ import { createAppWebSocket, type AppWebSocket } from "../lib/websocketClient"
 // }
 
 const Context = createContext<any>("")
-const ANAM_SESSION_ENDPOINT =
-  import.meta.env.VITE_ANAM_SESSION_ENDPOINT ||
-  "https://6626-2406-b400-b1-d1ef-40f2-154b-7adf-9b13.ngrok-free.app/api/anam/session"
+const ANAM_SESSION_ENDPOINT = AppConfig.anamSessionEndpoint
 
 export function useData() {
   const context = useContext(Context)
@@ -103,8 +102,8 @@ const [pref_language,setPref_language]=useState("English")
   const pendingAutoplayRef = useRef(false)
   const [isAudioPlayingState, setIsAudioPlayingState] = useState(false)
   const [isAvatarStreamConnected, setIsAvatarStreamConnected] = useState(false)
-  const [speakerEnabled, setSpeakerEnabled] = useState(false)
-  const speakerEnabledRef = useRef(false)
+  const [speakerEnabled, setSpeakerEnabled] = useState(true)
+  const speakerEnabledRef = useRef(true)
   const lastSentSpeakerStateRef = useRef<"on" | "off" | null>(null)
   const suppressSpeakerEmitRef = useRef(false)
   const avatarVideoElementsRef = useRef<Set<HTMLVideoElement>>(new Set())
@@ -115,6 +114,7 @@ const [pref_language,setPref_language]=useState("English")
   const prefetchedAnamSessionTokenRef = useRef<string | null>(null)
   const avatarAudioAbortControllerRef = useRef<AbortController | null>(null)
   const avatarSocketStreamActiveRef = useRef(false)
+  const avatarSpeechStartPromiseRef = useRef<Promise<void> | null>(null)
   const avatarVideoIdCounterRef = useRef(0)
   const primaryAvatarVideoElementRef = useRef<HTMLVideoElement | null>(null)
 
@@ -269,26 +269,48 @@ const [pref_language,setPref_language]=useState("English")
     advanceMediaQueue()
   }
 
+  function unlockAvatarOutput() {
+    audioUnlockedRef.current = true
+    syncAvatarVideoElements()
+  }
+
   async function startAvatarSocketSpeechIfNeeded() {
     if (avatarSocketStreamActiveRef.current) return
 
-    clearMediaQueueAndStopPlayback()
-    await ensureAvatarSessionStarted()
+    if (avatarSpeechStartPromiseRef.current) {
+      return avatarSpeechStartPromiseRef.current
+    }
 
-    avatarSocketStreamActiveRef.current = true
-    isMediaBusyRef.current = true
-    isAudioStillPlaying.current = true
-    setIsAudioPlayingState(true)
+    avatarSpeechStartPromiseRef.current = (async () => {
+      // Clear MP4/MP3 queue only — do not interrupt Anam persona (breaks lip-sync).
+      stopQueuedAudioPlayback()
+      mediaQueueRef.current = mediaQueueRef.current.filter(isFillerMediaItem)
+      setIsBasicInfoVideoPlaying(false)
+      isBasicInfoVideoPlayingRef.current = false
+      setBasicInfoVideoUrl("")
+
+      unlockAvatarOutput()
+      await ensureAvatarSessionStarted()
+
+      avatarSocketStreamActiveRef.current = true
+      isMediaBusyRef.current = true
+      isAudioStillPlaying.current = true
+      setIsAudioPlayingState(true)
+      syncAvatarVideoElements()
+    })()
+
+    try {
+      await avatarSpeechStartPromiseRef.current
+    } finally {
+      avatarSpeechStartPromiseRef.current = null
+    }
   }
 
-  function handleAnamSarvamTts(raw: any) {
+  function ingestAnamTtsPayload(raw: any) {
     const data = unwrapPlaybackPayload(raw)
     const eventType = typeof data?.type === "string" ? data.type : ""
 
     activateSpeakerIfRequested(data)
-    if (!speakerEnabledRef.current && !parseActivateSpeaker(data)) {
-      return
-    }
 
     if (
       eventType === "end" ||
@@ -309,6 +331,8 @@ const [pref_language,setPref_language]=useState("English")
 
     if (!audioChunk) return
 
+    unlockAvatarOutput()
+
     void startAvatarSocketSpeechIfNeeded()
       .then(() => {
         anamAudioInputStreamRef.current?.sendAudioChunk(audioChunk)
@@ -318,6 +342,49 @@ const [pref_language,setPref_language]=useState("English")
         finalizeAvatarSocketSpeech()
       })
   }
+
+  function handleAnamSarvamTts(raw: any) {
+    console.log("anam_saravm_tts received", raw)
+    ingestAnamTtsPayload(raw)
+  }
+
+  const speakThroughAvatar = useCallback(async (text: string) => {
+    const trimmed = text.trim()
+    if (!trimmed) return
+
+    avatarAudioAbortControllerRef.current?.abort()
+    const controller = new AbortController()
+    avatarAudioAbortControllerRef.current = controller
+
+    try {
+      await streamAnamTts({
+        text: trimmed,
+        signal: controller.signal,
+        onChunk: (chunk) => {
+          if (chunk.type === "audio" && chunk.chunk) {
+            ingestAnamTtsPayload({ type: "audio", chunk: chunk.chunk })
+            return
+          }
+          if (chunk.type === "end") {
+            ingestAnamTtsPayload({ type: "end" })
+          }
+          if (chunk.type === "error") {
+            console.warn("Anam HTTP TTS error:", chunk.message)
+          }
+        },
+      })
+      ingestAnamTtsPayload({ type: "end" })
+    } catch (err: any) {
+      if (err?.name !== "AbortError") {
+        console.warn("speakThroughAvatar failed:", err)
+      }
+      finalizeAvatarSocketSpeech()
+    } finally {
+      if (avatarAudioAbortControllerRef.current === controller) {
+        avatarAudioAbortControllerRef.current = null
+      }
+    }
+  }, [])
 
   const videoChunksRef = useRef<Uint8Array[]>([])
 
@@ -394,7 +461,10 @@ const [pref_language,setPref_language]=useState("English")
   }
 
   function getShouldMuteAvatarOutput() {
-    return !speakerEnabledRef.current || !audioUnlockedRef.current
+    // Speaker toggle controls Anam output; lip-sync still runs when muted.
+    if (!speakerEnabledRef.current) return true
+    // Browser autoplay policy: stay muted until a user gesture unlocks output.
+    return !audioUnlockedRef.current
   }
 
   function syncAvatarVideoElements() {
@@ -414,6 +484,12 @@ const [pref_language,setPref_language]=useState("English")
         if (playPromise && typeof playPromise.catch === "function") {
           playPromise.catch((err) => {
             console.warn("Avatar video play failed:", err)
+            if (!video.muted) {
+              video.muted = true
+              video.play().catch((retryErr) => {
+                console.warn("Avatar video muted play failed:", retryErr)
+              })
+            }
           })
         }
       } else if (video.srcObject) {
@@ -728,7 +804,20 @@ const [pref_language,setPref_language]=useState("English")
   }, [navigation])
 
 
-  function stopCurrentAudio() {
+  function stopQueuedAudioPlayback() {
+    const audioElem = audioRef.current
+    if (audioElem) {
+      audioElem.pause()
+      audioElem.src = ""
+      audioElem.load()
+    }
+    isAudioStillPlaying.current = false
+    pendingAutoplayRef.current = false
+    setIsAudioPlayingState(false)
+    setAudioUrl("")
+  }
+
+  function interruptAvatarSpeech() {
     avatarAudioAbortControllerRef.current?.abort()
     avatarAudioAbortControllerRef.current = null
     try {
@@ -742,17 +831,11 @@ const [pref_language,setPref_language]=useState("English")
       console.warn("Failed interrupting active avatar speech:", err)
     }
     avatarSocketStreamActiveRef.current = false
+  }
 
-    const audioElem = audioRef.current
-    if (audioElem) {
-      audioElem.pause()
-      audioElem.src = ""
-      audioElem.load()
-    }
-    isAudioStillPlaying.current = false
-    pendingAutoplayRef.current = false
-    setIsAudioPlayingState(false)
-    setAudioUrl("")
+  function stopCurrentAudio() {
+    interruptAvatarSpeech()
+    stopQueuedAudioPlayback()
   }
 
   function cancelBasicInfoVideoSession() {
@@ -776,13 +859,8 @@ const [pref_language,setPref_language]=useState("English")
   }, [])
 
   function resetSpeakerWhenMediaIdle(completedKeepButtonActive = false) {
-    if (!speakerEnabledRef.current) return
-    if (mediaQueueRef.current.length > 0) return
-    if (isMediaBusyRef.current) return
-    if (isAudioStillPlaying.current) return
-    if (isBasicInfoVideoPlayingRef.current) return
-    if (completedKeepButtonActive) return
-    setSpeakerEnabled(false)
+    // Speaker stays on by default; user toggles mute manually.
+    void completedKeepButtonActive
   }
 
   function advanceMediaQueue() {
@@ -796,12 +874,15 @@ const [pref_language,setPref_language]=useState("English")
   function toggleSpeakerPlayback() {
     setSpeakerEnabled((prev) => {
       if (prev) {
-        // Mute only — keep current video on screen (muted via SectionVideoOverlay)
+        // Mute output only — Anam still receives TTS chunks for lip-sync.
         speakerEnabledRef.current = false
-        stopCurrentAudio()
+        stopQueuedAudioPlayback()
+        syncAvatarVideoElements()
         return false
       }
       speakerEnabledRef.current = true
+      audioUnlockedRef.current = true
+      syncAvatarVideoElements()
       return true
     })
   }
@@ -951,10 +1032,11 @@ const [pref_language,setPref_language]=useState("English")
     processMediaQueue()
   }
 
-  // Speaker off: mute video + stop audio, but never tear down a playing video.
+  // Speaker off: mute output + stop queued MP3 playback; Anam TTS/lip-sync continues.
   useEffect(() => {
+    syncAvatarVideoElements()
     if (speakerEnabled) return
-    stopCurrentAudio()
+    stopQueuedAudioPlayback()
     // Drop queued audio / non-filler items; keep fillers + currently playing video.
     mediaQueueRef.current = mediaQueueRef.current.filter(isFillerMediaItem)
   }, [speakerEnabled])
@@ -1023,6 +1105,16 @@ useEffect(()=>{
         tempSocket.on('anam_saravm_tts', handleAnamSarvamTts)
         tempSocket.on('video_playback_res', handleVideoPlaybackResponse)
         tempSocket.on('video_bytes_playback_res', handleVideoBytesPlaybackResponse)
+        tempSocket.on('message', (payload: any) => {
+          const routeType =
+            payload?.route_type ||
+            payload?.event ||
+            payload?.channel ||
+            payload?.type
+          if (routeType) {
+            console.log("[ws inbound]", routeType, payload)
+          }
+        })
 
     setSocket(tempSocket)
 
@@ -1426,8 +1518,7 @@ useEffect(()=>{
       if (audioUnlockedRef.current) return
       audioUnlockedRef.current = true
       const audioElem = audioRef.current
-      if (!audioElem) return
-      if (pendingAutoplayRef.current || audioUrl) {
+      if (audioElem && (pendingAutoplayRef.current || audioUrl)) {
         const playPromise = audioElem.play()
         if (playPromise && typeof playPromise.catch === 'function') {
           playPromise.catch((err: any) => {
@@ -1437,9 +1528,6 @@ useEffect(()=>{
         pendingAutoplayRef.current = false
       }
       syncAvatarVideoElements()
-      document.removeEventListener('click', unlockAudio)
-      document.removeEventListener('touchstart', unlockAudio)
-      document.removeEventListener('keydown', unlockAudio)
     }
     document.addEventListener('click', unlockAudio, { once: true })
     document.addEventListener('touchstart', unlockAudio, { once: true })
@@ -1450,6 +1538,11 @@ useEffect(()=>{
       document.removeEventListener('keydown', unlockAudio)
     }
   }, [audioUrl])
+
+  // Prefetch Anam session token early to reduce first-speech latency.
+  useEffect(() => {
+    void prefetchAnamSessionToken()
+  }, [])
 
   useEffect(() => {
     syncAvatarVideoElements()
@@ -1474,7 +1567,7 @@ useEffect(()=>{
     pref_language,setPref_language,
     audioRef, audioUrl, setAudioUrl, mediaQueueRef, isAudioStillPlaying, isAudioPlayingState,
     speakerEnabled, setSpeakerEnabled, toggleSpeakerPlayback,
-    isAvatarStreamConnected, registerAvatarVideoElement,
+    isAvatarStreamConnected, registerAvatarVideoElement, speakThroughAvatar,
     basicInfoVideoUrl, isBasicInfoVideoPlaying, startBasicInfoVideo, endBasicInfoVideo,
     isVideoPreloaded,
     hotPageLoading,

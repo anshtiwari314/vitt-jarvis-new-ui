@@ -41,6 +41,8 @@ export default function CompanionVideo({
     if (!video) return;
 
     const freezeAtStart = () => {
+      // Never pause Anam WebRTC output — only freeze the idle placeholder clip.
+      if (video.srcObject) return;
       try {
         video.pause();
         if (video.currentTime !== 0) {
@@ -51,7 +53,7 @@ export default function CompanionVideo({
       }
     };
 
-    if (!autoPlay && !isAvatarStreamConnected) {
+    if (!autoPlay && !isAvatarStreamConnected && !video.srcObject) {
       freezeAtStart();
       video.addEventListener('loadeddata', freezeAtStart);
       video.addEventListener('play', freezeAtStart);
@@ -74,7 +76,7 @@ export default function CompanionVideo({
       className={className}
       style={style}
       src={isAvatarStreamConnected ? undefined : COMPANION_VIDEO_URL}
-      autoPlay={autoPlay}
+      autoPlay={autoPlay || isAvatarStreamConnected}
       loop={loop}
       muted={isAvatarStreamConnected ? !speakerEnabled : true}
       playsInline

@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <meta name="theme-color" content="#0284c7" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<link rel="apple-touch-icon" href="/pwa-192x192.png" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
 
     <title>Vitt Life Insurance </title>
     <script>
@@ -72,7 +72,7 @@
   <body>
     <div id="root" style="padding:24px;font-family:sans-serif;color:#111">Loading app…</div>
     <script>
-      // Dev: remove stale service workers + caches (workbox causes blank pages / 404 on main.tsx).
+      // Remove any previously installed PWA service workers and their caches.
       (function () {
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.getRegistrations().then(function (regs) {

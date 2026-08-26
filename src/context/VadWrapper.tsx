@@ -324,9 +324,14 @@ export default function VadWrapper({children}){
           //     ? compressFloat32Pcm(audio)
           //     : audio
 
-          //for compression (limiter logic)
-          //const processedAudio = audio
-          //processAudioToBase64(processedAudio, oneWayUrl, data)
+          const processedAudio =
+            audio instanceof Float32Array
+              ? compressFloat32Pcm(audio)
+              : audio
+          processAudioToBase64(processedAudio, oneWayUrl, {
+            ...data,
+            roomid: roomId,
+          })
         }
       })
 

@@ -3,9 +3,9 @@ export const config = {
     // Base websocket server URL. The client will append `wsEndpoint` when no path is present.
     // Example production value: 'https://your-domain.com'
     // wsUrl:'ws://localhost:8032',
-    //wsUrl: 'ws://localhost:5000',
+    wsUrl: 'ws://localhost:5000',
     // wsUrl: 'wss://recruito.vitti.insure',
-    wsUrl:'wss://6626-2406-b400-b1-d1ef-40f2-154b-7adf-9b13.ngrok-free.app',
+    //wsUrl:'wss://6626-2406-b400-b1-d1ef-40f2-154b-7adf-9b13.ngrok-free.app',
     // WebSocket stream route — enable exactly one (prod OR dev)
     //kotak_prod_stream_req: 'kotak_prod_stream_req',
     dev_stream_req: 'ai_suggestion_req_ins_v2',
@@ -17,7 +17,11 @@ export const config = {
     serverBaseUrl: 'https://recruito.vitti.insure/lms_router',
     //serverBaseUrl:'https://77b1-2406-b400-b1-45df-a501-9845-9c47-bfd0.ngrok-free.app/main_router',
     //serverBaseUrl: 'https://eeabca1560e3.ngrok-free.app',
-    postfactoUrl: 'https://postfacto.netlify.app'
+    postfactoUrl: 'https://postfacto.netlify.app',
+
+    // Anam avatar session + Sarvam TTS (proxied in dev via vite.config.ts)
+    anamSessionEndpoint: '/api/anam/session',
+    ttsStreamUrl: '/api/tts/stream',
 }
 
 /** Resolved WebSocket stream path — uses whichever of prod or dev is set in config. */

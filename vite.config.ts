@@ -2,7 +2,6 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url))
 
@@ -19,47 +18,18 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      devOptions: {
-        enabled: false,
-      },
-      includeAssets: ['lame.min.js', '*.wasm', '*.onnx', 'vad.worklet.bundle.min.js'],
-      manifest: {
-        name: 'Vitt Life Insurance',
-        short_name: 'Vitt Life',
-        description: 'Life Insurance tablet app',
-        theme_color: '#0284c7',
-        background_color: '#ffffff',
-        display: 'standalone',
-        orientation: 'portrait',
-        start_url: '/',
-        icons: [
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable',
-          },
-        ],
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm,onnx}'],
-        maximumFileSizeToCacheInBytes: 30 * 1024 * 1024,
-      },
-    }),
   ],
   server: {
+    proxy: {
+      '/api/anam': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+      '/api/tts': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+      },
+    },
     allowedHosts: [
       '426f-103-173-124-192.ngrok-free.app ',
       'fdd2-103-173-124-184.ngrok-free.app',
